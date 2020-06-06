@@ -1,6 +1,6 @@
 [submodule "client"]
-	path = client
+	path = cleave/client
 	url = git@github.com:KTH-EXPECA/CLEAVE-Client.git
 [submodule "backend"]
-	path = backend
+	path = cleave/backend
 	url = git@github.com:KTH-EXPECA/CLEAVE-Backend.git
