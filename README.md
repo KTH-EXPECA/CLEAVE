@@ -1,9 +1,26 @@
-# CLEAVE Project Metarepo
+# CLEAVE Project
+
+CLEAVE - ControL bEnmArking serVice on the Edge: A framework for testing, benchmarking and evaluating control loop applications on the Edge, written in Python 3.8+.
+---
+*Note: This project is in early stages of development.*
 ---
 
-This metarepository contains all the repositories associated with the CLEAVE project for easy organization and maintenance.
+## Architectural design:
 
-## Cloning:
+Class Diagram: 
+![Class Diagram](design/CLEAVE_CLASS.png)
+
+UML Sequence Diagram: 
+![UML Seq. Diagram](design/CLEAVE_UML.png)
+
+## General Structure of the Project
+
+- This repository contains the top-level structure of the project, as well as associated documentation.
+- The `cleave/client` subrepository contains the code associated to the `cleave.client` subpackage. This package includes all the functionality needed for the client software: emulation of plants, benchmarking and network code to connect to the backend.
+- The `cleave/backend` subrepository contains the code associated to the `cleave.backend` subpackage. This package includes the functionality needed for the backend: server software, control algorithms modularized into microservices and some benchmarking functionality.
+
+
+## Setup:
 
 To clone the whole project at once:
 

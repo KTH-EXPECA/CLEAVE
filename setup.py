@@ -45,8 +45,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url=None,  # TODO
-    packages=setuptools.find_packages('cleave/client') +
-             setuptools.find_packages('cleave/backend'),
+    packages=setuptools.find_packages(),
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Programming Language :: Python :: 3',
