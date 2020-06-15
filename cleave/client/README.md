@@ -1,7 +1,9 @@
 # CLEAVE CLIENT
 ---
 
-This repository contains the code for the CLEAVE client software for emulating networked control systems.
+This repository contains the code for the CLEAVE client software for emulating networked control systems. The expectation is that this will be run on a Raspberry Pi or similar low-powered hardware. The code is written in python3, and uses the packages numpy, scipy, numba and line_profiler. All these packages are installable directly using pip (pip install numpy scipy numba line_profiler).
+
+python simulator.py [-b Backend IP Address:Backend UDP Port number] [-c Client UDP Port number:Client IP Address] [-t simulation_time] [--env_M mass of the cart] [--env_m mass of the pendulum] [env_I moment of inertia of the pendulum] [--env_l length of the pendulum] [--env_bc coefficient of friction of the cart] [--env_bp coefficient of friction of the pendulum] [--env_g acceleration due to gravity]
 
 ## License
 
