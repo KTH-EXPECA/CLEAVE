@@ -14,13 +14,8 @@
 
 import setuptools
 
-with open('cleave/client/README.md', 'r') as fp:
-    client_desc = fp.read()
-
-with open('cleave/backend/README.md', 'r') as fp:
-    backend_desc = fp.read()
-
-long_description = f'{client_desc}\n{backend_desc}'
+with open('./README.md', 'w') as fp:
+    long_description = fp.read()
 
 setuptools.setup(
     name='cleave',
