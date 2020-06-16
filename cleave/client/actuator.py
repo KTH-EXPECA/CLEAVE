@@ -15,7 +15,7 @@
 from abc import ABC, abstractmethod
 
 
-class AbstractActuator(ABC):
+class BaseActuator(ABC):
 
     @abstractmethod
     def get_next_actuation(self):

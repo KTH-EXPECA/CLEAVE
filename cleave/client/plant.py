@@ -17,11 +17,11 @@ from multiprocessing import Event
 
 from loguru import logger
 
-from cleave.client.actuator import AbstractActuator
-from cleave.client.sensor import AbstractSensor
+from .actuator import BaseActuator
+from .sensor import BaseSensor
 
 
-class AbstractPlant(ABC):
+class BasePlant(ABC):
     """
     Base class providing general functionality to represent closed-loop
     control plants.
@@ -29,8 +29,8 @@ class AbstractPlant(ABC):
 
     def __init__(self,
                  dt: float,
-                 sensor: AbstractSensor,
-                 actuator: AbstractActuator):
+                 sensor: BaseSensor,
+                 actuator: BaseActuator):
         logger.debug('Initializing plant.', enqueue=True)
         self.dt = dt
         self.step_cnt = 0

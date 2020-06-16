@@ -12,6 +12,6 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from cleave.client.actuator import AbstractActuator as BaseActuator
-from cleave.client.plant import AbstractPlant as BasePlant
-from cleave.client.sensor import AbstractSensor as BaseSensor
+from .actuator import BaseActuator
+from .sensor import BaseSensor
+from .plant import BasePlant

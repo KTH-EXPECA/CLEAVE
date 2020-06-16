@@ -15,5 +15,5 @@
 from abc import ABC
 
 
-class AbstractSensor(ABC):
+class BaseSensor(ABC):
     pass
