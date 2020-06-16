@@ -14,6 +14,8 @@
 import time
 from abc import ABC, abstractmethod
 
+from multiprocessing import Event
+
 
 class AbstractPlant(ABC):
     """
@@ -24,6 +26,13 @@ class AbstractPlant(ABC):
     def __init__(self, dt: float):
         self.dt = dt
         self.step_cnt = 0
+
+        self._shutdown_event = Event()
+        self._shutdown_event.clear()
+
+    def shutdown(self):
+        # TODO: might need to do more stuff here at some point
+        self._shutdown_event.set()
 
     @abstractmethod
     def pre_actuate_hook(self):
@@ -49,22 +58,26 @@ class AbstractPlant(ABC):
         # TODO
         pass
 
+    def _step(self):
+        self.pre_actuate_hook()
+        self.actuate()
+        self.pre_simulate_hook()
+        self.simulate()
+        self.post_simulate_hook()
+        self.sample_system_state()
+
     def run(self):
         """
         Executes the simulation loop.
         """
-        while True:
-            # TODO: need way to shutdown
+        while not self._shutdown_event.is_set():
             ti = time.time()
-
-            self.pre_actuate_hook()
-            self.actuate()
-            self.pre_simulate_hook()
-            self.simulate()
-            self.post_simulate_hook()
-            self.sample_system_state()
+            try:
+                self._step()
+            except Exception as e:
+                # TODO: descriptive exceptions
+                self.shutdown()
+                return
 
             self.step_cnt += 1
-
-            dt = time.time() - ti
-            time.sleep(self.dt - dt)
+            time.sleep(self.dt - time.time() + ti)
