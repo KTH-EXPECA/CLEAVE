@@ -17,6 +17,9 @@ from multiprocessing import Event
 
 from loguru import logger
 
+from cleave.client.actuator import AbstractActuator
+from cleave.client.sensor import AbstractSensor
+
 
 class AbstractPlant(ABC):
     """
@@ -24,10 +27,16 @@ class AbstractPlant(ABC):
     control plants.
     """
 
-    def __init__(self, dt: float):
+    def __init__(self,
+                 dt: float,
+                 sensor: AbstractSensor,
+                 actuator: AbstractActuator):
         logger.debug('Initializing plant.', enqueue=True)
         self.dt = dt
         self.step_cnt = 0
+
+        self.sensor = sensor
+        self.actuator = actuator
 
         self._shutdown_event = Event()
         self._shutdown_event.clear()
@@ -81,9 +90,9 @@ class AbstractPlant(ABC):
                 logger.debug('Finished simulation step', enqueue=True)
             except Exception as e:
                 # TODO: descriptive exceptions
-                logger.opt(exception=e).error('Caught exception!')
+                logger.opt(exception=e).error('Caught exception!', enqueue=True)
                 self.shutdown()
                 return
 
             self.step_cnt += 1
-            time.sleep(self.dt - time.time() + ti)
+            time.sleep(max(self.dt - time.time() + ti, 0))

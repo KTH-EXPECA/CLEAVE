@@ -12,6 +12,28 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from cleave.client.actuator import AbstractActuator as BaseActuator
-from cleave.client.plant import AbstractPlant as BasePlant
-from cleave.client.sensor import AbstractSensor as BaseSensor
+from unittest import TestCase
+
+from cleave.client import BasePlant
+
+
+class DummyPlant(BasePlant):
+
+    def pre_actuate_hook(self):
+        pass
+
+    def pre_simulate_hook(self):
+        pass
+
+    def post_simulate_hook(self):
+        pass
+
+    def actuate(self):
+        pass
+
+    def simulate(self):
+        pass
+
+
+class TestPlant(TestCase):
+    pass
