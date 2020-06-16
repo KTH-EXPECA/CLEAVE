@@ -13,8 +13,9 @@
 #   limitations under the License.
 import time
 from abc import ABC, abstractmethod
-
 from multiprocessing import Event
+
+from loguru import logger
 
 
 class AbstractPlant(ABC):
@@ -24,6 +25,7 @@ class AbstractPlant(ABC):
     """
 
     def __init__(self, dt: float):
+        logger.debug('Initializing plant.', enqueue=True)
         self.dt = dt
         self.step_cnt = 0
 
@@ -32,6 +34,7 @@ class AbstractPlant(ABC):
 
     def shutdown(self):
         # TODO: might need to do more stuff here at some point
+        logger.warning('Shutting down plant.', enqueue=True)
         self._shutdown_event.set()
 
     @abstractmethod
@@ -73,9 +76,12 @@ class AbstractPlant(ABC):
         while not self._shutdown_event.is_set():
             ti = time.time()
             try:
+                logger.debug('Executing simulation step.', enqueue=True)
                 self._step()
+                logger.debug('Finished simulation step', enqueue=True)
             except Exception as e:
                 # TODO: descriptive exceptions
+                logger.opt(exception=e).error('Caught exception!')
                 self.shutdown()
                 return
 
