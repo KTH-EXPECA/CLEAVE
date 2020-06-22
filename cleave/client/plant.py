@@ -47,7 +47,7 @@ class HookCollection:
     def call(self, *args, **kwargs):
         with self._lock:
             for name, hook in self._hooks.items():
-                logger.debug('Calling {function}', function=name)
+                logger.debug('Calling {function}', function=name, enqueue=True)
                 hook(*args, **kwargs)
 
 
@@ -68,11 +68,11 @@ class Plant:
         self._state = init_state
         self._state_lck = RLock()
 
-        self.dt = dt
-        self.step_cnt = 0
+        self._dt = dt
+        self._step_cnt = 0
 
-        self.sensor = sensor
-        self.actuator = actuator
+        self._sensor = sensor
+        self._actuator = actuator
 
         self._shutdown_event = Event()
         self._shutdown_event.clear()
@@ -96,11 +96,15 @@ class Plant:
         logger.warning('Shutting down plant.', enqueue=True)
         self._shutdown_event.set()
 
+    def sample_state(self) -> BaseState:
+        with self._state_lck:
+            return self._state
+
     def _step(self):
         self._start_of_step_hooks.call()
 
         # pull next actuation command from actuator
-        actuation = self.actuator.get_next_actuation()
+        actuation = self._actuator.get_next_actuation()
         self._pre_sim_hooks.call(actuation=actuation)
 
         new_state = self._state.advance(actuation)
@@ -127,5 +131,5 @@ class Plant:
                 self.shutdown()
                 return
 
-            self.step_cnt += 1
-            time.sleep(max(self.dt - time.time() + ti, 0))
+            self._step_cnt += 1
+            time.sleep(max(self._dt - time.time() + ti, 0))

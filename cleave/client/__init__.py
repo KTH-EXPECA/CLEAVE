@@ -12,6 +12,6 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from .actuator import BaseActuator
-from .plant import Plant
+from .actuator import BaseActuationCommand, BaseActuator
+from .plant import BaseState, Plant
 from .sensor import BaseSensor
