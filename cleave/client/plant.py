@@ -11,14 +11,24 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
+from __future__ import annotations
+
 import time
 from abc import ABC, abstractmethod
-from multiprocessing import Event
+from multiprocessing import Event, RLock
+from typing import Any, Optional
 
 from loguru import logger
 
-from .actuator import BaseActuator
+from .actuator import BaseActuationCommand, BaseActuator
 from .sensor import BaseSensor
+
+
+class BaseState(ABC):
+    @abstractmethod
+    def advance(self, actuation: Optional[BaseActuationCommand] = None) \
+            -> BaseState:
+        pass
 
 
 class BasePlant(ABC):
@@ -29,9 +39,14 @@ class BasePlant(ABC):
 
     def __init__(self,
                  dt: float,
+                 init_state: BaseState,
                  sensor: BaseSensor,
                  actuator: BaseActuator):
         logger.debug('Initializing plant.', enqueue=True)
+
+        self._state = init_state
+        self._state_lck = RLock()
+
         self.dt = dt
         self.step_cnt = 0
 
@@ -47,36 +62,29 @@ class BasePlant(ABC):
         self._shutdown_event.set()
 
     @abstractmethod
-    def pre_actuate_hook(self):
+    def start_of_sim_step_hook(self):
         pass
 
     @abstractmethod
-    def pre_simulate_hook(self):
+    def end_of_sim_step_hook(self):
         pass
 
     @abstractmethod
-    def post_simulate_hook(self):
-        pass
-
-    @abstractmethod
-    def actuate(self):
-        pass
-
-    @abstractmethod
-    def simulate(self):
-        pass
-
-    def sample_system_state(self):
-        # TODO
+    def pre_simulate_hook(self, actuation: Any):
         pass
 
     def _step(self):
-        self.pre_actuate_hook()
-        self.actuate()
-        self.pre_simulate_hook()
-        self.simulate()
-        self.post_simulate_hook()
-        self.sample_system_state()
+        self.start_of_sim_step_hook()
+
+        # pull next actuation command from actuator
+        actuation = self.actuator.get_next_actuation()
+        self.pre_simulate_hook(actuation)
+
+        new_state = self._state.advance(actuation)
+        with self._state_lck:
+            self._state = new_state
+
+        self.end_of_sim_step_hook()
 
     def run(self):
         """

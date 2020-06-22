@@ -13,10 +13,15 @@
 #   limitations under the License.
 
 from abc import ABC, abstractmethod
+from typing import Optional
+
+
+class BaseActuationCommand(ABC):
+    pass
 
 
 class BaseActuator(ABC):
 
     @abstractmethod
-    def get_next_actuation(self):
+    def get_next_actuation(self) -> Optional[BaseActuationCommand]:
         pass
