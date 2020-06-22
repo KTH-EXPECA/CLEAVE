@@ -13,5 +13,5 @@
 #   limitations under the License.
 
 from .actuator import BaseActuator
+from .plant import Plant
 from .sensor import BaseSensor
-from .plant import BasePlant

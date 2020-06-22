@@ -14,10 +14,10 @@
 
 from unittest import TestCase
 
-from cleave.client import BasePlant
+from cleave.client import Plant
 
 
-class DummyPlant(BasePlant):
+class DummyPlant(Plant):
 
     def pre_actuate_hook(self):
         pass

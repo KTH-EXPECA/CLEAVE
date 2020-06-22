@@ -16,7 +16,7 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from multiprocessing import Event, RLock
-from typing import Any, Optional
+from typing import Callable, Dict, Optional
 
 from loguru import logger
 
@@ -31,7 +31,27 @@ class BaseState(ABC):
         pass
 
 
-class BasePlant(ABC):
+class HookCollection:
+    def __init__(self):
+        self._lock = RLock()
+        self._hooks: Dict[str, Callable] = {}
+
+    def add(self, fn: Callable[[...], ...]):
+        with self._lock:
+            self._hooks[fn.__name__] = fn
+
+    def remove(self, fn: Callable[[...], ...]):
+        with self._lock:
+            self._hooks.pop(fn.__name__, None)
+
+    def call(self, *args, **kwargs):
+        with self._lock:
+            for name, hook in self._hooks.items():
+                logger.debug('Calling {function}', function=name)
+                hook(*args, **kwargs)
+
+
+class Plant:
     """
     Base class providing general functionality to represent closed-loop
     control plants.
@@ -42,6 +62,7 @@ class BasePlant(ABC):
                  init_state: BaseState,
                  sensor: BaseSensor,
                  actuator: BaseActuator):
+        super(Plant, self).__init__()
         logger.debug('Initializing plant.', enqueue=True)
 
         self._state = init_state
@@ -56,35 +77,39 @@ class BasePlant(ABC):
         self._shutdown_event = Event()
         self._shutdown_event.clear()
 
+        # set up hooks
+        self._start_of_step_hooks = HookCollection()
+        self._end_of_step_hooks = HookCollection()
+        self._pre_sim_hooks = HookCollection()
+
+    def hook_start_of_step(self, fn: Callable[[...], ...]):
+        self._start_of_step_hooks.add(fn)
+
+    def hook_end_of_step(self, fn: Callable[[...], ...]):
+        self._end_of_step_hooks.add(fn)
+
+    def hook_pre_sim(self, fn: Callable[[...], ...]):
+        self._pre_sim_hooks.add(fn)
+
     def shutdown(self):
         # TODO: might need to do more stuff here at some point
         logger.warning('Shutting down plant.', enqueue=True)
         self._shutdown_event.set()
 
-    @abstractmethod
-    def start_of_sim_step_hook(self):
-        pass
-
-    @abstractmethod
-    def end_of_sim_step_hook(self):
-        pass
-
-    @abstractmethod
-    def pre_simulate_hook(self, actuation: Any):
-        pass
-
     def _step(self):
-        self.start_of_sim_step_hook()
+        self._start_of_step_hooks.call()
 
         # pull next actuation command from actuator
         actuation = self.actuator.get_next_actuation()
-        self.pre_simulate_hook(actuation)
+        self._pre_sim_hooks.call(actuation=actuation)
 
         new_state = self._state.advance(actuation)
         with self._state_lck:
             self._state = new_state
 
-        self.end_of_sim_step_hook()
+        # TODO: sensor!
+
+        self._end_of_step_hooks.call()
 
     def run(self):
         """
