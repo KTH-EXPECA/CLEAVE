@@ -148,6 +148,7 @@ class Plant:
         # TODO: might need to do more stuff here at some point
         logger.warning('Shutting down plant.', enqueue=True)
         self._shutdown_event.set()
+        self._sensor.shutdown()
 
     def sample_state(self) -> BaseState:
         """
@@ -177,8 +178,7 @@ class Plant:
         with self._state_lck:
             self._state = new_state
 
-        # TODO: sensor!
-
+        self._sensor.state = new_state
         self._end_of_step_hooks.call()
 
     def run(self):
