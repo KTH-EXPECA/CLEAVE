@@ -13,13 +13,13 @@
 #   limitations under the License.
 from __future__ import annotations
 
-import time
 from abc import ABC, abstractmethod
 from multiprocessing import Event, RLock
 from typing import Any, Callable, Dict, Optional
 
 from loguru import logger
 
+from . import utils
 from .actuator import BaseActuationCommand, BaseActuator
 from .sensor import BaseSensor
 
@@ -166,7 +166,7 @@ class Plant:
         """
         Executes all the necessary procedures to advance the simulation a
         single discrete time step. This method calls the respective hooks,
-        polls the actuator, advances the state and updates the actuator.
+        polls the actuator, advances the state and updates the sensor.
         """
         self._start_of_step_hooks.call()
 
@@ -180,22 +180,23 @@ class Plant:
 
         self._sensor.state = new_state
         self._end_of_step_hooks.call()
+        self._step_cnt += 1
 
     def run(self):
         """
         Executes the simulation loop.
         """
-        while not self._shutdown_event.is_set():
-            ti = time.time()
-            try:
-                logger.debug('Executing simulation step.', enqueue=True)
-                self._step()
-                logger.debug('Finished simulation step', enqueue=True)
-            except Exception as e:
-                # TODO: descriptive exceptions
-                logger.opt(exception=e).error('Caught exception!', enqueue=True)
-                self.shutdown()
-                return
-
-            self._step_cnt += 1
-            time.sleep(max(self._dt - time.time() + ti, 0))
+        try:
+            logger.debug('Starting simulation', enqueue=True)
+            utils.execute_periodically(
+                fn=Plant._step,
+                args=(self,),
+                period=self._dt,
+                shutdown_flag=self._shutdown_event
+            )
+        except Exception as e:
+            # TODO: descriptive exceptions
+            logger.opt(exception=e).error('Caught exception!', enqueue=True)
+            self.shutdown()
+        finally:
+            logger.debug('Finished simulation', enqueue=True)
