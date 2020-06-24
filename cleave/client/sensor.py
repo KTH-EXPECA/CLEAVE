@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from multiprocessing import Event, Process, RLock
-from typing import Optional
+from typing import Any, Callable, Optional
 
 from loguru import logger
 
@@ -45,6 +45,9 @@ class BaseSensor(ABC, Process):
         self._ts = 1.0 / sample_freq
         self._shutdown_event = Event()
         self._shutdown_event.clear()
+
+        self._sampling_hooks = utils.HookCollection()
+        self._post_send_hooks = utils.HookCollection()
 
     def shutdown(self):
         """
@@ -86,6 +89,37 @@ class BaseSensor(ABC, Process):
         with self._lock:
             self._state = value
 
+    def hook_sampling(self, fn: Callable[[], ...]):
+        """
+        Register a callable to be called at the beginning of each
+        sample-then-send step.
+        This callable should take no arguments.
+
+        The intended use pattern for this method is as a decorator.
+
+        Parameters
+        ----------
+        fn
+            Callable to be invoked at the start of sampling interval.
+        """
+        self._sampling_hooks.add(fn)
+
+    def hook_post_send(self, fn: Callable[[Any], ...]):
+        """
+        Register a callable to be called immediately after sending the
+        sampled state to the controller. This callable should take a single
+        argument which holds whatever was sent to the controller.
+
+        The intended use pattern for this method is as a decorator.
+
+        Parameters
+        ----------
+        fn
+            Callable to be invoked immediately after sending something to the
+            controller.
+        """
+        self._post_send_hooks.add(fn)
+
     @abstractmethod
     def prepare_state(self, state: BaseState) -> bytes:
         """
@@ -104,12 +138,13 @@ class BaseSensor(ABC, Process):
         pass
 
     @abstractmethod
-    def send(self, payload: bytes):
+    def send(self, payload: bytes) -> Any:
         """
         Sends the passed binary payload to the controller. What "sending"
         actually means is left up to the implementing class.
 
-        Should be implemented by inheriting classes.
+        Should be implemented by inheriting classes, and return whatever was
+        sent.
 
         Parameters
         ----------
@@ -122,8 +157,13 @@ class BaseSensor(ABC, Process):
         """
         Helper function to encapsulate the sensor sampling procedure.
         """
+
+        self._sampling_hooks.call()
+
         sample = self.prepare_state(self.state)
-        self.send(sample)
+        sent = self.send(sample)
+
+        self._post_send_hooks.call(sent)
 
     def run(self) -> None:
         """

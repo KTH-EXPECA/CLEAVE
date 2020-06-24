@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from multiprocessing import Event, RLock
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
 
 from loguru import logger
 
@@ -29,26 +29,6 @@ class BaseState(ABC):
     def advance(self, actuation: Optional[BaseActuationCommand] = None) \
             -> BaseState:
         pass
-
-
-class HookCollection:
-    def __init__(self):
-        self._lock = RLock()
-        self._hooks: Dict[str, Callable] = {}
-
-    def add(self, fn: Callable[[...], ...]):
-        with self._lock:
-            self._hooks[fn.__name__] = fn
-
-    def remove(self, fn: Callable[[...], ...]):
-        with self._lock:
-            self._hooks.pop(fn.__name__, None)
-
-    def call(self, *args, **kwargs):
-        with self._lock:
-            for name, hook in self._hooks.items():
-                logger.debug('Calling {function}', function=name, enqueue=True)
-                hook(*args, **kwargs)
 
 
 class Plant:
@@ -90,9 +70,9 @@ class Plant:
         self._shutdown_event.clear()
 
         # set up hooks
-        self._start_of_step_hooks = HookCollection()
-        self._end_of_step_hooks = HookCollection()
-        self._pre_sim_hooks = HookCollection()
+        self._start_of_step_hooks = utils.HookCollection()
+        self._end_of_step_hooks = utils.HookCollection()
+        self._pre_sim_hooks = utils.HookCollection()
 
     def hook_start_of_step(self, fn: Callable[[], ...]):
         """

@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 import time
-from multiprocessing import Event
+from multiprocessing import Event, RLock
 from typing import Callable, Dict, Optional, Tuple
 
 from loguru import logger
@@ -34,3 +34,23 @@ def execute_periodically(fn: Callable[[...], None],
             logger.warning('Function {} execution took longer than given '
                            'period! dt = {}, period = {}',
                            fn.__name__, dt, period, enqueue=True)
+
+
+class HookCollection:
+    def __init__(self):
+        self._lock = RLock()
+        self._hooks: Dict[str, Callable] = {}
+
+    def add(self, fn: Callable[[...], ...]):
+        with self._lock:
+            self._hooks[fn.__name__] = fn
+
+    def remove(self, fn: Callable[[...], ...]):
+        with self._lock:
+            self._hooks.pop(fn.__name__, None)
+
+    def call(self, *args, **kwargs):
+        with self._lock:
+            for name, hook in self._hooks.items():
+                logger.debug('Calling {function}', function=name, enqueue=True)
+                hook(*args, **kwargs)
