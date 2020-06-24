@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from multiprocessing import Event, RLock
+from multiprocessing import Event, Process, RLock
 from typing import Any, Callable, Optional
 
 from loguru import logger
@@ -31,7 +31,7 @@ class BaseState(ABC):
         pass
 
 
-class Plant:
+class Plant(Process):
     """
     Base class providing general functionality to represent closed-loop
     control plants.
@@ -67,7 +67,7 @@ class Plant:
         self._actuator = actuator
 
         self._shutdown_event = Event()
-        self._shutdown_event.clear()
+        self._shutdown_event.set()
 
         # set up hooks
         self._start_of_step_hooks = utils.HookCollection()
@@ -129,6 +129,7 @@ class Plant:
         logger.warning('Shutting down plant.', enqueue=True)
         self._shutdown_event.set()
         self._sensor.shutdown()
+        self._actuator.shutdown()
 
     def sample_state(self) -> BaseState:
         """
@@ -162,10 +163,15 @@ class Plant:
         self._end_of_step_hooks.call()
         self._step_cnt += 1
 
+    def start(self) -> None:
+        if self._shutdown_event.is_set():
+            super(Plant, self).start()
+
     def run(self):
         """
         Executes the simulation loop.
         """
+        self._shutdown_event.clear()
         try:
             logger.debug('Starting simulation', enqueue=True)
             utils.execute_periodically(

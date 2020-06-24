@@ -20,7 +20,9 @@ from typing import Any, Callable, Optional
 
 from loguru import logger
 
-from cleave.client import BaseState, utils
+from . import utils
+from .plant import BaseState
+from ..network.connection import UDPConnection
 
 
 class BaseSensor(ABC, Process):
@@ -44,7 +46,7 @@ class BaseSensor(ABC, Process):
         self._freq = sample_freq
         self._ts = 1.0 / sample_freq
         self._shutdown_event = Event()
-        self._shutdown_event.clear()
+        self._shutdown_event.set()
 
         self._sampling_hooks = utils.HookCollection()
         self._post_send_hooks = utils.HookCollection()
@@ -165,10 +167,15 @@ class BaseSensor(ABC, Process):
 
         self._post_send_hooks.call(sent)
 
+    def start(self) -> None:
+        if self._shutdown_event.is_set():
+            super(BaseSensor, self).start()
+
     def run(self) -> None:
         """
         Executes the sampling loop.
         """
+        self._shutdown_event.clear()
         try:
             utils.execute_periodically(
                 fn=BaseSensor._prepare_and_send_state,
@@ -181,3 +188,8 @@ class BaseSensor(ABC, Process):
             logger.opt(exception=e).error('Caught exception in sensor '
                                           'sampling loop!', enqueue=True)
             self.shutdown()
+
+
+class UDPSensor(ABC, BaseSensor, UDPConnection):
+    # TODO
+    pass
