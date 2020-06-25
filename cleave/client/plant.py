@@ -13,6 +13,7 @@
 #   limitations under the License.
 from __future__ import annotations
 
+import time
 from abc import ABC, abstractmethod
 from multiprocessing import Event, Process, RLock
 from typing import Any, Callable, Optional
@@ -26,8 +27,10 @@ from .sensor import BaseSensor
 
 class BaseState(ABC):
     @abstractmethod
-    def advance(self, actuation: Optional[BaseActuationCommand] = None) \
-            -> BaseState:
+    def advance(self,
+                dt_ns: int,
+                actuation: Optional[BaseActuationCommand] = None) \
+            -> Any:
         pass
 
 
@@ -38,7 +41,7 @@ class Plant(Process):
     """
 
     def __init__(self,
-                 dt: float,
+                 dt_ns: int,
                  init_state: BaseState,
                  sensor: BaseSensor,
                  actuator: BaseActuator):
@@ -60,7 +63,8 @@ class Plant(Process):
         self._state = init_state
         self._state_lck = RLock()
 
-        self._dt = dt
+        self._dt = dt_ns
+        self._last_update = time.monotonic_ns()
         self._step_cnt = 0
 
         self._sensor = sensor
@@ -155,11 +159,13 @@ class Plant(Process):
         actuation = self._actuator.get_next_actuation()
         self._pre_sim_hooks.call(actuation=actuation)
 
-        new_state = self._state.advance(actuation)
-        with self._state_lck:
-            self._state = new_state
+        sample = self._state.advance(
+            dt_ns=time.monotonic_ns() - self._last_update,
+            actuation=actuation
+        )
+        self._last_update = time.monotonic_ns()
 
-        self._sensor.state = new_state
+        self._sensor.sample = sample
         self._end_of_step_hooks.call()
         self._step_cnt += 1
 
@@ -177,7 +183,7 @@ class Plant(Process):
             utils.execute_periodically(
                 fn=Plant._step,
                 args=(self,),
-                period=self._dt,
+                period_ns=self._dt,
                 shutdown_flag=self._shutdown_event
             )
         except Exception as e:

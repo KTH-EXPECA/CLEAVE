@@ -41,7 +41,7 @@ class BaseSensor(ABC, Process):
             The sampling frequency of the sensor, in Hertz.
         """
         super(BaseSensor, self).__init__()
-        self._state = None
+        self._sample = None
         self._lock = RLock()
         self._freq = sample_freq
         self._ts = 1.0 / sample_freq
@@ -75,21 +75,21 @@ class BaseSensor(ABC, Process):
             self._ts = 1.0 / value
 
     @property
-    def state(self) -> Optional[BaseState]:
+    def sample(self) -> Optional[Any]:
         """
         Returns
         -------
-        Optional[BaseState]
+        Optional[Any]
             Most recently sampled state of the plant, or None if no sampling
             has yet occurred.
         """
         with self._lock:
-            return self._state
+            return self._sample
 
-    @state.setter
-    def state(self, value: BaseState):
+    @sample.setter
+    def sample(self, value: Any):
         with self._lock:
-            self._state = value
+            self._sample = value
 
     def hook_sampling(self, fn: Callable[[], ...]):
         """

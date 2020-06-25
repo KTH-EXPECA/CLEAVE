@@ -19,21 +19,21 @@ from loguru import logger
 
 
 def execute_periodically(fn: Callable[[...], None],
-                         period: float,
+                         period_ns: int,
                          args: Optional[Tuple] = None,
                          kwargs: Optional[Dict] = None,
                          shutdown_flag: Event = Event()):
     shutdown_flag.clear()
     while not shutdown_flag.is_set():
-        ti = time.time()
+        ti = time.monotonic_ns()
         fn(*args, **kwargs)
-        dt = time.time() - ti
+        dt = time.monotonic_ns() - ti
         try:
-            time.sleep(period - dt)
+            time.sleep((dt - period_ns) / 1e9)
         except ValueError:
             logger.warning('Function {} execution took longer than given '
-                           'period! dt = {}, period = {}',
-                           fn.__name__, dt, period, enqueue=True)
+                           'period! dt = {} ns, period = {} ns',
+                           fn.__name__, dt, period_ns, enqueue=True)
 
 
 class HookCollection:
