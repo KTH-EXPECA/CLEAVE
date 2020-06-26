@@ -13,8 +13,9 @@
 #   limitations under the License.
 
 from abc import ABC, abstractmethod
-from multiprocessing import Event, Process, RLock
 from typing import Any, Optional
+
+from .mproc import RunnableLoop
 
 
 class BaseActuationCommand(ABC):
@@ -24,15 +25,9 @@ class BaseActuationCommand(ABC):
         pass
 
 
-class BaseActuator(ABC, Process):
+class BaseActuator(RunnableLoop, ABC):
     def __init__(self):
         super(BaseActuator, self).__init__()
-        self._lck = RLock()
-        self._shutdown_flag = Event()
-        self._shutdown_flag.set()
-
-    def shutdown(self):
-        self._shutdown_flag.set()
 
     @abstractmethod
     def get_next_actuation(self) -> Optional[BaseActuationCommand]:
@@ -46,14 +41,5 @@ class BaseActuator(ABC, Process):
     def process_incoming(self, data: bytes):
         pass
 
-    def start(self) -> None:
-        if self._shutdown_flag.is_set():
-            super(BaseActuator, self).start()
-
-    def run(self) -> None:
-        self._shutdown_flag.clear()
-        while not self._shutdown_flag.is_set():
-            try:
-                self.process_incoming(self.listen())
-            except TimeoutError:
-                pass
+    def _loop(self) -> None:
+        self.process_incoming(self.listen())
