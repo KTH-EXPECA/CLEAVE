@@ -20,8 +20,7 @@ from typing import Any, Callable, Optional
 
 from loguru import logger
 
-from . import utils
-from .plant import BaseState
+from . import BaseState, utils
 from ..network.connection import UDPConnection
 
 

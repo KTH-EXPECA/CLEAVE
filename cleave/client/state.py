@@ -11,13 +11,27 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
+from abc import ABC, abstractmethod
+from typing import Any, Optional
 
-from .actuator import BaseActuationCommand, BaseActuator
-from .plant import Plant
-from .sensor import BaseSensor
-from .state import BaseState
+from . import BaseActuationCommand
 
-__all__ = ['Plant',
-           'BaseActuationCommand',
-           'BaseActuator',
-           'BaseSensor']
+
+class BaseState(ABC):
+    @abstractmethod
+    def advance(self,
+                dt_ns: int,
+                actuation: Optional[BaseActuationCommand] = None) \
+            -> Any:
+        pass
+
+    @abstractmethod
+    def sample(self) -> Any:
+        """
+        Returns a snapshot of the relevant portion of the system state.
+        Returns
+        -------
+            TODO
+        """
+
+        pass

@@ -14,24 +14,12 @@
 from __future__ import annotations
 
 import time
-from abc import ABC, abstractmethod
 from multiprocessing import Event, Process, RLock
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from loguru import logger
 
-from . import utils
-from .actuator import BaseActuationCommand, BaseActuator
-from .sensor import BaseSensor
-
-
-class BaseState(ABC):
-    @abstractmethod
-    def advance(self,
-                dt_ns: int,
-                actuation: Optional[BaseActuationCommand] = None) \
-            -> Any:
-        pass
+from . import BaseActuator, BaseSensor, BaseState, utils
 
 
 class Plant(Process):
