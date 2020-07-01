@@ -12,12 +12,12 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from .actuator import BaseActuationCommand, BaseActuator
+from .actuator import ActuationCommand, Actuator
 from .plant import Plant
-from .sensor import BaseSensor
+from .sensor import Sensor
 from .state import BaseState
 
 __all__ = ['Plant',
-           'BaseActuationCommand',
-           'BaseActuator',
-           'BaseSensor']
+           'ActuationCommand',
+           'Actuator',
+           'Sensor']

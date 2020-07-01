@@ -24,7 +24,7 @@ from multiprocess.connection import Pipe
 from .mproc import TimedRunnableLoop
 
 
-class BaseSensor(TimedRunnableLoop):
+class Sensor(TimedRunnableLoop):
     """
     Base class for a sensor capable of reading the state of a plant and
     sending it over the network to the controller.
@@ -39,7 +39,7 @@ class BaseSensor(TimedRunnableLoop):
         sample_freq_hz
             The sampling frequency of the sensor, in Hertz.
         """
-        super(BaseSensor, self).__init__(
+        super(Sensor, self).__init__(
             dt_ns=int(floor(1.0 / sample_freq_hz) * 1e9)
         )
         self._freq = sample_freq_hz
@@ -49,7 +49,7 @@ class BaseSensor(TimedRunnableLoop):
         self._sample = None
 
     def shutdown(self) -> None:
-        super(BaseSensor, self).shutdown()
+        super(Sensor, self).shutdown()
         self._pipe_recv.close()
         self._pipe_send.close()
 
@@ -119,7 +119,7 @@ class BaseSensor(TimedRunnableLoop):
         threading.Thread(
             target=_pipe_listen
         ).start()
-        super(BaseSensor, self).run()
+        super(Sensor, self).run()
 
     def update_sample(self, sample: bytes) -> None:
         self._pipe_send.send(sample)

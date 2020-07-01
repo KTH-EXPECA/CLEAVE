@@ -14,11 +14,10 @@
 import time
 from typing import Any, Optional
 
-from cleave.client import BaseActuationCommand, BaseActuator, BaseSensor, \
-    BaseState, Plant
+from cleave.client import ActuationCommand, Actuator, BaseState, Plant, Sensor
 
 
-class DummySensor(BaseSensor):
+class DummySensor(Sensor):
     def prepare_state(self, state: BaseState) -> bytes:
         return 'hello world'.encode('utf8')
 
@@ -26,8 +25,8 @@ class DummySensor(BaseSensor):
         return print(payload.decode('utf8'))
 
 
-class DummyActuator(BaseActuator):
-    def get_next_actuation(self) -> Optional[BaseActuationCommand]:
+class DummyActuator(Actuator):
+    def get_next_actuation(self) -> Optional[ActuationCommand]:
         return None
 
     def listen(self) -> bytes:
@@ -40,7 +39,7 @@ class DummyActuator(BaseActuator):
 
 class DummyState(BaseState):
     def advance(self,
-                actuation: Optional[BaseActuationCommand] = None) -> BaseState:
+                actuation: Optional[ActuationCommand] = None) -> BaseState:
         return self
 
 

@@ -18,19 +18,19 @@ from typing import Any, Optional
 from .mproc import RunnableLoop
 
 
-class BaseActuationCommand(ABC):
+class ActuationCommand(ABC):
     @property
     @abstractmethod
     def payload(self) -> Any:
         pass
 
 
-class BaseActuator(RunnableLoop, ABC):
+class Actuator(RunnableLoop, ABC):
     def __init__(self):
-        super(BaseActuator, self).__init__()
+        super(Actuator, self).__init__()
 
     @abstractmethod
-    def get_next_actuation(self) -> Optional[BaseActuationCommand]:
+    def get_next_actuation(self) -> Optional[ActuationCommand]:
         pass
 
     @abstractmethod

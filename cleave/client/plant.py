@@ -14,15 +14,15 @@
 from __future__ import annotations
 
 import time
-from multiprocessing import Event, Process, RLock
 from typing import Any, Callable
 
 from loguru import logger
 
-from . import BaseActuator, BaseSensor, BaseState, utils
+from . import Actuator, BaseState, Sensor, utils
+from .mproc import RunnableLoopContext, TimedRunnableLoop
 
 
-class Plant(Process):
+class Plant(TimedRunnableLoop):
     """
     Base class providing general functionality to represent closed-loop
     control plants.
@@ -31,12 +31,12 @@ class Plant(Process):
     def __init__(self,
                  dt_ns: int,
                  init_state: BaseState,
-                 sensor: BaseSensor,
-                 actuator: BaseActuator):
+                 sensor: Sensor,
+                 actuator: Actuator):
         """
         Parameters
         ----------
-        dt
+        dt_ns
             Time interval in seconds between successive simulation steps.
         init_state
             Initial plant state.
@@ -45,21 +45,15 @@ class Plant(Process):
         actuator
             BaseActuator instance associated with the plant.
         """
-        super(Plant, self).__init__()
+        super(Plant, self).__init__(dt_ns=dt_ns)
         logger.debug('Initializing plant.', enqueue=True)
 
         self._state = init_state
-        self._state_lck = RLock()
-
-        self._dt = dt_ns
         self._last_update = time.monotonic_ns()
         self._step_cnt = 0
 
         self._sensor = sensor
         self._actuator = actuator
-
-        self._shutdown_event = Event()
-        self._shutdown_event.set()
 
         # set up hooks
         self._start_of_step_hooks = utils.HookCollection()
@@ -112,35 +106,13 @@ class Plant(Process):
 
         self._pre_sim_hooks.add(fn)
 
-    def shutdown(self):
-        """
-        Shuts down this plant.
-        """
-
-        # TODO: might need to do more stuff here at some point
-        logger.warning('Shutting down plant.', enqueue=True)
-        self._shutdown_event.set()
-        self._sensor.shutdown()
-        self._actuator.shutdown()
-
-    def sample_state(self) -> BaseState:
-        """
-        Returns the current state of the plant. Thread- and process-safe.
-
-        Returns
-        -------
-        BaseState
-            Current state of the plant.
-        """
-        with self._state_lck:
-            return self._state
-
-    def _step(self):
+    def _loop(self) -> None:
         """
         Executes all the necessary procedures to advance the simulation a
         single discrete time step. This method calls the respective hooks,
         polls the actuator, advances the state and updates the sensor.
         """
+
         self._start_of_step_hooks.call()
 
         # pull next actuation command from actuator
@@ -157,26 +129,6 @@ class Plant(Process):
         self._end_of_step_hooks.call()
         self._step_cnt += 1
 
-    def start(self) -> None:
-        if self._shutdown_event.is_set():
-            super(Plant, self).start()
-
-    def run(self):
-        """
-        Executes the simulation loop.
-        """
-        self._shutdown_event.clear()
-        try:
-            logger.debug('Starting simulation', enqueue=True)
-            utils.execute_periodically(
-                fn=Plant._step,
-                args=(self,),
-                period_ns=self._dt,
-                shutdown_flag=self._shutdown_event
-            )
-        except Exception as e:
-            # TODO: descriptive exceptions
-            logger.opt(exception=e).error('Caught exception!', enqueue=True)
-            self.shutdown()
-        finally:
-            logger.debug('Finished simulation', enqueue=True)
+    def run(self) -> None:
+        with RunnableLoopContext([self._sensor, self._actuator]):
+            super(Plant, self).run()

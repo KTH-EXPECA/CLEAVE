@@ -14,14 +14,14 @@
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
-from . import BaseActuationCommand
+from . import ActuationCommand
 
 
 class BaseState(ABC):
     @abstractmethod
     def advance(self,
                 dt_ns: int,
-                actuation: Optional[BaseActuationCommand] = None) \
+                actuation: Optional[ActuationCommand] = None) \
             -> Any:
         pass
 
