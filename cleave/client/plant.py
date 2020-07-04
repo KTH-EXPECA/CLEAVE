@@ -13,13 +13,18 @@
 #   limitations under the License.
 from __future__ import annotations
 
+import math
 import time
-from typing import Any, Callable
+from abc import ABC, abstractmethod
+from typing import Any, Callable, Dict, Optional
 
 from loguru import logger
+from multiprocess.context import _default_context
+from multiprocess.synchronize import RLock
 
 from . import Actuator, BaseState, Sensor, utils
 from .mproc import RunnableLoopContext, TimedRunnableLoop
+from .sensor import FrequencyMismatchException
 
 
 class Plant(TimedRunnableLoop):
@@ -132,3 +137,58 @@ class Plant(TimedRunnableLoop):
     def run(self) -> None:
         with RunnableLoopContext([self._sensor, self._actuator]):
             super(Plant, self).run()
+
+
+class NewPlant(ABC, TimedRunnableLoop):
+    def __init__(self, update_freq_hz: int):
+        """
+        Parameters
+        ----------
+        update_freq_hz
+            Emulation update frequency in Hertz.
+        """
+        super(NewPlant, self) \
+            .__init__(dt_ns=int(math.floor((1.0 / update_freq_hz) * 10e9)))
+        self._sensors = dict()  # prop: sensor
+        self._sensor_lck = RLock(ctx=_default_context)
+        self._last_update = time.monotonic_ns()
+        self._step_cnt = 0
+        self._upd_freq = update_freq_hz
+
+    def register_sensor(self, sensor: Sensor):
+        with self._sensor_lck:
+            if (sensor.sampling_frequency > self._upd_freq) or \
+                    (self._upd_freq % sensor.sampling_frequency != 0):
+                raise FrequencyMismatchException('Sensor sampling frequency '
+                                                 'must be an even divisor of '
+                                                 'the plant update frequency!')
+
+            self._sensors[sensor.measured_property_name] = sensor
+
+    @abstractmethod
+    def emulation_step(self,
+                       delta_t_ns: int,
+                       act_values: Optional[Dict[str, Any]] = None) \
+            -> Dict[str, Sensor.SENSOR_TYPES]:
+        pass
+
+    def _loop(self) -> None:
+        """
+        Executes all the necessary procedures to advance the simulation a
+        single discrete time step. This method calls the respective hooks,
+        polls the actuator, advances the state and updates the sensor.
+        """
+
+        # TODO: pull next actuation command from actuator
+
+        sensor_updates = \
+            self.emulation_step(time.monotonic_ns() - self._last_update)
+        self._last_update = time.monotonic_ns()
+        self._step_cnt += 1
+
+        with self._sensor_lck:
+            for prop_name, value in sensor_updates.items():
+                try:
+                    self._sensors[prop_name].write_value(value)
+                except KeyError:
+                    continue

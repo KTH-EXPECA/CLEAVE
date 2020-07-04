@@ -14,112 +14,53 @@
 
 from __future__ import annotations
 
-import threading
-from abc import abstractmethod
-from math import floor
+from typing import Any, Callable, Type, Union
 
-from loguru import logger
-from multiprocess.connection import Pipe
+from multiprocess.sharedctypes import RawValue
 
-from .mproc import TimedRunnableLoop
+_ctype_mappings = {
+    int  : 'q',  # signed long long
+    float: 'd',  # double,
+    bool : 'B'  # unsigned char
+}
 
 
-class Sensor(TimedRunnableLoop):
-    """
-    Base class for a sensor capable of reading the state of a plant and
-    sending it over the network to the controller.
+class SensorTypeException(Exception):
+    pass
 
-    Thread- and process-safe.
-    """
 
-    def __init__(self, sample_freq_hz: float):
-        """
-        Parameters
-        ----------
-        sample_freq_hz
-            The sampling frequency of the sensor, in Hertz.
-        """
-        super(Sensor, self).__init__(
-            dt_ns=int(floor(1.0 / sample_freq_hz) * 1e9)
-        )
-        self._freq = sample_freq_hz
-        self._pipe_recv, self._pipe_send = Pipe(duplex=False)
+class FrequencyMismatchException(Exception):
+    pass
 
-        self._lock = threading.RLock()
-        self._sample = None
 
-    def shutdown(self) -> None:
-        super(Sensor, self).shutdown()
-        self._pipe_recv.close()
-        self._pipe_send.close()
+class Sensor:
+    SENSOR_TYPES = Type[Union[int, float, bool]]
+
+    def __init__(self,
+                 prop_name: str,
+                 prop_type: SENSOR_TYPES,
+                 sampling_freq_hz: float,
+                 noise_fn: Callable[[SENSOR_TYPES],
+                                    SENSOR_TYPES] = lambda x: x):
+        if prop_type not in _ctype_mappings:
+            raise SensorTypeException('Sensors can only read integers, '
+                                      'floats or booleans!')
+
+        self._prop_name = prop_name
+        self._sampl_freq = sampling_freq_hz
+        self._value = RawValue(_ctype_mappings[prop_type])
+        self._noise = noise_fn
 
     @property
-    def sampling_freq(self) -> float:
-        """
-        Returns
-        -------
-            float
-                Sampling frequency of this sensor, in Hertz.
-        """
-        return self._freq
+    def measured_property_name(self) -> str:
+        return self._prop_name
 
-    @abstractmethod
-    def prepare_sample(self, sample: bytes) -> bytes:
-        """
-        Prepares the sampled state to be sent to the controller.
+    @property
+    def sampling_frequency(self) -> float:
+        return self._sampl_freq
 
-        This method should be overridden by inheriting classes, in order to,
-        for instance, add noise to the state according to some internal
-        parameter of the sensor.
+    def write_value(self, value: Any):
+        self._value.value = value
 
-        Parameters
-        ----------
-        sample
-            The last sampled state of the system.
-
-        Returns
-        ----------
-        bytes
-            An potentially transformed or distorted copy of the sampled state.
-        """
-        pass
-
-    @abstractmethod
-    def send(self, payload: bytes) -> None:
-        """
-        Sends the passed binary payload to the controller. What "sending"
-        actually means is left up to the implementing class.
-
-        Should be implemented by inheriting classes.
-
-        Parameters
-        ----------
-        payload:
-            Bytes to be sent to the controller.
-        """
-        pass
-
-    def _loop(self):
-        with self._lock:
-            sample = self._sample
-
-        if sample is not None:
-            self.send(self.prepare_sample(sample))
-
-    def run(self) -> None:
-        def _pipe_listen():
-            try:
-                while True:
-                    data = self._pipe_recv.recv()
-                    with self._lock:
-                        self._sample = data
-            except EOFError:
-                logger.warning('Sensor got EOF from pipe.')
-
-        threading.Thread(
-            target=_pipe_listen
-        ).start()
-        super(Sensor, self).run()
-
-    def update_sample(self, sample: bytes) -> None:
-        self._pipe_send.send(sample)
+    def read_value(self) -> Any:
+        return self._noise(self._value.value)
