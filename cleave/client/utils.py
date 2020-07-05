@@ -11,31 +11,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
-import time
-from multiprocessing import Event, RLock
-from typing import Callable, Dict, Optional, Tuple
+from multiprocessing import RLock
+from typing import Callable, Dict
 
 from loguru import logger
 
 
-def execute_periodically(fn: Callable[[...], None],
-                         period_ns: int,
-                         args: Optional[Tuple] = None,
-                         kwargs: Optional[Dict] = None,
-                         shutdown_flag: Event = Event()):
-    shutdown_flag.clear()
-    while not shutdown_flag.is_set():
-        ti = time.monotonic_ns()
-        fn(*args, **kwargs)
-        dt = time.monotonic_ns() - ti
-        try:
-            time.sleep((dt - period_ns) / 1e9)
-        except ValueError:
-            logger.warning('Function {} execution took longer than given '
-                           'period! dt = {} ns, period = {} ns',
-                           fn.__name__, dt, period_ns, enqueue=True)
-
-
+# TODO: remove?
 class HookCollection:
     def __init__(self):
         self._lock = RLock()

@@ -16,128 +16,14 @@ from __future__ import annotations
 import math
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
-from loguru import logger
-
-from . import Actuator, BaseState, Sensor, utils
+from . import Sensor
 from .mproc import RunnableLoopContext, TimedRunnableLoop
 from .sensor import SensorArray
 
 
-class Plant(TimedRunnableLoop):
-    """
-    Base class providing general functionality to represent closed-loop
-    control plants.
-    """
-
-    def __init__(self,
-                 dt_ns: int,
-                 init_state: BaseState,
-                 sensor: Sensor,
-                 actuator: Actuator):
-        """
-        Parameters
-        ----------
-        dt_ns
-            Time interval in seconds between successive simulation steps.
-        init_state
-            Initial plant state.
-        sensor
-            BaseSensor instance associated with the plant.
-        actuator
-            BaseActuator instance associated with the plant.
-        """
-        super(Plant, self).__init__(dt_ns=dt_ns)
-        logger.debug('Initializing plant.', enqueue=True)
-
-        self._state = init_state
-        self._last_update = time.monotonic_ns()
-        self._step_cnt = 0
-
-        self._sensor = sensor
-        self._actuator = actuator
-
-        # set up hooks
-        self._start_of_step_hooks = utils.HookCollection()
-        self._end_of_step_hooks = utils.HookCollection()
-        self._pre_sim_hooks = utils.HookCollection()
-
-    def hook_start_of_step(self, fn: Callable[[], ...]):
-        """
-        Register a callable to be called at the beginning of each simulation
-        step. This callable should take no arguments.
-
-        The intended use pattern for this method is as a decorator.
-
-        Parameters
-        ----------
-        fn
-            Callable to be invoked at the start of each simulation step.
-        """
-        self._start_of_step_hooks.add(fn)
-
-    def hook_end_of_step(self, fn: Callable[[], ...]):
-        """
-        Register a callable to be called at the end of each simulation
-        step. This callable should take no arguments.
-
-        The intended use pattern for this method is as a decorator.
-
-        Parameters
-        ----------
-        fn
-            Callable to be invoked at the end of each simulation step.
-        """
-        self._end_of_step_hooks.add(fn)
-
-    def hook_pre_sim(self, fn: Callable[[Any], ...]):
-        """
-        Register a callable to be called immediately before advancing the
-        state of the simulation, but after the initial procedures of each
-        simulation step. This callable should take an optional `actuation`
-        keyword argument through which it will receive the actuation command
-        about to be applied to the state.
-
-        The intended use pattern for this method is as a decorator.
-
-        Parameters
-        ----------
-        fn
-            Callable to be invoked right before advancing the simulation state.
-        """
-
-        self._pre_sim_hooks.add(fn)
-
-    def _loop(self) -> None:
-        """
-        Executes all the necessary procedures to advance the simulation a
-        single discrete time step. This method calls the respective hooks,
-        polls the actuator, advances the state and updates the sensor.
-        """
-
-        self._start_of_step_hooks.call()
-
-        # pull next actuation command from actuator
-        actuation = self._actuator.get_next_actuation()
-        self._pre_sim_hooks.call(actuation=actuation)
-
-        sample = self._state.advance(
-            dt_ns=time.monotonic_ns() - self._last_update,
-            actuation=actuation
-        )
-        self._last_update = time.monotonic_ns()
-
-        self._sensor.sample = sample
-        self._end_of_step_hooks.call()
-        self._step_cnt += 1
-
-    def run(self) -> None:
-        with RunnableLoopContext([self._sensor, self._actuator]):
-            super(Plant, self).run()
-
-
-class NewPlant(ABC, TimedRunnableLoop):
+class Plant(ABC, TimedRunnableLoop):
     def __init__(self, update_freq_hz: int):
         """
         Parameters
@@ -145,7 +31,7 @@ class NewPlant(ABC, TimedRunnableLoop):
         update_freq_hz
             Emulation update frequency in Hertz.
         """
-        super(NewPlant, self) \
+        super(Plant, self) \
             .__init__(dt_ns=int(math.floor((1.0 / update_freq_hz) * 10e9)))
         self._last_update = time.monotonic_ns()
         self._step_cnt = 0
@@ -181,4 +67,4 @@ class NewPlant(ABC, TimedRunnableLoop):
     def run(self) -> None:
         # TODO: add actuator array?
         with RunnableLoopContext([self._sensor_array]):
-            super(NewPlant, self).run()
+            super(Plant, self).run()

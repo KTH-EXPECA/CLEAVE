@@ -12,12 +12,9 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from .actuator import ActuationCommand, Actuator
 from .plant import Plant
 from .sensor import Sensor
-from .state import BaseState
 
+# TODO: finish API
 __all__ = ['Plant',
-           'ActuationCommand',
-           'Actuator',
            'Sensor']
