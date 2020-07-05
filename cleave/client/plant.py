@@ -19,12 +19,10 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Optional
 
 from loguru import logger
-from multiprocess.context import _default_context
-from multiprocess.synchronize import RLock
 
 from . import Actuator, BaseState, Sensor, utils
 from .mproc import RunnableLoopContext, TimedRunnableLoop
-from .sensor import FrequencyMismatchException
+from .sensor import SensorArray
 
 
 class Plant(TimedRunnableLoop):
@@ -149,21 +147,14 @@ class NewPlant(ABC, TimedRunnableLoop):
         """
         super(NewPlant, self) \
             .__init__(dt_ns=int(math.floor((1.0 / update_freq_hz) * 10e9)))
-        self._sensors = dict()  # prop: sensor
-        self._sensor_lck = RLock(ctx=_default_context)
         self._last_update = time.monotonic_ns()
         self._step_cnt = 0
         self._upd_freq = update_freq_hz
 
-    def register_sensor(self, sensor: Sensor):
-        with self._sensor_lck:
-            if (sensor.sampling_frequency > self._upd_freq) or \
-                    (self._upd_freq % sensor.sampling_frequency != 0):
-                raise FrequencyMismatchException('Sensor sampling frequency '
-                                                 'must be an even divisor of '
-                                                 'the plant update frequency!')
+        self._sensor_array = SensorArray(self._upd_freq)
 
-            self._sensors[sensor.measured_property_name] = sensor
+    def register_sensor(self, sensor: Sensor):
+        self._sensor_array.attach_sensor(sensor)
 
     @abstractmethod
     def emulation_step(self,
@@ -185,10 +176,9 @@ class NewPlant(ABC, TimedRunnableLoop):
             self.emulation_step(time.monotonic_ns() - self._last_update)
         self._last_update = time.monotonic_ns()
         self._step_cnt += 1
+        self._sensor_array.push_samples(sensor_updates)
 
-        with self._sensor_lck:
-            for prop_name, value in sensor_updates.items():
-                try:
-                    self._sensors[prop_name].write_value(value)
-                except KeyError:
-                    continue
+    def run(self) -> None:
+        # TODO: add actuator array?
+        with RunnableLoopContext([self._sensor_array]):
+            super(NewPlant, self).run()
