@@ -18,12 +18,11 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from . import Sensor
-from .mproc import RunnableLoopContext, TimedRunnableLoop
-from .sensor import SensorArray
+from .mproc import TimedRunnableLoop
+from .sensor import Sensor, SensorArray
 
 
-class Plant(ABC, TimedRunnableLoop):
+class Plant(TimedRunnableLoop, ABC):
     def __init__(self, update_freq_hz: int):
         """
         Parameters
@@ -46,7 +45,7 @@ class Plant(ABC, TimedRunnableLoop):
     def emulation_step(self,
                        delta_t_ns: int,
                        act_values: Optional[Dict[str, Any]] = None) \
-            -> Dict[str, Sensor.SENSOR_TYPES]:
+            -> Dict[str, Any]:
         pass
 
     def _loop(self) -> None:
@@ -63,8 +62,3 @@ class Plant(ABC, TimedRunnableLoop):
         self._last_update = time.monotonic_ns()
         self._step_cnt += 1
         self._sensor_array.push_samples(sensor_updates)
-
-    def run(self) -> None:
-        # TODO: add actuator array?
-        with RunnableLoopContext([self._sensor_array]):
-            super(Plant, self).run()

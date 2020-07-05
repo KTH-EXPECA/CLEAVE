@@ -14,7 +14,7 @@
 import time
 from abc import ABC, abstractmethod
 # noinspection PyProtectedMember
-from typing import Collection
+from typing import Any, Callable, Collection
 
 from loguru import logger
 from multiprocess.context import _default_context
@@ -39,6 +39,7 @@ class RunnableLoop(Runnable, ABC):
         pass
 
     def run(self) -> None:
+        logger.debug('Initializing loop.')
         self._shutdown_flag.clear()
         while not self._shutdown_flag.is_set():
             self._loop()
@@ -56,6 +57,7 @@ class TimedRunnableLoop(RunnableLoop, ABC):
         self._dt_ns = dt_ns
 
     def run(self) -> None:
+        logger.debug('Initializing timed loop.')
         self._shutdown_flag.clear()
         while not self._shutdown_flag.is_set():
             ti = time.monotonic_ns()
@@ -69,17 +71,34 @@ class TimedRunnableLoop(RunnableLoop, ABC):
                                dt, self._dt_ns, enqueue=True)
 
 
+def wrap_with_error_logging(fn: Callable[..., Any]) -> Callable[..., Any]:
+    def wrapper(*args, **kwargs) -> Any:
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            logger.exception(e)
+
+    return wrapper
+
+
 class RunnableLoopContext:
     def __init__(self, loops: Collection[RunnableLoop]):
         self._pool = Pool()
         self._loops = loops
 
     def __enter__(self):
-        self._pool.__enter__()
+        logger.debug('Initializing loop context.', enqueue=True)
+        self._pool = self._pool.__enter__()
         for loop in self._loops:
-            self._pool.apply_async(loop.run)
+            logger.debug('Starting loop...', enqueue=True)
+            r = self._pool.apply_async(
+                wrap_with_error_logging(lambda l: l.run()), args=(loop,))
+            r.get()
+
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        logger.debug('Shutting down loop context.', enqueue=True)
         for loop in self._loops:
             loop.shutdown()
-        self._pool.__exit__(exc_type, exc_val, exc_tb)
+        return self._pool.__exit__(exc_type, exc_val, exc_tb)
