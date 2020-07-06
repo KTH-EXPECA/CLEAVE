@@ -19,7 +19,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 from .mproc import TimedRunnableLoop
-from .simplesensor import SimpleSensor, SensorArray
+from .sensor import SimpleSensor, SensorArray
 
 
 class Plant(TimedRunnableLoop, ABC):
