@@ -19,7 +19,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 from .mproc import TimedRunnableLoop
-from .sensor import Sensor, SensorArray
+from .simplesensor import SimpleSensor, SensorArray
 
 
 class Plant(TimedRunnableLoop, ABC):
@@ -38,7 +38,7 @@ class Plant(TimedRunnableLoop, ABC):
 
         self._sensor_array = SensorArray(self._upd_freq)
 
-    def register_sensor(self, sensor: Sensor):
+    def register_sensor(self, sensor: SimpleSensor):
         self._sensor_array.attach_sensor(sensor)
 
     @abstractmethod
@@ -62,3 +62,10 @@ class Plant(TimedRunnableLoop, ABC):
         self._last_update = time.monotonic_ns()
         self._step_cnt += 1
         self._sensor_array.push_samples(sensor_updates)
+
+    def run(self) -> None:
+        try:
+            self._sensor_array.initialize()
+            super(Plant, self).run()
+        finally:
+            self._sensor_array.shutdown()

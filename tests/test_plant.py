@@ -15,7 +15,7 @@ from typing import Any, Dict, Optional
 
 from loguru import logger
 
-from cleave.client import Plant, Sensor
+from cleave.client import Plant, SimpleSensor
 
 
 class DummyPlant(Plant):
@@ -27,13 +27,15 @@ class DummyPlant(Plant):
         return {'test_prop': 1.0}
 
 
-def _noise_fn(test: float) -> float:
-    logger.info(f'Test prop: {test}', enqueue=True)
-    return test
+class DummySensor(SimpleSensor):
+    @staticmethod
+    def noise(test: float) -> float:
+        logger.info(f'Test prop: {test}', enqueue=True)
+        return test
 
 
 if __name__ == '__main__':
-    test_sensor = Sensor('test_prop', 100, _noise_fn)
+    test_sensor = DummySensor('test_prop', 100)
     plant = DummyPlant(200)
     plant.register_sensor(test_sensor)
 

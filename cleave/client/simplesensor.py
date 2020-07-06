@@ -15,12 +15,17 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Callable, Dict
+from typing import Any, Dict, Optional
 
 from loguru import logger
+from multiprocess.pool import Pool
 
 
 class RunningSensorArrayError(Exception):
+    pass
+
+
+class StoppedSensorArrayError(Exception):
     pass
 
 
@@ -44,15 +49,13 @@ class UnassignedPropertyWarning(PropertyWarning):
     pass
 
 
-class Sensor:
+class SimpleSensor:
     def __init__(self,
                  prop_name: str,
-                 sampling_freq_hz: int,
-                 noise_fn: Callable[[Any], Any] = lambda x: x):
+                 sampling_freq_hz: int):
         self._value = None
         self._prop_name = prop_name
         self._sampl_freq = sampling_freq_hz
-        self._noise = noise_fn
 
     @property
     def measured_property_name(self) -> str:
@@ -66,7 +69,11 @@ class Sensor:
         self._value = value
 
     def read_value(self) -> Any:
-        return self._noise(self._value)
+        return self.noise(self._value)
+
+    @staticmethod
+    def noise(raw_value: Any) -> Any:
+        return raw_value
 
 
 class SensorArray:
@@ -78,8 +85,24 @@ class SensorArray:
         self._plant_freq = plant_upd_freq_hz
         self._cycles = -1
 
-    def attach_sensor(self, sensor: Sensor):
-        if self._plant_freq < sensor.sampling_frequency:
+        self._pool: Optional[Pool] = None
+
+    def initialize(self):
+        if self._pool is None:
+            self._pool = Pool(processes=1).__enter__()
+
+    def shutdown(self):
+        if self._pool is not None:
+            self._pool.close()
+            self._pool.terminate()
+
+        self._pool = None
+
+    def attach_sensor(self, sensor: SimpleSensor):
+        if self._pool is not None:
+            raise RunningSensorArrayError('Cannot attach sensor to running '
+                                          'array')
+        elif self._plant_freq < sensor.sampling_frequency:
             raise FrequencyMismatchException('Sensor sampling frequency is '
                                              'higher than plant update '
                                              'frequency.')
@@ -101,6 +124,10 @@ class SensorArray:
             self._cycle_triggers[c].append(sensor)
 
     def push_samples(self, sampled_values: Dict[str, Any]):
+        if self._pool is None:
+            raise StoppedSensorArrayError('Cannot push samples to stopped '
+                                          'sensor array!')
+
         logger.info('Pushing samples to sensors.')
         for prop_name, new_value in sampled_values.items():
             try:
@@ -113,7 +140,7 @@ class SensorArray:
         self._cycles += 1
         # get values from sensors triggered in this cycle
         for sensor in self._cycle_triggers.get(self._cycles, []):
-            value = sensor.read_value()
+            self._pool.apply_async(sensor.read_value)
 
             # TODO do something with value
             # TODO read in another process and send to controller

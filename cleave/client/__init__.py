@@ -13,8 +13,8 @@
 #   limitations under the License.
 
 from .plant import Plant
-from .sensor import Sensor
+from .simplesensor import SimpleSensor
 
 # TODO: finish API
 __all__ = ['Plant',
-           'Sensor']
+           'SimpleSensor']

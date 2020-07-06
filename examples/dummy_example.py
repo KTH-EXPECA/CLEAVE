@@ -14,10 +14,10 @@
 import time
 from typing import Any, Optional
 
-from cleave.client import ActuationCommand, Actuator, BaseState, Plant, Sensor
+from cleave.client import ActuationCommand, Actuator, BaseState, Plant, SimpleSensor
 
 
-class DummySensor(Sensor):
+class DummySensor(SimpleSensor):
     def prepare_state(self, state: BaseState) -> bytes:
         return 'hello world'.encode('utf8')
 
