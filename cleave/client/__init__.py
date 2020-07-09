@@ -12,9 +12,7 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from .plant import Plant
-from .sensor import SimpleSensor
+from .sensor import Sensor, SimpleSensor
 
 # TODO: finish API
-__all__ = ['Plant',
-           'SimpleSensor']
+__all__ = ['Sensor', 'SimpleSensor']
