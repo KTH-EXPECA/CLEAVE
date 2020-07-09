@@ -71,8 +71,7 @@ class SimpleSensor:
     def read_value(self) -> Any:
         return self.noise(self._value)
 
-    @staticmethod
-    def noise(raw_value: Any) -> Any:
+    def noise(self, raw_value: Any) -> Any:
         return raw_value
 
 

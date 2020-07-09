@@ -23,14 +23,18 @@ class DummyPlant(Plant):
                        act_values: Optional[Dict[str, Any]] = None) \
             -> Dict[str, Any]:
         logger.info(f'Delta T: {delta_t_ns / 10e9: 0.5f} s', enqueue=True)
-
+        logger.info(f'Plant step count: {self._step_cnt}', enqueue=True)
         return {'test_prop': 1.0}
 
 
 class DummySensor(SimpleSensor):
-    @staticmethod
-    def noise(test: float) -> float:
-        logger.info(f'Test prop: {test}', enqueue=True)
+    def __init__(self, prop: str, freq: int):
+        super(DummySensor, self).__init__(prop, freq)
+        self._tick_cnt = 0
+
+    def noise(self, test: float) -> float:
+        logger.info(f'Sensor tick count: {self._tick_cnt}', enqueue=True)
+        self._tick_cnt += 1
         return test
 
 
