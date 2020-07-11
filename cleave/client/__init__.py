@@ -13,6 +13,8 @@
 #   limitations under the License.
 
 from .sensor import Sensor, SimpleSensor
+from .actuator import Actuator, SimpleActuator
 
 # TODO: finish API
-__all__ = ['Sensor', 'SimpleSensor']
+__all__ = ['Sensor', 'SimpleSensor',
+           'Actuator', 'SimpleActuator']
