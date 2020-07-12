@@ -1,13 +1,34 @@
 import unittest
-from typing import Any
+from typing import Dict
 
-from cleave.client import Sensor, SimpleSensor
+from cleave.client import Sensor, SensorValue, SimpleSensor
 from cleave.client.sensor import SensorArray
+from cleave.network import CommHandler
 
 
 class SquareValueSensor(Sensor):
-    def add_noise(self, value: Any) -> Any:
+    def process_sample(self, value: SensorValue) -> SensorValue:
         return value * value
+
+
+class DummyCommHandler(CommHandler):
+    def __init__(self):
+        self.prop_values = {}
+
+    def connect(self):
+        pass
+
+    def disconnect(self):
+        pass
+
+    def send_raw_bytes(self, data: bytes):
+        pass
+
+    def recv_raw_bytes(self) -> bytes:
+        pass
+
+    def send_sensor_values(self, prop_values: Dict[str, SensorValue]):
+        self.prop_values = prop_values
 
 
 class TestSimpleSensor(unittest.TestCase):
@@ -17,31 +38,23 @@ class TestSimpleSensor(unittest.TestCase):
     def setUp(self) -> None:
         self.sensor = SimpleSensor(prop_name='dummy1', fs=200)
         self.sqr_sensor = SquareValueSensor(prop_name='dummy2', fs=100)
-        self.array = SensorArray(plant_freq=200)
+        self.comm = DummyCommHandler()
+        self.array = SensorArray(plant_freq=200, comm=self.comm)
 
-    def test_read_write(self):
-        self.sensor.write_value(TestSimpleSensor.input_val)
-        self.sqr_sensor.write_value(TestSimpleSensor.input_val)
-
+    def test_process(self):
         self.assertEqual(
             TestSimpleSensor.input_val,
-            self.sensor.read_value()
+            self.sensor.process_sample(TestSimpleSensor.input_val)
         )
 
         self.assertEqual(
             TestSimpleSensor.input_val ** 2,
-            self.sqr_sensor.read_value()
+            self.sqr_sensor.process_sample(TestSimpleSensor.input_val)
         )
 
     def test_array(self):
-        self.sensor.write_value(0)
-        self.sqr_sensor.write_value(0)
-
         self.array.add_sensor(self.sensor)
         self.array.add_sensor(self.sqr_sensor)
-
-        self.assertEqual(self.sensor.read_value(), 0)
-        self.assertEqual(self.sqr_sensor.read_value(), 0)
 
         # test frequency synchronization
         # simple sensor should update every step,
@@ -55,9 +68,10 @@ class TestSimpleSensor(unittest.TestCase):
                     self.sqr_sensor.measured_property_name:
                         TestSimpleSensor.input_val
                 })
-                self.assertEqual(self.sqr_sensor.read_value(),
+                values = self.comm.prop_values
+                self.assertEqual(values[self.sqr_sensor.measured_property_name],
                                  TestSimpleSensor.input_val ** 2)
-                self.assertEqual(self.sensor.read_value(),
+                self.assertEqual(values[self.sensor.measured_property_name],
                                  TestSimpleSensor.input_val)
 
             else:
@@ -68,7 +82,9 @@ class TestSimpleSensor(unittest.TestCase):
                         TestSimpleSensor.input_val2
                 })
 
-                self.assertEqual(self.sqr_sensor.read_value(),
-                                 TestSimpleSensor.input_val ** 2)
-                self.assertEqual(self.sensor.read_value(),
+                values = self.comm.prop_values
+                self.assertRaises(KeyError,
+                                  lambda: values[
+                                      self.sqr_sensor.measured_property_name])
+                self.assertEqual(values[self.sensor.measured_property_name],
                                  TestSimpleSensor.input_val2)

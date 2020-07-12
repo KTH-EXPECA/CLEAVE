@@ -1,27 +1,13 @@
+from __future__ import annotations
+
 import warnings
 from abc import ABC, abstractmethod
 from threading import RLock
-from typing import Any, Dict, Union
+from typing import Dict
+
 from ..network import CommHandler
-
-
-class RegisteredSensorWarning(Warning):
-    pass
-
-
-class UnregisteredPropertyWarning(Warning):
-    pass
-
-
-class IncompatibleFrequenciesError(Exception):
-    pass
-
-
-class MissingPropertyError(Exception):
-    pass
-
-
-SensorValue = Union[int, float, bytes, bool]
+from ..util import IncompatibleFrequenciesError, MissingPropertyError, \
+    RegisteredSensorWarning, SensorValue
 
 
 class Sensor(ABC):
@@ -35,22 +21,16 @@ class Sensor(ABC):
         return self._prop_name
 
     @property
-    def sampling_frequency(self) -> Any:
+    def sampling_frequency(self) -> int:
         return self._sample_freq
 
-    def write_value(self, value: SensorValue) -> None:
-        self._value = value
-
-    def read_value(self) -> SensorValue:
-        return self.add_noise(self._value)
-
     @abstractmethod
-    def add_noise(self, value: SensorValue) -> SensorValue:
+    def process_sample(self, value: SensorValue) -> SensorValue:
         pass
 
 
 class SimpleSensor(Sensor):
-    def add_noise(self, value: SensorValue) -> SensorValue:
+    def process_sample(self, value: SensorValue) -> SensorValue:
         return value
 
 
@@ -110,14 +90,21 @@ class SensorArray:
         with self._lock:
             try:
                 # check which sensors need to be updated this cycle
+                processed_values = dict()
                 for sensor in self._cycle_triggers[self._cycle_count]:
                     try:
-                        value = prop_values[sensor.measured_property_name]
-                        sensor.write_value(value)
+                        prop_name = sensor.measured_property_name
+                        value = prop_values[prop_name]
+                        processed_value = sensor.process_sample(value)
+                        processed_values[prop_name] = processed_value
                     except KeyError:
                         raise MissingPropertyError(
                             'Missing expected update for property '
                             f'{sensor.measured_property_name}!')
+
+                # send updated values (if any) to commhandler
+                if len(processed_values) > 0:
+                    self._comm.send_sensor_values(processed_values)
             except KeyError:
                 # no sensors on this cycle
                 pass
