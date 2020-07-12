@@ -90,7 +90,7 @@ class SensorArray:
                 warnings.warn(f'Replacing already registered sensor for '
                               f'property {sensor.measured_property_name}',
                               RegisteredSensorWarning)
-            elif sensor.sampling_frequency >= self._plant_freq:
+            elif sensor.sampling_frequency > self._plant_freq:
                 raise IncompatibleFrequenciesError(
                     'Sensor sampling frequency cannot be higher than plant '
                     'update frequency!'
@@ -120,4 +120,4 @@ class SensorArray:
                 # no sensors on this cycle
                 pass
             finally:
-                self._cycle_count += 1
+                self._cycle_count = (self._cycle_count + 1) % self._plant_freq
