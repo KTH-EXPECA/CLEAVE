@@ -1,7 +1,8 @@
 import warnings
 from abc import ABC, abstractmethod
 from threading import RLock
-from typing import Any, Dict
+from typing import Any, Dict, Union
+from ..network import CommHandler
 
 
 class RegisteredSensorWarning(Warning):
@@ -20,11 +21,13 @@ class MissingPropertyError(Exception):
     pass
 
 
+SensorValue = Union[int, float, bytes, bool]
+
+
 class Sensor(ABC):
     def __init__(self, prop_name: str, fs: int):
         self._prop_name = prop_name
         self._sample_freq = fs
-        self._lock = RLock()
         self._value = None
 
     @property
@@ -35,32 +38,31 @@ class Sensor(ABC):
     def sampling_frequency(self) -> Any:
         return self._sample_freq
 
-    def write_value(self, value: Any) -> None:
-        with self._lock:
-            self._value = value
+    def write_value(self, value: SensorValue) -> None:
+        self._value = value
 
-    def read_value(self) -> Any:
-        with self._lock:
-            return self.add_noise(self._value)
+    def read_value(self) -> SensorValue:
+        return self.add_noise(self._value)
 
     @abstractmethod
-    def add_noise(self, value: Any) -> Any:
+    def add_noise(self, value: SensorValue) -> SensorValue:
         pass
 
 
 class SimpleSensor(Sensor):
-    def add_noise(self, value: Any) -> Any:
+    def add_noise(self, value: SensorValue) -> SensorValue:
         return value
 
 
 class SensorArray:
-    def __init__(self, plant_freq: int):
+    def __init__(self, plant_freq: int, comm: CommHandler):
         super(SensorArray, self).__init__()
         self._plant_freq = plant_freq
         self._prop_sensors = dict()
         self._cycle_triggers = dict()
         self._cycle_count = 0
         self._lock = RLock()
+        self._comm = comm
 
     def _recalculate_cycle_triggers(self):
         """
@@ -104,7 +106,7 @@ class SensorArray:
             self._prop_sensors[sensor.measured_property_name] = sensor
             self._recalculate_cycle_triggers()
 
-    def update_property_values(self, prop_values: Dict[str, Any]):
+    def update_property_values(self, prop_values: Dict[str, SensorValue]):
         with self._lock:
             try:
                 # check which sensors need to be updated this cycle
