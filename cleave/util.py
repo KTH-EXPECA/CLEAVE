@@ -17,4 +17,4 @@ class MissingPropertyError(Exception):
     pass
 
 
-SensorValue = Union[int, float, bytes, bool]
+PhyPropType = Union[int, float, bytes, bool]

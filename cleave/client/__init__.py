@@ -13,8 +13,9 @@
 #   limitations under the License.
 
 from .sensor import Sensor, SimpleSensor
-from cleave.util import SensorValue
+from cleave.util import PhyPropType
 from .actuator import Actuator, SimpleActuator
 
 # TODO: finish API
-__all__ = ['Sensor', 'SimpleSensor', 'Actuator', 'SimpleActuator', 'SensorValue']
+__all__ = ['Sensor', 'SimpleSensor', 'Actuator', 'SimpleActuator',
+           'PhyPropType']

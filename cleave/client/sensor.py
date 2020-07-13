@@ -5,9 +5,9 @@ from abc import ABC, abstractmethod
 from threading import RLock
 from typing import Dict
 
-from ..network import CommHandler
+from ..network import ClientCommHandler
 from ..util import IncompatibleFrequenciesError, MissingPropertyError, \
-    RegisteredSensorWarning, SensorValue
+    RegisteredSensorWarning, PhyPropType
 
 
 class Sensor(ABC):
@@ -25,17 +25,17 @@ class Sensor(ABC):
         return self._sample_freq
 
     @abstractmethod
-    def process_sample(self, value: SensorValue) -> SensorValue:
+    def process_sample(self, value: PhyPropType) -> PhyPropType:
         pass
 
 
 class SimpleSensor(Sensor):
-    def process_sample(self, value: SensorValue) -> SensorValue:
+    def process_sample(self, value: PhyPropType) -> PhyPropType:
         return value
 
 
 class SensorArray:
-    def __init__(self, plant_freq: int, comm: CommHandler):
+    def __init__(self, plant_freq: int, comm: ClientCommHandler):
         super(SensorArray, self).__init__()
         self._plant_freq = plant_freq
         self._prop_sensors = dict()
@@ -86,7 +86,7 @@ class SensorArray:
             self._prop_sensors[sensor.measured_property_name] = sensor
             self._recalculate_cycle_triggers()
 
-    def update_property_values(self, prop_values: Dict[str, SensorValue]):
+    def update_property_values(self, prop_values: Dict[str, PhyPropType]):
         with self._lock:
             try:
                 # check which sensors need to be updated this cycle

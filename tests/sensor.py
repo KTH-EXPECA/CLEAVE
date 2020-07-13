@@ -1,17 +1,17 @@
 import unittest
 from typing import Dict
 
-from cleave.client import Sensor, SensorValue, SimpleSensor
+from cleave.client import Sensor, PhyPropType, SimpleSensor
 from cleave.client.sensor import SensorArray
-from cleave.network import CommHandler
+from cleave.network import ClientCommHandler
 
 
 class SquareValueSensor(Sensor):
-    def process_sample(self, value: SensorValue) -> SensorValue:
+    def process_sample(self, value: PhyPropType) -> PhyPropType:
         return value * value
 
 
-class DummyCommHandler(CommHandler):
+class DummyCommHandler(ClientCommHandler):
     def __init__(self):
         self.prop_values = {}
 
@@ -27,7 +27,7 @@ class DummyCommHandler(CommHandler):
     def recv_raw_bytes(self) -> bytes:
         pass
 
-    def send_sensor_values(self, prop_values: Dict[str, SensorValue]):
+    def send_sensor_values(self, prop_values: Dict[str, PhyPropType]):
         self.prop_values = prop_values
 
 
