@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Any, Dict
 
 from .actuator import Actuator
 from .sensor import Sensor, SensorArray
@@ -30,13 +30,39 @@ class Plant(ABC):
 
     @abstractmethod
     @property
-    def update_rate_hz(self) -> int:
+    def update_freq_hz(self) -> int:
         pass
 
     @abstractmethod
     @property
     def plant_state(self) -> State:
         pass
+
+
+class BasePlant(Plant):
+    def __init__(self,
+                 update_freq: int,
+                 state: State,
+                 sensor_array: SensorArray,
+                 actuator_array: Any,
+                 comm: ClientCommHandler):
+        self._freq = update_freq
+        self._state = state
+        self._sensors = sensor_array
+        self._actuators = actuator_array
+        self._comm = comm
+
+    def execute(self):
+        # TODO
+        pass
+
+    @property
+    def update_freq_hz(self) -> int:
+        return self._freq
+
+    @property
+    def plant_state(self) -> State:
+        return self._state
 
 
 # noinspection PyAttributeOutsideInit
@@ -75,11 +101,22 @@ class PlantBuilder:
         self._plant_state = plant_state
 
     def build(self, plant_upd_freq: int) -> Plant:
-        # TODO: build plant and reset
-        sensor_array = SensorArray(
-            plant_freq=plant_upd_freq,
-            sensors=self._sensors
-        )
+        try:
+            # TODO: build plant and reset
+            sensor_array = SensorArray(
+                plant_freq=plant_upd_freq,
+                sensors=self._sensors
+            )
 
-        self.reset()
-        pass
+            # TODO actuators
+            actuator_array = None
+
+            return BasePlant(
+                update_freq=plant_upd_freq,
+                state=self._plant_state,
+                sensor_array=sensor_array,
+                actuator_array=actuator_array,
+                comm=self._comm_handler
+            )
+        finally:
+            self.reset()
