@@ -4,7 +4,7 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-from .actuator import Actuator
+from .actuator import Actuator, ActuatorArray
 from .sensor import Sensor, SensorArray
 from ..network.handler import ClientCommHandler
 from ..util import PhyPropType
@@ -102,20 +102,13 @@ class PlantBuilder:
 
     def build(self, plant_upd_freq: int) -> Plant:
         try:
-            # TODO: build plant and reset
-            sensor_array = SensorArray(
-                plant_freq=plant_upd_freq,
-                sensors=self._sensors
-            )
-
-            # TODO actuators
-            actuator_array = None
-
             return BasePlant(
                 update_freq=plant_upd_freq,
                 state=self._plant_state,
-                sensor_array=sensor_array,
-                actuator_array=actuator_array,
+                sensor_array=SensorArray(
+                    plant_freq=plant_upd_freq,
+                    sensors=self._sensors),
+                actuator_array=ActuatorArray(actuators=self._actuators),
                 comm=self._comm_handler
             )
         finally:
