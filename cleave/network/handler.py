@@ -14,7 +14,7 @@ class ClientCommHandler(ABC):
     """
 
     @abstractmethod
-    def connect(self):
+    def connect(self) -> ClientCommHandler:
         pass
 
     @abstractmethod

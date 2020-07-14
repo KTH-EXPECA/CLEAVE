@@ -83,17 +83,27 @@ class BasePlant(Plant):
     def execute(self):
         # run the emulation loop
         target_dt_ns = (1.0 // self._freq) * 10e9
-        self._shutdown_flag.clear()
-        while not self._shutdown_flag.is_set():
-            try:
-                ti = time.monotonic_ns()
-                self.__emu_step()
-                time.sleep(target_dt_ns - (time.monotonic_ns() - ti))
-            except ValueError:
-                warnings.warn(
-                    'Emulation step took longer than allotted time slot!',
-                    EmulationWarning
-                )
+        try:
+            self._comm.connect()
+            self._shutdown_flag.clear()
+            while not self._shutdown_flag.is_set():
+                try:
+                    ti = time.monotonic_ns()
+                    self.__emu_step()
+                    time.sleep(target_dt_ns - (time.monotonic_ns() - ti))
+                except ValueError:
+                    warnings.warn(
+                        'Emulation step took longer than allotted time slot!',
+                        EmulationWarning
+                    )
+        except KeyboardInterrupt:
+            self._shutdown_flag.set()
+            warnings.warn(
+                'Shutting down plant.',
+                EmulationWarning
+            )
+        finally:
+            self._comm.disconnect()
 
     @property
     def update_freq_hz(self) -> int:
@@ -102,6 +112,10 @@ class BasePlant(Plant):
     @property
     def plant_state(self) -> State:
         return self._state
+
+    @property
+    def is_shutdown(self):
+        return self._shutdown_flag.is_set()
 
 
 # noinspection PyAttributeOutsideInit
