@@ -34,8 +34,7 @@ class ClientCommHandler(ABC):
         pass
 
     @abstractmethod
-    def recv_actuator_values(self,
-                             callback: Callable[[Dict[str, PhyPropType]], Any]):
+    def recv_actuator_values(self) -> Dict[str, PhyPropType]:
         pass
 
 

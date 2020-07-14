@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import time
 import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from threading import Event
+from typing import Dict
 
 from .actuator import Actuator, ActuatorArray
 from .sensor import Sensor, SensorArray
@@ -14,11 +16,15 @@ class PlantBuilderWarning(Warning):
     pass
 
 
+class EmulationWarning(Warning):
+    pass
+
+
 class State(ABC):
     @abstractmethod
     def advance(self,
                 dt_ns: int,
-                act_values: Dict[str, PhyPropType]):
+                act_values: Dict[str, PhyPropType]) -> Dict[str, PhyPropType]:
         pass
 
 
@@ -44,17 +50,50 @@ class BasePlant(Plant):
                  update_freq: int,
                  state: State,
                  sensor_array: SensorArray,
-                 actuator_array: Any,
+                 actuator_array: ActuatorArray,
                  comm: ClientCommHandler):
         self._freq = update_freq
         self._state = state
         self._sensors = sensor_array
         self._actuators = actuator_array
         self._comm = comm
+        self._last_tf = time.monotonic_ns()
+        self._cycles = 0
+
+        self._shutdown_flag = Event()
+        self._shutdown_flag.clear()
+
+    def __emu_step(self):
+        # 1. get raw actuation inputs
+        # 2. process actuation inputs
+        # 3. advance state
+        # 4. process sensor outputs
+        # 5. send sensor outputs
+
+        act = self._comm.recv_actuator_values()
+        proc_act = self._actuators.process_actuation_inputs(act)
+        sensor_samples = self._state.advance(
+            dt_ns=time.monotonic_ns() - self._last_tf,
+            act_values=proc_act)
+        self._last_tf = time.monotonic_ns()
+        proc_sens = self._sensors.process_plant_state(sensor_samples)
+        self._comm.send_sensor_values(proc_sens)
+        self._cycles += 1
 
     def execute(self):
-        # TODO
-        pass
+        # run the emulation loop
+        target_dt_ns = (1.0 // self._freq) * 10e9
+        self._shutdown_flag.clear()
+        while not self._shutdown_flag.is_set():
+            try:
+                ti = time.monotonic_ns()
+                self.__emu_step()
+                time.sleep(target_dt_ns - (time.monotonic_ns() - ti))
+            except ValueError:
+                warnings.warn(
+                    'Emulation step took longer than allotted time slot!',
+                    EmulationWarning
+                )
 
     @property
     def update_freq_hz(self) -> int:
