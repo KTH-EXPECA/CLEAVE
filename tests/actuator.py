@@ -9,7 +9,7 @@ class DummyDampenedActuator(Actuator):
         super(DummyDampenedActuator, self).__init__(prop_name)
         self._dampening = dampening
 
-    def _process_actuation(self, desired_value: Any) -> Any:
+    def process_actuation(self, desired_value: Any) -> Any:
         return self._dampening * desired_value
 
 
