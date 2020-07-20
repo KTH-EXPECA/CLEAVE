@@ -11,6 +11,8 @@ from .sensor import Sensor, SensorArray
 from ..network.handler import ClientCommHandler
 from ..util import PhyPropType
 
+__all__ = ['Plant', 'State']
+
 
 class PlantBuilderWarning(Warning):
     pass
@@ -25,27 +27,81 @@ class State(ABC):
     def advance(self,
                 dt_ns: int,
                 act_values: Dict[str, PhyPropType]) -> Dict[str, PhyPropType]:
+        """
+        Advances the plant state a single time step. Should return a
+        dictionary containing mappings from property names to values,
+        in order to update the sensors of the associated plant.
+
+        Parameters
+        ----------
+        dt_ns
+            Time passed since this method last RETURNED, in nanoseconds. Note
+            when this method is invoked for the first time, this value will
+            correspond to the time passed since the plant was instantiated.
+
+        act_values
+            Dictionary containing mappings from property names to values
+            corresponding to the latest updated from actuators (if any).
+
+        Returns
+        -------
+        Dict
+            Implementations should return a dictionary of mappings from property
+            names to values, corresponding to the updated values of the desired
+            measured properties for this plant.
+
+        """
         pass
 
 
 class Plant(ABC):
-    # interface for plant
+    """
+    Interface for all plants.
+    """
+
     @abstractmethod
     def execute(self):
+        """
+        Executes this plant. Depending on implementation, this method may or
+        may not be asynchronous.
+
+        Returns
+        -------
+
+        """
         pass
 
     @abstractmethod
     @property
     def update_freq_hz(self) -> int:
+        """
+        The update frequency of this plant in Hz. Depending on
+        implementation, accessing this property may or may not be thread-safe.
+
+        Returns
+        -------
+        int
+            The update frequency of the plant in Hertz.
+
+        """
         pass
 
     @abstractmethod
     @property
     def plant_state(self) -> State:
+        """
+        The State object associated with this plant. Depending on
+        implementation, accessing this property may or may not be thread-safe.
+
+        Returns
+        -------
+        State
+            The plant State.
+        """
         pass
 
 
-class BasePlant(Plant):
+class _BasePlant(Plant):
     def __init__(self,
                  update_freq: int,
                  state: State,
@@ -119,8 +175,23 @@ class BasePlant(Plant):
 
 
 # noinspection PyAttributeOutsideInit
-class PlantBuilder:
-    def reset(self):
+class _PlantBuilder:
+    """
+    Builder for plant objects.
+
+    This class is not meant to be instantiated by users --- a singleton
+    library instance is provided below.
+    """
+
+    def reset(self) -> None:
+        """
+        Resets this builder, removing all previously added sensors,
+        actuators, as well as detaching the plant state and comm handler.
+
+        Returns
+        -------
+
+        """
         self._sensors = []
         self._actuators = []
         self._comm_handler = None
@@ -129,13 +200,53 @@ class PlantBuilder:
     def __init__(self):
         self.reset()
 
-    def attach_sensor(self, sensor: Sensor):
+    def attach_sensor(self, sensor: Sensor) -> None:
+        """
+        Attaches a sensor to the plant under construction.
+
+        Parameters
+        ----------
+        sensor
+            A Sensor instance to be attached to the target plant.
+
+
+        Returns
+        -------
+
+        """
         self._sensors.append(sensor)
 
-    def attach_actuator(self, actuator: Actuator):
+    def attach_actuator(self, actuator: Actuator) -> None:
+        """
+        Attaches an actuator to the plant under construction.
+
+        Parameters
+        ----------
+        actuator
+            An Actuator instance to be attached to the target plant.
+
+        Returns
+        -------
+
+        """
         self._actuators.append(actuator)
 
-    def set_comm_handler(self, handler: ClientCommHandler):
+    def set_comm_handler(self, handler: ClientCommHandler) -> None:
+        """
+        Sets the communication handler for the plant under construction.
+
+        Note that any previously assigned communication handler will be
+        overwritten by this operation.
+
+        Parameters
+        ----------
+        handler
+            A ClientCommHandler instance to assign to the plant.
+
+        Returns
+        -------
+
+        """
         if self._comm_handler is not None:
             warnings.warn(
                 'Replacing already set ClientCommHandler for plant.',
@@ -144,7 +255,22 @@ class PlantBuilder:
 
         self._comm_handler = handler
 
-    def set_plant_state(self, plant_state: State):
+    def set_plant_state(self, plant_state: State) -> None:
+        """
+        Sets the State that will govern the evolution of the plant.
+
+        Note that any previously assigned State will be overwritten by this
+        operation.
+
+        Parameters
+        ----------
+        plant_state
+            A State instance to assign to the plant.
+
+        Returns
+        -------
+
+        """
         if self._plant_state is not None:
             warnings.warn(
                 'Replacing already set State for plant.',
@@ -154,8 +280,26 @@ class PlantBuilder:
         self._plant_state = plant_state
 
     def build(self, plant_upd_freq: int) -> Plant:
+        """
+        Builds a Plant instance and returns it. The actual subtype of this
+        plant will depend on the previously provided parameters.
+
+        Parameters
+        ----------
+        plant_upd_freq
+            Update frequency of the built plant in Hz.
+
+        Returns
+        -------
+        Plant
+            A Plant instance.
+
+        """
+
+        # TODO: raise error if missing parameters OR instantiate different
+        #  types of plants?
         try:
-            return BasePlant(
+            return _BasePlant(
                 update_freq=plant_upd_freq,
                 state=self._plant_state,
                 sensor_array=SensorArray(
@@ -166,3 +310,6 @@ class PlantBuilder:
             )
         finally:
             self.reset()
+
+
+builder = _PlantBuilder()
