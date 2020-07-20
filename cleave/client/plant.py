@@ -11,7 +11,7 @@ from .sensor import Sensor, SensorArray
 from ..network.handler import ClientCommHandler
 from ..util import PhyPropType
 
-__all__ = ['Plant', 'State']
+__all__ = ['Plant', 'State', 'builder']
 
 
 class PlantBuilderWarning(Warning):
