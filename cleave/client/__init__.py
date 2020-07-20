@@ -12,10 +12,12 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from .sensor import Sensor, SimpleSensor
 from cleave.util import PhyPropType
 from .actuator import Actuator, SimpleActuator
+from .plant import Plant, State, builder
+from .sensor import Sensor, SimpleSensor
 
-# TODO: finish API
-__all__ = ['Sensor', 'SimpleSensor', 'Actuator', 'SimpleActuator',
+__all__ = ['Plant', 'builder', 'State',
+           'Sensor', 'SimpleSensor',
+           'Actuator', 'SimpleActuator',
            'PhyPropType']

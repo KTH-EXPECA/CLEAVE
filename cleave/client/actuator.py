@@ -14,6 +14,11 @@ class UnregisteredPropertyWarning(Warning):
 
 
 class Actuator(ABC):
+    """
+    Abstract base class for actuators. Implementations should override the
+    process_actuation() method with their logic.
+    """
+
     def __init__(self, prop_name: str):
         super(Actuator, self).__init__()
         self._prop_name = prop_name
@@ -21,19 +26,52 @@ class Actuator(ABC):
 
     @property
     def actuated_property_name(self) -> str:
+        """
+        Returns
+        -------
+        str
+            Name of the property actuated upon by this actuator.
+        """
         return self._prop_name
 
     @abstractmethod
     def process_actuation(self, desired_value: PhyPropType) -> PhyPropType:
+        """
+        Processes the raw actuation value obtained from the controller.
+        Implementing subclasses should put their logic here, for instance to
+        add noise to an actuation command.
+
+        Parameters
+        ----------
+        desired_value
+            Actuation value obtained from controller.
+
+        Returns
+        -------
+        PhyPropType
+            A possibly altered value of the actuated property, according to
+            the internal parameters of this actuator.
+
+        """
         pass
 
 
 class SimpleActuator(Actuator):
+    """
+    Simplest implementation of an actuator, which performs no processing on the
+    value obtained from the controller and returns it as-is.
+    """
+
     def process_actuation(self, desired_value: PhyPropType) -> PhyPropType:
         return desired_value
 
 
 class ActuatorArray:
+    """
+    Internal utility class to manage a collection of Actuators attached to a
+    Plant.
+    """
+
     def __init__(self, actuators: Collection[Actuator]):
         super(ActuatorArray, self).__init__()
         self._actuators = dict()
@@ -49,6 +87,24 @@ class ActuatorArray:
 
     def process_actuation_inputs(self, input_values: Dict[str, PhyPropType]) \
             -> Dict[str, PhyPropType]:
+        """
+        Processes the actuation inputs obtained from the controller by
+        passing them to the internal collection of actuators and returnign
+        the processed values.
+
+        Parameters
+        ----------
+        input_values
+            A dictionary containing mappings from actuated property names to
+            input values.
+
+        Returns
+        -------
+        Dict
+            A dictionary containing mappings from actuated property names to
+            processed values.
+
+        """
         processed_values = dict()
         for prop, value in input_values.items():
             try:
