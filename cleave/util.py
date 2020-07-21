@@ -1,3 +1,4 @@
+from queue import Empty
 from threading import Condition
 from typing import Any, Optional, Union
 
@@ -32,12 +33,23 @@ class SingleElementQ:
             self._has_value = True
             self._cond.notify()
 
+    def pop_nowait(self) -> Any:
+        with self._cond:
+            try:
+                if not self._has_value:
+                    raise Empty()
+                else:
+                    return self._value
+            finally:
+                self._value = None
+                self._has_value = False
+
     def pop(self, timeout: Optional[float] = None) -> Any:
         """
         Pop the latest value for the stored variable. If timeout is None (the
         default), block until a value is available. Otherwise, block for up to
-        timeout seconds, after which a TimeoutError is raised if no value was
-        made available within that time.
+        timeout seconds, after which an Empty exception is raised if no value
+        was made available within that time.
 
         Parameters
         ----------
@@ -54,7 +66,7 @@ class SingleElementQ:
             try:
                 while not self._has_value:
                     if not self._cond.wait(timeout=timeout):
-                        raise TimeoutError()
+                        raise Empty()
                 return self._value
             finally:
                 self._value = None

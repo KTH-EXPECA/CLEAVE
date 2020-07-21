@@ -29,10 +29,13 @@ class DummyState(State):
 
 if __name__ == '__main__':
     builder.reset()
+
     builder.set_plant_state(DummyState())
     builder.set_comm_handler(None)  # TODO client comm handler
+
     builder.attach_sensor(SimpleSensor('temperature', 100))
     builder.attach_sensor(SimpleActuator('cooling'))
+
     plant = builder.build(plant_upd_freq=200)
 
     plant.execute()
