@@ -86,24 +86,29 @@ class ClientCommHandler(ABC):
 
 
 class ThreadedClientCommHandler(ClientCommHandler, ABC):
+    """
+    This class provides base abstractions for asynchronous communication
+    handlers such as those handling communication over sockets or between
+    processes. It manages two internal threads, once for sending and one for
+    receiving data.
+
+    Extending classes need to override methods for serializing and
+    deserializing data as well as methods for actually sending and receiving
+    raw bytes.
+    """
+
     DEFAULT_TIMEOUT_S = 0.01
 
     def __init__(self):
         self._shutdown = Event()
         self._shutdown.clear()
 
-        self._recv_t = Thread(target=ThreadedClientCommHandler._recv_loop,
-                              args=(self,))
-        self._send_t = Thread(target=ThreadedClientCommHandler._send_loop,
-                              args=(self,))
+        self._recv_t = None
+        self._send_t = None
 
         # We don't want a backlog, so we use custom single element queues
         self._recv_q = SingleElementQ()
         self._send_q = SingleElementQ()
-
-        # start the threads
-        self._recv_t.start()
-        self._send_t.start()
 
     @abstractmethod
     def _serialize(self, sensor_values: Dict[str, PhyPropType]) -> bytes:
@@ -120,6 +125,14 @@ class ThreadedClientCommHandler(ClientCommHandler, ABC):
     @abstractmethod
     def _recv_bytes(self,
                     timeout: Optional[float] = DEFAULT_TIMEOUT_S) -> bytes:
+        pass
+
+    @abstractmethod
+    def _connect(self):
+        pass
+
+    @abstractmethod
+    def _disconnect(self):
         pass
 
     def recv_actuator_values(self) -> Mapping[str, PhyPropType]:
@@ -151,3 +164,24 @@ class ThreadedClientCommHandler(ClientCommHandler, ABC):
 
             payload = self._serialize(sensor_values)
             self._send_bytes(payload)
+
+    def connect(self) -> None:
+        self._recv_t = Thread(target=ThreadedClientCommHandler._recv_loop,
+                              args=(self,))
+        self._send_t = Thread(target=ThreadedClientCommHandler._send_loop,
+                              args=(self,))
+
+        # start the threads
+        self._recv_t.start()
+        self._send_t.start()
+
+        self._connect()
+
+    def disconnect(self):
+        self._shutdown.set()
+        if self._recv_t is not None:
+            self._recv_t.join()
+        if self._send_t is not None:
+            self._send_t.join()
+
+        self._disconnect()
