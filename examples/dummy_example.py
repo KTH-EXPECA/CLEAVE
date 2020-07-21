@@ -11,49 +11,28 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
-import time
-from typing import Any, Optional
+from typing import Dict
 
-from cleave.client import ActuationCommand, Actuator, BaseState, Plant, SimpleSensor
-
-
-class DummySensor(SimpleSensor):
-    def prepare_state(self, state: BaseState) -> bytes:
-        return 'hello world'.encode('utf8')
-
-    def send(self, payload: bytes) -> Any:
-        return print(payload.decode('utf8'))
+from cleave.client import SimpleActuator, SimpleSensor, State, builder
+from cleave.util import PhyPropType
 
 
-class DummyActuator(Actuator):
-    def get_next_actuation(self) -> Optional[ActuationCommand]:
-        return None
+class DummyState(State):
+    def __init__(self):
+        self._temp = 0
 
-    def listen(self) -> bytes:
-        time.sleep(1.0)
-        return 'hello_world'.encode('utf8')
-
-    def process_incoming(self, data: bytes):
-        print(data.decode('utf8'))
-
-
-class DummyState(BaseState):
-    def advance(self,
-                actuation: Optional[ActuationCommand] = None) -> BaseState:
-        return self
+    def advance(self, dt_ns: int, act_values: Dict[str, PhyPropType]) \
+            -> Dict[str, PhyPropType]:
+        self._temp += 1
+        return {'temperature': self._temp}
 
 
 if __name__ == '__main__':
-    sensor = DummySensor(sample_freq=60)
-    actuator = DummyActuator()
+    builder.reset()
+    builder.set_plant_state(DummyState())
+    builder.set_comm_handler(None)  # TODO client comm handler
+    builder.attach_sensor(SimpleSensor('temperature', 100))
+    builder.attach_sensor(SimpleActuator('cooling'))
+    plant = builder.build(plant_upd_freq=200)
 
-    state = DummyState()
-
-    plant = Plant(
-        dt=0.001,
-        init_state=state,
-        sensor=sensor,
-        actuator=actuator
-    )
-
-    plant.run()
+    plant.execute()

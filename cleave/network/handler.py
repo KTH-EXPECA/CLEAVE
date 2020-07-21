@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from threading import Event, Thread
 from typing import Mapping
 
-from ..util import PhyPropType
+from ..util import PhyPropType, SingleElementQ
 
 
 class ClientCommHandler(ABC):
@@ -80,3 +81,35 @@ class ClientCommHandler(ABC):
             Mapping from actuated property names to values.
         """
         pass
+
+
+class ThreadedClientCommHandler(ABC, ClientCommHandler):
+    DEFAULT_TIMEOUT_S = 0.01
+
+    def __init__(self):
+        self._shutdown = Event()
+        self._shutdown.clear()
+
+        self._recv_t = Thread(target=ThreadedClientCommHandler._recv_loop,
+                              args=(self,))
+        self._send_t = Thread(target=ThreadedClientCommHandler._send_loop,
+                              args=(self,))
+
+        # We don't want a backlog, so we use custom single element queues
+        self._recv_q = SingleElementQ()
+        self._send_q = SingleElementQ()
+
+        # start the threads
+        self._recv_t.start()
+        self._send_t.start()
+
+    def _recv_loop(self):
+        pass
+
+    def _send_loop(self):
+        while not self._shutdown.is_set():
+            try:
+                payload = self._send_q.pop(
+                    timeout=ThreadedClientCommHandler.DEFAULT_TIMEOUT_S)
+            except TimeoutError:
+                continue
