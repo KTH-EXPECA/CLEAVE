@@ -71,8 +71,8 @@ class Plant(ABC):
         """
         pass
 
-    @abstractmethod
     @property
+    @abstractmethod
     def update_freq_hz(self) -> int:
         """
         The update frequency of this plant in Hz. Depending on
@@ -86,8 +86,8 @@ class Plant(ABC):
         """
         pass
 
-    @abstractmethod
     @property
+    @abstractmethod
     def plant_state(self) -> State:
         """
         The State object associated with this plant. Depending on

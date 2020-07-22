@@ -10,7 +10,10 @@ Welcome to CLEAVE's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   modules
+   cleave.backend
+   cleave.client
+   cleave.network
 
 Indices and tables
 ==================
