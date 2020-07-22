@@ -28,7 +28,7 @@ author = 'ExPECA Project Team'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    # 'autodoc',
+    'sphinx.ext.autodoc',
     'sphinxcontrib.napoleon'
 ]
 
