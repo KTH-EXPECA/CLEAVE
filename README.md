@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/cleave/badge/?version=latest)](https://cleave.readthedocs.io/en/latest/?badge=latest)
+
 # CLEAVE Project
 
 CLEAVE - ControL bEnmArking serVice on the Edge: A framework for testing, benchmarking and evaluating control loop applications on the Edge, written in Python 3.8+.
