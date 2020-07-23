@@ -58,8 +58,8 @@ master_doc = 'index'
 autodoc_default_options = {
     # 'members'        : 'var1, var2',
     'member-order'   : 'bysource',
-    'special-members': True,
-    'undoc-members'  : True,
+    'special-members': 'yes',
+    'undoc-members'  : 'yes',
     'exclude-members': '__weakref__, __abstractmethods__, __dict__, '
                        '__module__, __doc__, __init__'
 }
