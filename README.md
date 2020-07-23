@@ -40,10 +40,10 @@ scipy
 
 ### From the repositories
 
-1. Clone the CLEAVE metarepository and its submodules:
+1.Clone the repository:
 
     ```bash
-    $ git clone --recurse-submodules -j4 git@github.com:KTH-EXPECA/CLEAVE.git
+    $ git clone git@github.com:KTH-EXPECA/CLEAVE.git
     ```
 2. In your project directory, set up a Python virtualenv and activate it:
 
@@ -64,9 +64,9 @@ scipy
 
 ## Setting up for development:
 
-1. Clone the CLEAVE metarepository and its submodules:
+1. Clone the CLEAVE repository:
    ```bash
-   $ git clone --recurse-submodules -j4 git@github.com:KTH-EXPECA/CLEAVE.git
+   $ git clone git@github.com:KTH-EXPECA/CLEAVE.git
    $ cd ./CLEAVE
    ```
 
@@ -80,14 +80,34 @@ scipy
     $ . ./venv/bin/activate
     (venv) $ pip install -Ur ./requirements.txt
     ```
+
+3. (Optional) To build the documentation using Sphinx:
+
+    1. Document code using the Numpy docstring format (see below).
+    2. Generate reStructured text files for the code using `sphinx-apidocs` from the top-level directory:
+        ```bash
+       $ sphinx-apidoc -fo docs/source . ./setup.py ./cleave/client/actuator.py ./cleave/client/sensor.py ./cleave/client/plant.py ./cleave/network/handler.py ./tests ./examples
+        ```
+       Note the exclude directives in the command, to avoid generating documentation for files such as `setup.py` and
+        files deep within the project structure. 
+    3. (Optional) To preview what the documentation will look like when published on [cleave.readthedocs.io
+    ](https://cleave.readthedocs.io), build it with `GNU Make`:
+    ```bash
+   $ cd docs/
+   $ make html
+    ```
+   The compiled HTML structure will be output to `docs/build`, from where it can be viewed in a browser.
+
 ### Code style and standards:
 
 *When developing on this project, please configure your IDE to adhere to the following guidelines.*
 
-The code in this repository (and associated submodules) should be [PEP8 coding style guide](https://pep8.org/) compliant, with one exception: maximum line length. 
+The code in this repository should be [PEP8 coding style guide](https://pep8.org/) compliant, with one exception: maximum line length. 
 [PEP8 specifies a maximum line length of 79 characters](https://pep8.org/#maximum-line-length), a relic of a time where widescreen monitors didn't exist. In this project, we extend the maximum line length to 120 characters.
 
-Additionally, every Python module in this project should include an Apache License v2.0 statement at the top:
+Furthermore, code documentation in this project should follow the [Numpy docstring format as detailed here.](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard)
+
+Finally, every Python module in this project should include an Apache License v2.0 statement at the top:
 
 ```python
 #  Copyright (c) 2020 KTH Royal Institute of Technology
@@ -107,42 +127,6 @@ Additionally, every Python module in this project should include an Apache Licen
 #
 # ...
 ```
-
-
-## Architectural design:
-
-**WIP**
-
-Class Diagram: 
-![Class Diagram](design/CLEAVE_CLASS.png)
-
-UML Sequence Diagram: 
-![UML Seq. Diagram](design/CLEAVE_UML.png)
-
-## General Structure of the Project
-
-- This repository contains the top-level structure of the project, as well as associated documentation.
-- The `cleave/client` subrepository contains the code associated to the `cleave.client` subpackage. This package includes all the functionality needed for the client software: emulation of plants, benchmarking and network code to connect to the backend.
-- The `cleave/backend` subrepository contains the code associated to the `cleave.backend` subpackage. This package includes the functionality needed for the backend: server software, control algorithms modularized into microservices and some benchmarking functionality.
-
-
-## Setup:
-
-To clone the whole project at once:
-
-```bash
-git clone --recurse-submodules -j8 git@github.com:KTH-EXPECA/CLEAVE.git
-```
-
-or 
-
-```bash
-git clone git@github.com:KTH-EXPECA/CLEAVE.git
-cd CLEAVE
-git submodule update --init --recursive
-```
-
-For instructions on how to clone individual submodules, head to the respective Git repository pages.
 
 ## License
 

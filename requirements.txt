@@ -2,5 +2,6 @@ numpy
 loguru
 sphinx
 autodoc
+sphinx
 sphinxcontrib-napoleon
 sphinx_rtd_theme
