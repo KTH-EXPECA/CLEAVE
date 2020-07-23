@@ -6,9 +6,7 @@
 Welcome to CLEAVE's documentation!
 ==================================
 
-CLEAVE --- ControL bEnmArking serVice on the Edge --- is a Python framework for emulating, testing and benchmarking control loop applications on the Edge.
-
-*Note: this project is still in a very early stage of development. As such, the API is subject to change at any moment without prior notice.*
+.. mdinclude:: ../../README.md
 
 .. toctree::
    :maxdepth: 2

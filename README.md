@@ -1,7 +1,5 @@
 [![Documentation Status](https://readthedocs.org/projects/cleave/badge/?version=latest)](https://cleave.readthedocs.io/en/latest/?badge=latest)
 
-# CLEAVE Project
-
 CLEAVE - ControL bEnmArking serVice on the Edge: A framework for testing, benchmarking and evaluating control loop applications on the Edge, written in Python 3.8+.
 ---
 *Note: This project is in early stages of development.*
@@ -40,11 +38,8 @@ scipy
 
 ### From the repositories
 
-1.Clone the repository:
+1. Clone the repository: `$ git clone git@github.com:KTH-EXPECA/CLEAVE.git`
 
-    ```bash
-    $ git clone git@github.com:KTH-EXPECA/CLEAVE.git
-    ```
 2. In your project directory, set up a Python virtualenv and activate it:
 
     ```bash
@@ -56,11 +51,13 @@ scipy
     $ . ./venv/bin/activate
    (venv) $
     ```
- 3. Install CLEAVE from the previously cloned repositories by pointing `pip` to the root of the CLEAVE metarepo:
-    
+
+3. Install CLEAVE from the previously cloned repositories by pointing `pip` to the root of the CLEAVE repo:
+
     ```bash
     (venv) $ pip install -U /path/to/CLEAVE
     ```
+    
 
 ## Setting up for development:
 
@@ -84,19 +81,23 @@ scipy
 3. (Optional) To build the documentation using Sphinx:
 
     1. Document code using the Numpy docstring format (see below).
+    
     2. Generate reStructured text files for the code using `sphinx-apidocs` from the top-level directory:
+    
         ```bash
-       $ sphinx-apidoc -fo docs/source . ./setup.py ./cleave/client/actuator.py ./cleave/client/sensor.py ./cleave/client/plant.py ./cleave/network/handler.py ./tests ./examples
+        $ sphinx-apidoc -fo docs/source . ./setup.py ./cleave/client/actuator.py ./cleave/client/sensor.py ./cleave/client/plant.py ./cleave/network/handler.py ./tests ./examples
         ```
-       Note the exclude directives in the command, to avoid generating documentation for files such as `setup.py` and
-        files deep within the project structure. 
+       
+       Note the exclude directives in the command, to avoid generating documentation for files such as `setup.py` and files deep within the project structure. 
     3. (Optional) To preview what the documentation will look like when published on [cleave.readthedocs.io
     ](https://cleave.readthedocs.io), build it with `GNU Make`:
-    ```bash
-   $ cd docs/
-   $ make html
-    ```
-   The compiled HTML structure will be output to `docs/build`, from where it can be viewed in a browser.
+    
+        ```bash
+        $ cd docs/
+        $ make html
+        ```
+       
+       The compiled HTML structure will be output to `docs/build`, from where it can be viewed in a browser.
 
 ### Code style and standards:
 
@@ -124,8 +125,6 @@ Finally, every Python module in this project should include an Apache License v2
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 # 
-#
-# ...
 ```
 
 ## License
