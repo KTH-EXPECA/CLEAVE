@@ -12,15 +12,14 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../'))
 
+sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
 project = 'CLEAVE'
-copyright = '2020, ExPECA Project Team'
+copyright = '2020, KTH Royal Institute of Technology'
 author = 'ExPECA Project Team'
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -40,7 +39,6 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -55,3 +53,29 @@ html_static_path = ['_static']
 
 # index.rst is the master document
 master_doc = 'index'
+
+# autodoc rules
+autodoc_default_options = {
+    # 'members'        : 'var1, var2',
+    'member-order'   : 'bysource',
+    'special-members': True,
+    'undoc-members'  : True,
+    'exclude-members': '__weakref__, __abstractmethods__, __dict__, '
+                       '__module__, __doc__, __init__'
+}
+autoclass_content = 'both'
+
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    exclusions = ('__weakref__',  # special-members
+                  '__doc__',
+                  '__module__',
+                  '__dict__',  # undoc-members
+                  'setup.py'
+                  )
+    exclude = name in exclusions
+    return skip or exclude
+
+
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)

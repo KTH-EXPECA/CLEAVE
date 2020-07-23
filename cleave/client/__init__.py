@@ -12,12 +12,13 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from cleave.util import PhyPropType
 from .actuator import Actuator, SimpleActuator
-from .plant import Plant, State, builder
+from .plant import Plant, State, PlantBuilder
 from .sensor import Sensor, SimpleSensor
 
-__all__ = ['Plant', 'builder', 'State',
+#: The global builder instance.
+builder = PlantBuilder()
+
+__all__ = ['Plant', 'State', 'PlantBuilder',
            'Sensor', 'SimpleSensor',
-           'Actuator', 'SimpleActuator',
-           'PhyPropType']
+           'Actuator', 'SimpleActuator']

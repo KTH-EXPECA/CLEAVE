@@ -2,6 +2,7 @@ from queue import Empty
 from threading import Condition
 from typing import Any, Optional, Union
 
+#: Type of properties that can be handled by sensors and actuators.
 PhyPropType = Union[int, float, bytes, bool]
 
 
@@ -33,17 +34,6 @@ class SingleElementQ:
             self._has_value = True
             self._cond.notify()
 
-    def pop_nowait(self) -> Any:
-        with self._cond:
-            try:
-                if not self._has_value:
-                    raise Empty()
-                else:
-                    return self._value
-            finally:
-                self._value = None
-                self._has_value = False
-
     def pop(self, timeout: Optional[float] = None) -> Any:
         """
         Pop the latest value for the stored variable. If timeout is None (the
@@ -61,6 +51,11 @@ class SingleElementQ:
         Any
             The stored value.
 
+        Raises
+        ------
+        Empty
+            If timeout is not None and no value is available when it runs out.
+
         """
         with self._cond:
             try:
@@ -68,6 +63,32 @@ class SingleElementQ:
                     if not self._cond.wait(timeout=timeout):
                         raise Empty()
                 return self._value
+            finally:
+                self._value = None
+                self._has_value = False
+
+    def pop_nowait(self) -> Any:
+        """
+        Pops the latest value for the stored variable without waiting. If no
+        value has been set yet, raises an Empty exception.
+
+        Returns
+        -------
+        Any
+            Latest value for the stored variable.
+
+        Raises
+        ------
+        Empty
+            If no value for the stored variable exists.
+
+        """
+        with self._cond:
+            try:
+                if not self._has_value:
+                    raise Empty()
+                else:
+                    return self._value
             finally:
                 self._value = None
                 self._has_value = False

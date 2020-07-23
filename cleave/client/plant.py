@@ -11,7 +11,7 @@ from .sensor import Sensor, SensorArray
 from ..network.handler import ClientCommHandler
 from ..util import PhyPropType
 
-__all__ = ['Plant', 'State', 'builder']
+__all__ = ['Plant', 'State', 'PlantBuilder']
 
 
 class PlantBuilderWarning(Warning):
@@ -175,12 +175,12 @@ class _BasePlant(Plant):
 
 
 # noinspection PyAttributeOutsideInit
-class _PlantBuilder:
+class PlantBuilder:
     """
     Builder for plant objects.
 
     This class is not meant to be instantiated by users --- a singleton
-    library instance is provided below.
+    library is provided as cleave.client.builder.
     """
 
     def reset(self) -> None:
@@ -310,6 +310,3 @@ class _PlantBuilder:
             )
         finally:
             self.reset()
-
-
-builder = _PlantBuilder()

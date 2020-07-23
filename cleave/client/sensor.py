@@ -6,7 +6,7 @@ from typing import Collection, Dict
 
 from ..util import PhyPropType
 
-__all__ = ['Sensor', 'SimpleSensor']
+__all__ = ['Sensor', 'SimpleSensor', 'SensorArray']
 
 
 class RegisteredSensorWarning(Warning):
