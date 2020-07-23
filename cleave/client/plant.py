@@ -191,8 +191,8 @@ class PlantBuilder:
     """
     Builder for plant objects.
 
-    This class is not meant to be instantiated by users --- a singleton
-    library is provided as cleave.client.builder.
+    This class is not meant to be instantiated by users --- a library
+    singleton is provided as cleave.client.builder.
     """
 
     def reset(self) -> None:

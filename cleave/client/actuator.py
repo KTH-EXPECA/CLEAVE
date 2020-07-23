@@ -27,10 +27,12 @@ class Actuator(ABC):
     @property
     def actuated_property_name(self) -> str:
         """
+
         Returns
         -------
         str
             Name of the property actuated upon by this actuator.
+
         """
         return self._prop_name
 
@@ -89,7 +91,7 @@ class ActuatorArray:
             -> Dict[str, PhyPropType]:
         """
         Processes the actuation inputs obtained from the controller by
-        passing them to the internal collection of actuators and returnign
+        passing them to the internal collection of actuators and returning
         the processed values.
 
         Parameters

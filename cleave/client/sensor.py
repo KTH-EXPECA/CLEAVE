@@ -35,6 +35,7 @@ class Sensor(ABC):
     @property
     def measured_property_name(self) -> str:
         """
+
         Returns
         -------
         str
@@ -46,10 +47,12 @@ class Sensor(ABC):
     @property
     def sampling_frequency(self) -> int:
         """
+
         Returns
         -------
         int
             Sampling frequency of this sensor, expressed in Hertz.
+
         """
         return self._sample_freq
 
@@ -69,6 +72,7 @@ class Sensor(ABC):
         PhyPropType
             A possibly transformed value of the monitored property, according to
             the internal parameters of this sensor.
+
         """
         pass
 
