@@ -23,14 +23,23 @@ class EmulationWarning(Warning):
 
 
 class State(ABC):
+    """
+    Abstract base class defining an interface for Plant state evolution over
+    the course of a simulation. Implementing classes need to extend the
+    advance() method to implement their logic, as this method will be called
+    by the plant on each emulation time step.
+    """
+
     @abstractmethod
     def advance(self,
                 dt_ns: int,
                 act_values: Dict[str, PhyPropType]) -> Dict[str, PhyPropType]:
         """
-        Advances the plant state a single time step. Should return a
-        dictionary containing mappings from property names to values,
-        in order to update the sensors of the associated plant.
+        Called by the plant on every time step to advance the emulation,
+        passing the number of nanoseconds since the last time this method
+        returned and a mapping from property names to actuator values.
+        Should return a dictionary containing mappings from property names to
+        values, in order to update the sensors of the associated plant.
 
         Parameters
         ----------
@@ -102,6 +111,10 @@ class Plant(ABC):
 
 
 class _BasePlant(Plant):
+    """
+    Base, immutable implementation of a Plant.
+    """
+
     def __init__(self,
                  update_freq: int,
                  state: State,
@@ -137,7 +150,6 @@ class _BasePlant(Plant):
         self._cycles += 1
 
     def execute(self):
-        # run the emulation loop
         target_dt_ns = (1.0 // self._freq) * 10e9
         try:
             self._comm.connect()
