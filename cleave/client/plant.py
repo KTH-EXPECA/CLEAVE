@@ -8,7 +8,7 @@ from typing import Dict
 
 from .actuator import Actuator, ActuatorArray
 from .sensor import Sensor, SensorArray
-from ..network.handler import ClientCommHandler
+from ..network.handler import CommClient
 from ..util import PhyPropType
 
 __all__ = ['Plant', 'State', 'PlantBuilder']
@@ -120,7 +120,7 @@ class _BasePlant(Plant):
                  state: State,
                  sensor_array: SensorArray,
                  actuator_array: ActuatorArray,
-                 comm: ClientCommHandler):
+                 comm: CommClient):
         self._freq = update_freq
         self._state = state
         self._sensors = sensor_array
@@ -198,7 +198,7 @@ class PlantBuilder:
     def reset(self) -> None:
         """
         Resets this builder, removing all previously added sensors,
-        actuators, as well as detaching the plant state and comm handler.
+        actuators, as well as detaching the plant state and comm client.
 
         Returns
         -------
@@ -206,7 +206,7 @@ class PlantBuilder:
         """
         self._sensors = []
         self._actuators = []
-        self._comm_handler = None
+        self._comm_client = None
         self._plant_state = None
 
     def __init__(self):
@@ -243,29 +243,29 @@ class PlantBuilder:
         """
         self._actuators.append(actuator)
 
-    def set_comm_handler(self, handler: ClientCommHandler) -> None:
+    def set_comm_handler(self, client: CommClient) -> None:
         """
-        Sets the communication handler for the plant under construction.
+        Sets the communication client for the plant under construction.
 
         Note that any previously assigned communication handler will be
         overwritten by this operation.
 
         Parameters
         ----------
-        handler
+        client
             A ClientCommHandler instance to assign to the plant.
 
         Returns
         -------
 
         """
-        if self._comm_handler is not None:
+        if self._comm_client is not None:
             warnings.warn(
-                'Replacing already set ClientCommHandler for plant.',
+                'Replacing already set communication client for plant.',
                 PlantBuilderWarning
             )
 
-        self._comm_handler = handler
+        self._comm_client = client
 
     def set_plant_state(self, plant_state: State) -> None:
         """
@@ -318,7 +318,7 @@ class PlantBuilder:
                     plant_freq=plant_upd_freq,
                     sensors=self._sensors),
                 actuator_array=ActuatorArray(actuators=self._actuators),
-                comm=self._comm_handler
+                comm=self._comm_client
             )
         finally:
             self.reset()

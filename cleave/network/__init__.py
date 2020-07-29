@@ -11,6 +11,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
-from .handler import ClientCommHandler, ThreadedClientCommHandler
+from .handler import CommClient, ThreadedCommClient
 
-__all__ = ['ClientCommHandler', 'ThreadedClientCommHandler']
+__all__ = ['CommClient', 'ThreadedCommClient']

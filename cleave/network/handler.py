@@ -8,23 +8,23 @@ from typing import Dict, Mapping, Optional
 from ..util import PhyPropType, SingleElementQ
 
 
-class ClientCommHandler(ABC):
+class CommClient(ABC):
     """
-    Abstract base class for network connections (and other types of
+    Abstract base class for network connection clients (and other types of
     connections).
     """
 
     @abstractmethod
     def connect(self) -> None:
         """
-        Connects this handler to its associated endpoint.
+        Connects this client to its associated endpoint.
         """
         pass
 
     @abstractmethod
     def disconnect(self):
         """
-        Disconnects this handler.
+        Disconnects this client.
         """
         pass
 
@@ -53,42 +53,11 @@ class ClientCommHandler(ABC):
         """
         pass
 
-    # @abstractmethod
-    # def send_raw_bytes(self, data: bytes):
-    #     """
-    #     Directly sends a raw payload of bytes through this handler.
-    #
-    #     Parameters
-    #     ----------
-    #     data
-    #         Raw payload to be sent.
-    #     """
-    #     pass
-    #
-    # @abstractmethod
-    # def recv_raw_bytes(self, size: int) -> bytes:
-    #     """
-    #     Waits for size amount of raw bytes from the connection and returns
-    #     them.
-    #
-    #     Parameters
-    #     ----------
-    #     size
-    #         The number of bytes to wait for and return.
-    #
-    #     Returns
-    #     -------
-    #     bytes
-    #         The received data.
-    #
-    #     """
-    #     pass
 
-
-class ThreadedClientCommHandler(ClientCommHandler, ABC):
+class ThreadedCommClient(CommClient, ABC):
     """
     This class provides base abstractions for asynchronous communication
-    handlers such as those handling communication over sockets or between
+    clients such as those handling communication over sockets or between
     processes. It manages two internal threads, once for sending and one for
     receiving data.
 
@@ -158,7 +127,7 @@ class ThreadedClientCommHandler(ClientCommHandler, ABC):
         while not self._shutdown.is_set():
             try:
                 sensor_values = self._send_q.pop(
-                    timeout=ThreadedClientCommHandler.DEFAULT_TIMEOUT_S)
+                    timeout=ThreadedCommClient.DEFAULT_TIMEOUT_S)
             except Empty:
                 continue
 
@@ -166,9 +135,9 @@ class ThreadedClientCommHandler(ClientCommHandler, ABC):
             self._send_bytes(payload)
 
     def connect(self) -> None:
-        self._recv_t = Thread(target=ThreadedClientCommHandler._recv_loop,
+        self._recv_t = Thread(target=ThreadedCommClient._recv_loop,
                               args=(self,))
-        self._send_t = Thread(target=ThreadedClientCommHandler._send_loop,
+        self._send_t = Thread(target=ThreadedCommClient._send_loop,
                               args=(self,))
 
         # start the threads

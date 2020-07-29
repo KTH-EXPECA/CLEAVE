@@ -3,7 +3,7 @@ from typing import Dict
 
 from cleave.client import Sensor, PhyPropType, SimpleSensor
 from cleave.client.sensor import SensorArray
-from cleave.network import ClientCommHandler
+from cleave.network import CommClient
 
 
 class SquareValueSensor(Sensor):
@@ -11,7 +11,7 @@ class SquareValueSensor(Sensor):
         return value * value
 
 
-class DummyCommHandler(ClientCommHandler):
+class DummyCommClient(CommClient):
     def __init__(self):
         self.prop_values = {}
 
@@ -38,7 +38,7 @@ class TestSimpleSensor(unittest.TestCase):
     def setUp(self) -> None:
         self.sensor = SimpleSensor(prop_name='dummy1', fs=200)
         self.sqr_sensor = SquareValueSensor(prop_name='dummy2', fs=100)
-        self.comm = DummyCommHandler()
+        self.comm = DummyCommClient()
         self.array = SensorArray(plant_freq=200, comm=self.comm)
 
     def test_process(self):
