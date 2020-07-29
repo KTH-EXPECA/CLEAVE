@@ -8,8 +8,6 @@ SENSOR_UDP_PORT_NO = 6789
 EDGE_UDP_PORT_NO = 6790
 
 
-serverSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-serverSock.bind((UDP_LOCAL_IP_ADDRESS, EDGE_UDP_PORT_NO))
 
 ## Parameters of the pendulum; usually determined a priori by modeling
 K = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]
@@ -32,8 +30,12 @@ def parse_data(a):
     return new_a
 
 if __name__ == "__main__":
-    '''Receives current state and computes the amount of force to be applied'''
+    '''Receives current state and computes the amount of force to be applied.
+    Sends it back using another socket.'''
     clientSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    serverSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    serverSock.bind((UDP_LOCAL_IP_ADDRESS, EDGE_UDP_PORT_NO))
+    
     while True:
         data, addr = serverSock.recvfrom(65536)
         values = data.decode('UTF-8')
