@@ -4,9 +4,9 @@ import os
 
 cmd = 'sphinx-apidoc -M -fo ./source .. ' \
       '../setup.py ' \
-      '../cleave/client/actuator.py ' \
-      '../cleave/client/sensor.py ' \
-      '../cleave/client/plant.py ' \
+      '../cleave/client/base/actuator.py ' \
+      '../cleave/client/base/sensor.py ' \
+      '../cleave/client/base/plant.py ' \
       '../cleave/network/client.py ' \
       '../tests ' \
       '../examples'

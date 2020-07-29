@@ -5,3 +5,12 @@ cleave.client package
    :members:
    :private-members:
    :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   cleave.client.base
+   cleave.client.impl
