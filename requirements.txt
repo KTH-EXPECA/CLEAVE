@@ -5,3 +5,5 @@ sphinx >= 3.1
 sphinxcontrib-napoleon
 m2r2
 sphinx_press_theme
+pyglet
+pymunk
