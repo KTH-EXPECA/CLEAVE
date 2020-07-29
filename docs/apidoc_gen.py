@@ -2,7 +2,7 @@ import subprocess
 import shlex
 import os
 
-cmd = 'sphinx-apidoc.exe -M -fo ./source .. ' \
+cmd = 'sphinx-apidoc -M -fo ./source .. ' \
       '../setup.py ' \
       '../cleave/client/actuator.py ' \
       '../cleave/client/sensor.py ' \
