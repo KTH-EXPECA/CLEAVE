@@ -8,7 +8,7 @@ from typing import Dict
 
 from .actuator import Actuator, ActuatorArray
 from .sensor import Sensor, SensorArray
-from ..network.handler import CommClient
+from ..network.client import CommClient
 from ..util import PhyPropType
 
 __all__ = ['Plant', 'State', 'PlantBuilder']

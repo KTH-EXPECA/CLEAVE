@@ -7,7 +7,7 @@ cmd = 'sphinx-apidoc -M -fo ./source .. ' \
       '../cleave/client/actuator.py ' \
       '../cleave/client/sensor.py ' \
       '../cleave/client/plant.py ' \
-      '../cleave/network/handler.py ' \
+      '../cleave/network/client.py ' \
       '../tests ' \
       '../examples'
 
