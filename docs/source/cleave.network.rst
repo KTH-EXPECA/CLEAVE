@@ -1,10 +1,7 @@
 cleave.network package
 ======================
 
-Module contents
----------------
-
 .. automodule:: cleave.network
    :members:
-   :undoc-members:
+   :private-members:
    :show-inheritance:

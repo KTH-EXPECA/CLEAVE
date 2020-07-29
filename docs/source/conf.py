@@ -62,26 +62,11 @@ master_doc = 'index'
 
 # autodoc rules
 autodoc_default_options = {
-    # 'members'        : 'var1, var2',
     'member-order'   : 'bysource',
-    'special-members': True,
-    'undoc-members'  : True,
+    'private-members': True,
+    # 'special-members': False,
+    # 'undoc-members'  : False,
     'exclude-members': '__weakref__, __abstractmethods__, __dict__, '
                        '__module__, __doc__, __init__'
 }
 autoclass_content = 'both'
-
-
-def autodoc_skip_member(app, what, name, obj, skip, options):
-    exclusions = ('__weakref__',  # special-members
-                  '__doc__',
-                  '__module__',
-                  '__dict__',  # undoc-members
-                  'setup.py'
-                  )
-    exclude = name in exclusions
-    return skip or exclude
-
-
-def setup(app):
-    app.connect('autodoc-skip-member', autodoc_skip_member)

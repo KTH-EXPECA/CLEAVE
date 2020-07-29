@@ -1,10 +1,7 @@
 cleave.backend package
 ======================
 
-Module contents
----------------
-
 .. automodule:: cleave.backend
    :members:
-   :undoc-members:
+   :private-members:
    :show-inheritance:
