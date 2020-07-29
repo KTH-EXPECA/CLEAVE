@@ -57,7 +57,7 @@ response_deq = Queue()
 print(f"cart mass = {cart_body.mass:0.1f} kg")
 print(f"pendulum mass = {pend_body.mass:0.1f} kg, pendulum moment = {pend_body.moment:0.3f} kg*m^2")
 
-# K gain matrix and Nbar found from modelling via Jupyter
+## Parameters of the pendulum; usually determined a priori by modeling
 K = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]
 Nbar = -57.25
 state = Array('d', [0, 0, 0, 0])
@@ -83,10 +83,14 @@ labels = [label_x, label_ang, label_force, label_time]
 
 # data recorder so we can compare our results to our predictions
 currtime = 0.0
-record_data = False
 
 
 def draw_body(offset, body):
+    '''Draws the inverted pendulum for GUI
+    ;;;Args: offset: 2-D position of the cart
+    body: bodies including the pendulum and card
+    '''
+
     for shape in body.shapes:
         if isinstance(shape, pymunk.Circle):
             # TODO
@@ -106,6 +110,10 @@ def draw_body(offset, body):
 
 
 def draw_ground(offset):
+    '''Draws the inverted pendulum for GUI
+    ;;;Args: offset: 2-D position of the cart
+    '''
+
     vertices = [v + (0, ground.radius) for v in (ground.a, ground.b)]
 
     # convert vertices to pixel coordinates
@@ -120,6 +128,8 @@ def draw_ground(offset):
 
 @window.event
 def on_draw():
+    '''Wrapper function to draw the ground, cart and pendulum
+    '''
     window.clear()
 
     # center view x around 0
@@ -139,7 +149,12 @@ EDGE_UDP_PORT_NO = 6790
 import time
 
 def receive_force_process(state, ref, response_deq, delay):
-    """Computes the amount of force to be applied. Also applies some delay"""
+    """Computes the amount of force to be applied. Also applies some delay
+    Args: state: current state of the system
+    ref: current x-axis position of the cart
+    response_deq: queue with all the responses
+    delay: any additional delay for experiments
+    """
     clientSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     serverSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     serverSock.bind((UDP_LOCAL_IP_ADDRESS, SENSOR_UDP_PORT_NO))
@@ -157,7 +172,13 @@ def receive_force_process(state, ref, response_deq, delay):
         response_deq.put(u, True)
 
 def compute_force_process(state, ref, response_deq, delay):
-    """Computes the amount of force to be applied. Also applies some delay"""
+    """Computes the amount of force to be applied. Also applies some delay.
+    This controller uses linear feedback delay. Used only for the process-based method.
+    Args: state: current state of the system
+    ref: current x-axis position of the cart
+    response_deq: queue with all the responses
+    delay: any additional delay for experiments
+    """
 
     while True:
         cur_time = time.time()
@@ -180,7 +201,9 @@ def compute_force_process(state, ref, response_deq, delay):
 
 
 def simulate(_):
-    """Runs the actual simulation and updates plant state"""
+    """Runs the actual simulation and updates plant state.
+    Simulation involves actual updating of time, and current state,
+     and then applying force as a response"""
 
     # ensure we get a consistent simulation step - ignore the input dt value
     #asyncio.sleep(0.3)
@@ -205,7 +228,9 @@ def simulate(_):
 
 
 def response_step():
-    """Applies force as directed by the other process"""
+    """Applies force as directed by the other process.
+    We utilize only the LAST response in the queue. If queue is empty, just apply a force of 0"""
+
     global force
     force = 0
     while response_deq.empty() is False:
@@ -229,9 +254,9 @@ def update_reference(_, newref):
     global ref
     ref.value = newref
 
-#space.add_post_step_callback(response_step, force)
-# callback for simulation
 def socket_technique(delay):
+    """Wrapper function to run socket-based controller
+    Args: delay: Additional delay to add for testing"""
     state[0] = cart_body.position[0]
     state[1] = cart_body.velocity[0]
     state[2] = pend_body.angle
@@ -255,6 +280,8 @@ def socket_technique(delay):
     force_process.kill()
 
 def process_technique(delay):
+    """Wrapper function to run process-based controller
+    Args: delay: Additional delay to add for testing"""
     state[0] = cart_body.position[0]
     state[1] = cart_body.velocity[0]
     state[2] = pend_body.angle
@@ -279,12 +306,14 @@ def process_technique(delay):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Control an inverted pendulum')
-    parser.add_argument('-m', metavar='method', default='socket', type=str, dest='method')
-    parser.add_argument('-d', metavar='delay', default=0.0, type=float, dest='delay')
+    parser.add_argument('-m', '--method', metavar='method [socket|process]', default='socket',
+                        type=str, dest='method')
+    parser.add_argument('-d', '--delay', metavar='delay', default=0.0, type=float, dest='delay',
+                        help = 'Additional delay to add for experiments in milliseconds')
 
     args = parser.parse_args()
     if args.method.lower() == 'socket':
         socket_technique(args.delay)
-    elif arg.method.lower() == 'process':
+    elif args.method.lower() == 'process':
         process_technique(args.delay)
 # close the output file
