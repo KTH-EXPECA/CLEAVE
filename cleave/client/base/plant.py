@@ -20,10 +20,10 @@ from abc import ABC, abstractmethod
 from threading import Event
 from typing import Dict
 
-from .actuator import Actuator, ActuatorArray
-from .sensor import Sensor, SensorArray
 from cleave.network.client import CommClient
 from cleave.util import PhyPropType
+from .actuator import Actuator, ActuatorArray
+from .sensor import Sensor, SensorArray
 
 __all__ = ['Plant', 'State', 'PlantBuilder']
 
@@ -44,9 +44,29 @@ class State(ABC):
     by the plant on each emulation time step.
     """
 
+    @staticmethod
+    def calculate_dt(ti: int) -> float:
+        """
+        Utility function to calculate delta T in seconds given a timestamp in
+        nanoseconds.
+
+        Parameters
+        ----------
+        ti
+            Initial timestamp in nanoseconds.
+
+        Returns
+        -------
+        float
+            Delta T since ti, in seconds and fractions thereof.
+
+        """
+
+        return (time.monotonic_ns() - ti) * 10e-9
+
     @abstractmethod
     def advance(self,
-                dt_ns: int,
+                last_ts_ns: int,
                 act_values: Dict[str, PhyPropType]) -> Dict[str, PhyPropType]:
         """
         Called by the plant on every time step to advance the emulation,
@@ -57,10 +77,10 @@ class State(ABC):
 
         Parameters
         ----------
-        dt_ns
-            Time passed since this method last RETURNED, in nanoseconds. Note
-            when this method is invoked for the first time, this value will
-            correspond to the time passed since the plant was instantiated.
+        last_ts_ns
+            Timestamp of the for the last time this method RETURNED. Note
+            when this method is invoked for the first time, this timestamp
+            will correspond to the initialization of the plant.
 
         act_values
             Dictionary containing mappings from property names to values
@@ -156,7 +176,7 @@ class _BasePlant(Plant):
         act = self._comm.recv_actuator_values()
         proc_act = self._actuators.process_actuation_inputs(act)
         sensor_samples = self._state.advance(
-            dt_ns=time.monotonic_ns() - self._last_tf,
+            last_ts_ns=self._last_tf,
             act_values=proc_act)
         self._last_tf = time.monotonic_ns()
         proc_sens = self._sensors.process_plant_state(sensor_samples)
