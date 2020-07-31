@@ -12,5 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .inverted_pendulum import InvPendulumState
-__all__ = ['InvPendulumState']
+from cleave.client.base import builder
+from cleave.client.impl import InvPendulumState
+from cleave.network.client import DummyCommClient
+
+if __name__ == '__main__':
+    state = InvPendulumState()
+
+    builder.set_comm_handler(DummyCommClient())
+    builder.set_plant_state(state)
+
+    plant = builder.build(plant_upd_freq=60)
+    plant.execute()

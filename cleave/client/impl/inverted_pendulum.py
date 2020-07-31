@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import functools
+import time
 import warnings
 from typing import Dict, Tuple
 
@@ -20,7 +21,7 @@ import pymunk
 from pymunk.vec2d import Vec2d
 
 from ..base.plant import State
-from ...util import PhyPropType
+from ...util import PhyPropType, nanos2seconds
 
 #: Gravity constants
 G_CONST = Vec2d(0, -9.8)
@@ -149,7 +150,7 @@ class InvPendulumState(State):
                     points.append(v2.x)
                     points.append(v2.y)
 
-                data = ('v2i', tuple(points))
+                data = ('v2i', tuple(map(int, points)))
                 pyglet.graphics.draw(len(vertices),
                                      pyglet.gl.GL_LINE_LOOP,
                                      data)
@@ -181,7 +182,7 @@ class InvPendulumState(State):
             points.append(v2.x)
             points.append(v2.y)
 
-        data = ('v2i', tuple(points))
+        data = ('v2i', tuple(map(int, points)))
         pyglet.graphics.draw(len(vertices), pyglet.gl.GL_LINES, data)
 
     def _draw_window(self) -> None:
@@ -218,7 +219,8 @@ class InvPendulumState(State):
 
         # advance the world state
         # delta T is received as nanoseconds, turn into seconds
-        self._space.step(InvPendulumState.calculate_dt(last_ts_ns))
+        deltaT = nanos2seconds(time.monotonic_ns() - last_ts_ns)
+        self._space.step(deltaT)
 
         # update labels before drawing
         self._labels['x'].text = f'Cart X: {self._cart_body.position[0]:0.3f} m'
@@ -228,8 +230,7 @@ class InvPendulumState(State):
                                      f' degrees'
 
         self._labels['force'].text = f'Force: {force:0.1f} newtons'
-        now = InvPendulumState.calculate_dt(last_ts_ns) + (last_ts_ns * 10e-9)
-        self._labels['time'].text = f'Time: {now:0.3f} s'
+        self._labels['time'].text = f'DeltaT: {deltaT:f} s'
 
         # tick pyglet to draw screen
         self._pyglet_tick()

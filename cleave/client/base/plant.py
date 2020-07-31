@@ -20,10 +20,10 @@ from abc import ABC, abstractmethod
 from threading import Event
 from typing import Dict
 
-from cleave.network.client import CommClient
-from cleave.util import PhyPropType
 from .actuator import Actuator, ActuatorArray
 from .sensor import Sensor, SensorArray
+from ...network.client import CommClient
+from ...util import PhyPropType, nanos2seconds, seconds2nanos
 
 __all__ = ['Plant', 'State', 'PlantBuilder']
 
@@ -43,26 +43,6 @@ class State(ABC):
     advance() method to implement their logic, as this method will be called
     by the plant on each emulation time step.
     """
-
-    @staticmethod
-    def calculate_dt(ti: int) -> float:
-        """
-        Utility function to calculate delta T in seconds given a timestamp in
-        nanoseconds.
-
-        Parameters
-        ----------
-        ti
-            Initial timestamp in nanoseconds.
-
-        Returns
-        -------
-        float
-            Delta T since ti, in seconds and fractions thereof.
-
-        """
-
-        return (time.monotonic_ns() - ti) * 10e-9
 
     @abstractmethod
     def advance(self,
@@ -184,7 +164,7 @@ class _BasePlant(Plant):
         self._cycles += 1
 
     def execute(self):
-        target_dt_ns = (1.0 // self._freq) * 10e9
+        target_dt_ns = seconds2nanos(1.0 / self._freq)
         try:
             self._comm.connect()
             self._shutdown_flag.clear()
@@ -192,7 +172,8 @@ class _BasePlant(Plant):
                 try:
                     ti = time.monotonic_ns()
                     self.__emu_step()
-                    time.sleep(target_dt_ns - (time.monotonic_ns() - ti))
+                    time.sleep(nanos2seconds(
+                        target_dt_ns - (time.monotonic_ns() - ti)))
                 except ValueError:
                     warnings.warn(
                         'Emulation step took longer than allotted time slot!',

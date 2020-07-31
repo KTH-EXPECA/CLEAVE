@@ -92,3 +92,11 @@ class SingleElementQ:
             finally:
                 self._value = None
                 self._has_value = False
+
+
+def nanos2seconds(nanos: int) -> float:
+    return nanos / 10e9
+
+
+def seconds2nanos(seconds: float) -> int:
+    return int(seconds * 10e9)
