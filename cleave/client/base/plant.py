@@ -44,6 +44,13 @@ class State(ABC):
     by the plant on each emulation time step.
     """
 
+    def __init__(self, update_freq_hz: int):
+        self._freq = update_freq_hz
+
+    @property
+    def update_frequency(self) -> int:
+        return self._freq
+
     @abstractmethod
     def advance(self,
                 last_ts_ns: int,
@@ -306,7 +313,7 @@ class PlantBuilder:
 
         self._plant_state = plant_state
 
-    def build(self, plant_upd_freq: int) -> Plant:
+    def build(self) -> Plant:
         """
         Builds a Plant instance and returns it. The actual subtype of this
         plant will depend on the previously provided parameters.
@@ -327,10 +334,10 @@ class PlantBuilder:
         #  types of plants?
         try:
             return _BasePlant(
-                update_freq=plant_upd_freq,
+                update_freq=self._plant_state.update_frequency,
                 state=self._plant_state,
                 sensor_array=SensorArray(
-                    plant_freq=plant_upd_freq,
+                    plant_freq=self._plant_state.update_frequency,
                     sensors=self._sensors),
                 actuator_array=ActuatorArray(actuators=self._actuators),
                 comm=self._comm_client

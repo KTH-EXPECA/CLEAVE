@@ -17,10 +17,10 @@ from cleave.client.impl import InvPendulumState
 from cleave.network.client import DummyCommClient
 
 if __name__ == '__main__':
-    state = InvPendulumState()
+    state = InvPendulumState(upd_freq_hz=60)
 
     builder.set_comm_handler(DummyCommClient())
     builder.set_plant_state(state)
 
-    plant = builder.build(plant_upd_freq=60)
+    plant = builder.build()
     plant.execute()

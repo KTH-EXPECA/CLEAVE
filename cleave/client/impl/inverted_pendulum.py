@@ -35,6 +35,7 @@ class InvPendulumState(State):
     PYGLET_CAPTION = 'Inverted Pendulum Simulator'
 
     def __init__(self,
+                 upd_freq_hz: int,
                  screen_w: int = 1000,
                  screen_h: int = 700,
                  ground_friction: float = 0.1,
@@ -47,6 +48,7 @@ class InvPendulumState(State):
                  draw_color: Tuple[int, int, int, int] = (200, 200, 200, 200),
                  pixels_per_meter: float = 200.0,
                  ):
+        super(InvPendulumState, self).__init__(update_freq_hz=upd_freq_hz)
         # set up state
         # window for visualization:
         self._window = pyglet.window.Window(screen_w, screen_h,
