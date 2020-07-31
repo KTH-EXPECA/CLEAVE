@@ -12,9 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from cleave.client.base import builder
-from cleave.client.impl import InvPendulumState
-from cleave.network.client import DummyCommClient
+from cleave.base.client import builder
+from cleave.impl import InvPendulumState
+from cleave.base.network import DummyCommClient
 
 if __name__ == '__main__':
     state = InvPendulumState(upd_freq_hz=60)

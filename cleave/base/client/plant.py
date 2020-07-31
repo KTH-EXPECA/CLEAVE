@@ -22,8 +22,8 @@ from typing import Dict
 
 from .actuator import Actuator, ActuatorArray
 from .sensor import Sensor, SensorArray
-from ...network.client import CommClient
-from ...util import PhyPropType, nanos2seconds, seconds2nanos
+from ...base.network import CommClient
+from ...base.util import PhyPropType, nanos2seconds, seconds2nanos
 
 __all__ = ['Plant', 'State', 'PlantBuilder']
 

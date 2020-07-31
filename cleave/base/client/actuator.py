@@ -16,7 +16,7 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import Collection, Dict
 
-from cleave.util import PhyPropType
+from ...base.util import PhyPropType
 
 
 class RegisteredActuatorWarning(Warning):

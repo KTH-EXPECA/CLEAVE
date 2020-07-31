@@ -10,4 +10,15 @@
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
-#   limitations under the License.
+#  limitations under the License.
+
+from .actuator import Actuator, SimpleActuator
+from .sensor import Sensor, SimpleSensor
+from .plant import PlantBuilder, Plant, State
+
+#: Global PlantBuilder instance
+builder = PlantBuilder()
+
+__all__ = ['builder', 'Plant', 'State',
+           'Sensor', 'SimpleSensor',
+           'Actuator', 'SimpleActuator']

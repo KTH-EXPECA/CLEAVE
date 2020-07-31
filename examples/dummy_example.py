@@ -13,8 +13,8 @@
 #   limitations under the License.
 from typing import Dict
 
-from cleave.client import SimpleActuator, SimpleSensor, State, builder
-from cleave.util import PhyPropType
+from cleave.base.client import SimpleActuator, SimpleSensor, State, builder
+from cleave.base.util import PhyPropType
 
 
 class DummyState(State):
