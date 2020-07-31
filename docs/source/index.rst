@@ -13,9 +13,10 @@ Welcome to CLEAVE's documentation!
    :caption: Contents:
 
    modules
-   cleave.backend
-   cleave.client
-   cleave.network
+   cleave.base.backend
+   cleave.base.client
+   cleave.base.network
+   cleave.impl
 
 Indices and tables
 ==================

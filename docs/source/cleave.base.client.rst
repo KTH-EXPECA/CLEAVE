@@ -1,7 +1,7 @@
-cleave.client.base package
+cleave.base.client package
 ==========================
 
-.. automodule:: cleave.client.base
+.. automodule:: cleave.base.client
    :members:
    :private-members:
    :show-inheritance:

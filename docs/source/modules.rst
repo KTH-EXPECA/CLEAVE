@@ -5,3 +5,4 @@ CLEAVE
    :maxdepth: 4
 
    cleave
+   tests

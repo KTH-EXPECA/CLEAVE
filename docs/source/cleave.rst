@@ -12,18 +12,5 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   cleave.backend
-   cleave.client
-   cleave.network
-
-Submodules
-----------
-
-cleave.util module
-------------------
-
-.. automodule:: cleave.util
-   :members:
-   :private-members:
-   :show-inheritance:
-
+   cleave.base
+   cleave.impl
