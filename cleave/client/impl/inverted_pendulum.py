@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import functools
+import warnings
 from typing import Dict, Tuple
 
 import pyglet
@@ -60,8 +61,9 @@ class InvPendulumState(State):
         # ground
         filt = pymunk.ShapeFilter(group=1)
         self._ground = pymunk.Segment(self._space.static_body,
-                                (-4, -0.1),
-                                (4, -0.1), 0.1)  # TODO remove magic numbers
+                                      (-4, -0.1),
+                                      (4, -0.1),
+                                      0.1)  # TODO remove magic numbers
 
         self._ground.friction = ground_friction
         self._ground.filter = filt
@@ -110,45 +112,98 @@ class InvPendulumState(State):
         self._window.on_draw = functools.partial(
             InvPendulumState._draw_window, self)
 
+    @staticmethod
+    def _draw_body(body: pymunk.Body,
+                   ppm: float,
+                   offset: Vec2d = Vec2d(0, 0)) -> None:
+        """
+        Helper method to draw bodies using closed polygons.
+
+        Parameters
+        ----------
+        body
+            pymunk.Body to be drawn on screen.
+        ppm
+            Pixels per meter factor.
+        offset
+            Offset vector from the origin.
+
+
+        """
+
+        for shape in body.shapes:
+            if isinstance(shape, pymunk.Circle):
+                warnings.warn('_draw_body is not implemented for Circles.')
+            elif isinstance(shape, pymunk.Poly):
+                # get vertices in world coordinates
+                vertices = [v.rotated(body.angle) + body.position for v in
+                            shape.get_vertices()]
+
+                # convert vertices to pixel coordinates
+                points = []
+                for v in vertices:
+                    v2 = (v * ppm) + offset
+                    points.append(v2.x)
+                    points.append(v2.y)
+
+                data = ('v2i', tuple(points))
+                pyglet.graphics.draw(len(vertices),
+                                     pyglet.gl.GL_LINE_LOOP,
+                                     data)
+
+    @staticmethod
+    def _draw_line(segment: pymunk.Segment,
+                   ppm: float,
+                   offset: Vec2d = Vec2d(0, 0)):
+        """
+        Helper method to draw line segments.
+
+        Parameters
+        ----------
+        segment
+            Line segment to be drawn.
+        ppm
+            Pixels per meter factor.
+        offset
+            Offset vector from the origin.
+
+        """
+
+        vertices = [v + (0, segment.radius) for v in (segment.a, segment.b)]
+
+        # convert vertices to pixel coordinates
+        points = []
+        for v in vertices:
+            v2 = (v * ppm) + offset
+            points.append(v2.x)
+            points.append(v2.y)
+
+        data = ('v2i', tuple(points))
+        pyglet.graphics.draw(len(vertices), pyglet.gl.GL_LINES, data)
+
     def _draw_window(self) -> None:
         """
         Internal utility function which handles visualization of the space.
         """
 
         self._window.clear()
-
-        # get cart and pendulum vertices
-        # ground is done apart since it's a line as opposed to a convex figure
-        vertices = [v.rotated(self._cart_body.angle) + self._cart_body.position
-                    for v in self._cart_shape.get_vertices()] + \
-                   [v.rotated(self._pend_body.angle) + self._pend_body.position
-                    for v in self._pend_shape.get_vertices()]
-
-        # convert vertices to pixel coordinates and draw
-        points = []
-        for v in vertices:
-            points.append(int(v.x * self._ppm) + self._floor_offset.x)
-            points.append(int(v.x * self._ppm) + self._floor_offset.y)
-
-        data = ('v2i', tuple(points))
-        pyglet.graphics.draw(len(vertices), pyglet.gl.GL_LINE_LOOP, data)
-
-        # ground
-        vertices = [v + (0, self._ground.radius)
-                    for v in (self._ground.a, self._ground.b)]
-
-        # convert vertices to pixel coordinates and draw
-        points = []
-        for v in vertices:
-            points.append(int(v.x * self._ppm) + self._floor_offset.x)
-            points.append(int(v.x * self._ppm) + self._floor_offset.y)
-
-        data = ('v2i', tuple(points))
-        pyglet.graphics.draw(len(vertices), pyglet.gl.GL_LINES, data)
-
+        self._draw_body(self._cart_body, self._ppm, self._floor_offset)
+        self._draw_body(self._pend_body, self._ppm, self._floor_offset)
+        self._draw_line(self._ground, self._ppm, self._floor_offset)
 
         for label in self._labels:
             label.draw()
+
+    def _pyglet_tick(self):
+        """
+        Manually advance the pyglet event loop in sync with our simulation.
+        """
+        pyglet.clock.tick()
+
+        self._window.switch_to()
+        self._window.dispatch_events()
+        self._window.dispatch_event('on_draw')
+        self._window.flip()
 
     def advance(self,
                 last_ts_ns: int,
@@ -161,6 +216,7 @@ class InvPendulumState(State):
         # advance the world state
         # delta T is received as nanoseconds, turn into seconds
         self._space.step(InvPendulumState.calculate_dt(last_ts_ns))
+        self._pyglet_tick()
 
         # return new world state
         return {
