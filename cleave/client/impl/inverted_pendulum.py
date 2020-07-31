@@ -108,7 +108,10 @@ class InvPendulumState(State):
         label_time = pyglet.text.Label(text='', font_size=18, color=draw_color,
                                        x=10, y=screen_h - 118)
 
-        self._labels = [label_x, label_ang, label_force, label_time]
+        self._labels = {'x'    : label_x,
+                        'angle': label_ang,
+                        'force': label_force,
+                        'time' : label_time}
         self._window.on_draw = functools.partial(
             InvPendulumState._draw_window, self)
 
@@ -191,7 +194,7 @@ class InvPendulumState(State):
         self._draw_body(self._pend_body, self._ppm, self._floor_offset)
         self._draw_line(self._ground, self._ppm, self._floor_offset)
 
-        for label in self._labels:
+        for _, label in self._labels.items():
             label.draw()
 
     def _pyglet_tick(self):
@@ -216,6 +219,19 @@ class InvPendulumState(State):
         # advance the world state
         # delta T is received as nanoseconds, turn into seconds
         self._space.step(InvPendulumState.calculate_dt(last_ts_ns))
+
+        # update labels before drawing
+        self._labels['x'].text = f'Cart X: {self._cart_body.position[0]:0.3f} m'
+        # TODO: fix magic number
+        self._labels['angle'].text = f'Pendulum Angle: ' \
+                                     f'{self._pend_body.angle * 57.2958:0.3f}' \
+                                     f' degrees'
+
+        self._labels['force'].text = f'Force: {force:0.1f} newtons'
+        now = InvPendulumState.calculate_dt(last_ts_ns) + (last_ts_ns * 10e-9)
+        self._labels['time'].text = f'Time: {now:0.3f} s'
+
+        # tick pyglet to draw screen
         self._pyglet_tick()
 
         # return new world state
