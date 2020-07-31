@@ -54,6 +54,24 @@ class CommClient(ABC):
         pass
 
 
+class DummyCommClient(CommClient):
+    """
+    Dummy implementation of a CommClient. None of its methods do anything.
+    """
+
+    def connect(self) -> None:
+        pass
+
+    def disconnect(self):
+        pass
+
+    def send_sensor_values(self, prop_values: Mapping[str, PhyPropType]):
+        pass
+
+    def recv_actuator_values(self) -> Mapping[str, PhyPropType]:
+        return {}
+
+
 class ThreadedCommClient(CommClient, ABC):
     """
     This class provides base abstractions for asynchronous communication
