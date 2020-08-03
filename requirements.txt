@@ -7,3 +7,4 @@ m2r2
 sphinx_press_theme
 pyglet
 pymunk
+msgpack
