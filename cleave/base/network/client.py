@@ -14,17 +14,13 @@
 
 from __future__ import annotations
 
-import socket
 from abc import ABC, abstractmethod
 from queue import Empty
 from threading import Event, Thread
 from typing import Mapping, Optional
 
-import msgpack
-
 from ...base.util import PhyPropType, SingleElementQ
 
-_MAX_IP_PORT = 65535
 _DEFAULT_TIMEOUT_S = 0.01
 
 
@@ -154,8 +150,7 @@ class ThreadedCommClient(CommClient, ABC):
     def _send_loop(self):
         while not self._shutdown.is_set():
             try:
-                self._send(self._send_q.pop(
-                    timeout=_DEFAULT_TIMEOUT_S))
+                self._send(self._send_q.pop(timeout=_DEFAULT_TIMEOUT_S))
             except Empty:
                 pass
             except IOError:
@@ -182,47 +177,3 @@ class ThreadedCommClient(CommClient, ABC):
             self._recv_t.join()
         if self._send_t is not None:
             self._send_t.join()
-
-
-class TCPCommClient(ThreadedCommClient):
-    def __init__(self, host: str, port: int, max_attempts: int = 3):
-        super(TCPCommClient, self).__init__()
-
-        assert 0 <= port <= _MAX_IP_PORT  # port ranges
-
-        self._host = host
-        self._port = port
-        self._max_conn_tries = max_attempts
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._unpack = msgpack.Unpacker(max_buffer_size=1024)  # TODO: magic n
-
-    def _send(self, payload: Mapping[str, PhyPropType]) -> None:
-        msgpack.pack(payload, self._sock, use_bin_type=True)
-
-    def _recv(self, timeout: Optional[float] = _DEFAULT_TIMEOUT_S) \
-            -> Mapping[str, PhyPropType]:
-        # TODO: timeout?
-        while True:
-            buf = self._sock.recv(1024)
-            if not buf:
-                return {}
-            self._unpack.feed(buf)
-            try:
-                return next(self._unpack)
-            except StopIteration:
-                pass
-
-    def _connect_endpoints(self):
-        tries = 1
-        while True:
-            try:
-                self._sock.connect((self._host, self._port))
-            except socket.timeout:
-                if tries < self._max_conn_tries:
-                    tries += 1
-                else:
-                    raise
-
-    def _disconnect_endpoints(self):
-        self._sock.shutdown(socket.SHUT_RDWR)
-        self._sock.close()
