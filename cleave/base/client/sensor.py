@@ -168,9 +168,9 @@ class SensorArray:
             sensor values.
 
         """
+        processed_values = dict()
         try:
             # check which sensors need to be updated this cycle
-            processed_values = dict()
             for sensor in self._cycle_triggers[self._cycle_count]:
                 try:
                     prop_name = sensor.measured_property_name
@@ -181,11 +181,10 @@ class SensorArray:
                     raise MissingPropertyError(
                         'Missing expected update for property '
                         f'{sensor.measured_property_name}!')
-
-            return processed_values
         except KeyError:
             # no sensors on this cycle
             pass
         finally:
             # always increase the cycle counter
             self._cycle_count = (self._cycle_count + 1) % self._plant_freq
+            return processed_values
