@@ -13,13 +13,14 @@
 #  limitations under the License.
 import math
 import multiprocessing
+import random
 import socket
 import time
 from typing import Mapping, Optional
 
 import msgpack
 
-from cleave.base.client import SimpleActuator, SimpleSensor, builder
+from cleave.base.client import Actuator, SimpleSensor, builder
 from cleave.base.network import ThreadedCommClient
 from cleave.base.util import PhyPropType
 from cleave.impl import InvPendulumState
@@ -88,11 +89,13 @@ def server_process(host: str, port: int):
 
                 unpack.feed(buf)
                 for sensor_values in unpack:
-                    print(f'Controller got: {sensor_values}')
-                    position = sensor_values['position']
-                    speed = sensor_values['speed']
-                    angle = sensor_values['angle']
-                    ang_vel = sensor_values['ang_vel']
+                    try:
+                        position = sensor_values['position']
+                        speed = sensor_values['speed']
+                        angle = sensor_values['angle']
+                        ang_vel = sensor_values['ang_vel']
+                    except KeyError:
+                        continue
 
                     gain = K[0] * position + \
                            K[1] * speed + \
@@ -100,15 +103,14 @@ def server_process(host: str, port: int):
                            K[3] * ang_vel
                     force = 0.0 * NBAR - gain
 
-                    # kill our motors if we go past our linearized acceptable angles
+                    # kill our motors if we go past our linearized acceptable
+                    # angles
                     if math.fabs(angle) > 0.35:
                         force = 0.0
 
                     # cap our maximum force so it doesn't go crazy
                     if math.fabs(force) > MAX_FORCE:
                         force = math.copysign(MAX_FORCE, force)
-
-                    print(f'Controller returns: {force}')
                     client.sendall(msgpack.packb({'force': force},
                                                  use_bin_type=True))
     except Exception as e:
@@ -117,16 +119,35 @@ def server_process(host: str, port: int):
         print('Server shutting down.')
 
 
+class NoisyActuator(Actuator):
+    def __init__(self,
+                 prop: str,
+                 noise_pcent: float = 5,
+                 noise_prob: float = 0.7):
+        super(NoisyActuator, self).__init__(prop)
+        self._noise_factor = noise_pcent / 100.0
+        self._prob = noise_prob
+
+    def process_actuation(self, desired_value: PhyPropType) -> PhyPropType:
+        if random.random() < self._prob:
+            noise = desired_value * self._noise_factor
+            return desired_value + noise \
+                if random.choice((True, False)) \
+                else desired_value - noise
+        else:
+            return desired_value
+
+
 if __name__ == '__main__':
-    state = InvPendulumState(upd_freq_hz=60)
+    state = InvPendulumState(upd_freq_hz=200)
 
     builder.set_comm_handler(CommClient(*HOST_ADDR))
     builder.set_plant_state(state)
-    builder.attach_sensor(SimpleSensor('position', 60))
-    builder.attach_sensor(SimpleSensor('speed', 60))
-    builder.attach_sensor(SimpleSensor('angle', 60))
-    builder.attach_sensor(SimpleSensor('ang_vel', 60))
-    builder.attach_actuator(SimpleActuator('force'))
+    builder.attach_sensor(SimpleSensor('position', 50))
+    builder.attach_sensor(SimpleSensor('speed', 50))
+    builder.attach_sensor(SimpleSensor('angle', 50))
+    builder.attach_sensor(SimpleSensor('ang_vel', 50))
+    builder.attach_actuator(NoisyActuator('force'))
 
     plant = builder.build()
 

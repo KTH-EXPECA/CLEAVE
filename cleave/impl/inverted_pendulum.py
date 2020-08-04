@@ -24,6 +24,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import functools
+import math
 import time
 import warnings
 from typing import Dict, Tuple
@@ -243,7 +244,7 @@ class InvPendulumState(State):
                                      f'{self._pend_body.angle * 57.2958:0.3f}' \
                                      f' degrees'
 
-        self._labels['force'].text = f'Force: {force:0.1f} newtons'
+        self._labels['force'].text = f'Force: {math.fabs(force):0.1f} newtons'
         self._labels['time'].text = f'DeltaT: {deltaT:f} s'
 
         # tick pyglet to draw screen
