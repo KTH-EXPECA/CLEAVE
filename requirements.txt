@@ -8,3 +8,6 @@ sphinx_press_theme
 pyglet
 pymunk
 msgpack
+Flask
+simplejson
+python-dotenv
