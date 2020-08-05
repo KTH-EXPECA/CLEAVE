@@ -82,6 +82,9 @@ def server_process(host: str, port: int):
         with socket.create_server((host, port)) as server_socket:
             client, addr = server_socket.accept()
             print(f'Accepted connection from {addr}')
+            ref = -0.2
+            count = 0
+
             while True:
                 buf = client.recv(1024)
                 if not buf:
@@ -89,6 +92,10 @@ def server_process(host: str, port: int):
 
                 unpack.feed(buf)
                 for sensor_values in unpack:
+                    count = (count + 1) % 1000
+                    if count == 0:
+                        ref = -1 * ref
+
                     try:
                         position = sensor_values['position']
                         speed = sensor_values['speed']
@@ -101,7 +108,7 @@ def server_process(host: str, port: int):
                            K[1] * speed + \
                            K[2] * angle + \
                            K[3] * ang_vel
-                    force = 0.0 * NBAR - gain
+                    force = ref * NBAR - gain
 
                     # kill our motors if we go past our linearized acceptable
                     # angles
