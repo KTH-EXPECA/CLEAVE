@@ -13,12 +13,14 @@
 #  limitations under the License.
 
 from .actuator import Actuator, SimpleActuator
+from .plant import Plant, PlantBuilder
 from .sensor import Sensor, SimpleSensor
-from .plant import PlantBuilder, Plant, State
+from .state import ActuatorVariable, SensorVariable, State
 
 #: Global PlantBuilder instance
 builder = PlantBuilder()
 
-__all__ = ['builder', 'Plant', 'State',
+__all__ = ['builder', 'Plant',
            'Sensor', 'SimpleSensor',
-           'Actuator', 'SimpleActuator']
+           'Actuator', 'SimpleActuator',
+           'State', 'SensorVariable', 'ActuatorVariable']

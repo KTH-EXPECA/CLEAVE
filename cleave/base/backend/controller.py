@@ -11,7 +11,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import functools
 from abc import ABC, abstractmethod
 from typing import Mapping
 
@@ -24,12 +23,12 @@ class Controller(ABC):
             -> Mapping[str, PhyPropType]:
         pass
 
-    @classmethod
-    def find_all_subclasses(cls):
-        subcls = set(cls.__subclasses__())
-        if len(subcls) == 0:
-            return subcls
-        else:
-            return subcls.union(
-                functools.reduce(lambda x, y: x.union(y),
-                                 [s.find_all_subclasses() for s in subcls]))
+    # @classmethod
+    # def find_all_subclasses(cls):
+    #     subcls = set(cls.__subclasses__())
+    #     if len(subcls) == 0:
+    #         return subcls
+    #     else:
+    #         return subcls.union(
+    #             functools.reduce(lambda x, y: x.union(y),
+    #                              [s.find_all_subclasses() for s in subcls]))

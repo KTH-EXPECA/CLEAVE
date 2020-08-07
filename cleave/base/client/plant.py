@@ -18,14 +18,14 @@ import time
 import warnings
 from abc import ABC, abstractmethod
 from threading import Event
-from typing import Dict
 
 from .actuator import Actuator, ActuatorArray
 from .sensor import Sensor, SensorArray
+from .state import State
 from ...base.network import CommClient
-from ...base.util import PhyPropType, nanos2seconds, seconds2nanos
+from ...base.util import nanos2seconds, seconds2nanos
 
-__all__ = ['Plant', 'State', 'PlantBuilder']
+__all__ = ['Plant', 'PlantBuilder']
 
 
 class PlantBuilderWarning(Warning):
@@ -34,54 +34,6 @@ class PlantBuilderWarning(Warning):
 
 class EmulationWarning(Warning):
     pass
-
-
-class State(ABC):
-    """
-    Abstract base class defining an interface for Plant state evolution over
-    the course of a simulation. Implementing classes need to extend the
-    advance() method to implement their logic, as this method will be called
-    by the plant on each emulation time step.
-    """
-
-    def __init__(self, update_freq_hz: int):
-        self._freq = update_freq_hz
-
-    @property
-    def update_frequency(self) -> int:
-        return self._freq
-
-    @abstractmethod
-    def advance(self,
-                last_ts_ns: int,
-                act_values: Dict[str, PhyPropType]) -> Dict[str, PhyPropType]:
-        """
-        Called by the plant on every time step to advance the emulation,
-        passing the number of nanoseconds since the last time this method
-        returned and a mapping from property names to actuator values.
-        Should return a dictionary containing mappings from property names to
-        values, in order to update the sensors of the associated plant.
-
-        Parameters
-        ----------
-        last_ts_ns
-            Timestamp of the for the last time this method RETURNED. Note
-            when this method is invoked for the first time, this timestamp
-            will correspond to the initialization of the plant.
-
-        act_values
-            Dictionary containing mappings from property names to values
-            corresponding to the latest updated from actuators (if any).
-
-        Returns
-        -------
-        Dict
-            Implementations should return a dictionary of mappings from property
-            names to values, corresponding to the updated values of the desired
-            measured properties for this plant.
-
-        """
-        pass
 
 
 class Plant(ABC):
@@ -147,7 +99,6 @@ class _BasePlant(Plant):
         self._sensors = sensor_array
         self._actuators = actuator_array
         self._comm = comm
-        self._last_tf = time.monotonic_ns()
         self._cycles = 0
 
         self._shutdown_flag = Event()
@@ -162,10 +113,9 @@ class _BasePlant(Plant):
 
         act = self._comm.recv_actuator_values()
         proc_act = self._actuators.process_actuation_inputs(act)
-        sensor_samples = self._state.advance(
-            last_ts_ns=self._last_tf,
-            act_values=proc_act)
-        self._last_tf = time.monotonic_ns()
+        self._state.actuate(proc_act)
+        self._state.advance()
+        sensor_samples = self._state.get_state()
         proc_sens = self._sensors.process_plant_state(sensor_samples)
         self._comm.send_sensor_values(proc_sens)
         self._cycles += 1

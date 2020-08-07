@@ -25,16 +25,15 @@
 #  limitations under the License.
 import functools
 import math
-import time
 import warnings
-from typing import Dict, Tuple
+from typing import Tuple
 
 import pyglet
 import pymunk
 from pymunk.vec2d import Vec2d
 
-from ..base.client.plant import State
-from ..base.util import PhyPropType, nanos2seconds
+from ..base.client import ActuatorVariable, SensorVariable, State
+from ..base.util import nanos2seconds
 
 #: Gravity constants
 G_CONST = Vec2d(0, -9.8)
@@ -68,6 +67,13 @@ class InvPendulumState(State):
                                             vsync=False,
                                             caption=self.PYGLET_CAPTION)
         self._ppm = pixels_per_meter
+
+        # actuated and sensor variables
+        self.force = ActuatorVariable(persistent=False, default=0.0)
+        self.position = SensorVariable()
+        self.speed = SensorVariable()
+        self.angle = SensorVariable()
+        self.ang_vel = SensorVariable()
 
         # space
         self._space = pymunk.Space(threaded=True)
@@ -224,17 +230,16 @@ class InvPendulumState(State):
         self._window.dispatch_event('on_draw')
         self._window.flip()
 
-    def advance(self,
-                last_ts_ns: int,
-                act_values: Dict[str, PhyPropType]) -> Dict[str, PhyPropType]:
+    def advance(self) -> None:
         # apply actuation
-        force = act_values.get('force', 0)
+        force = self.force
+        
         self._cart_body.apply_force_at_local_point(Vec2d(force, 0.0),
                                                    Vec2d(0, 0))
 
         # advance the world state
         # delta T is received as nanoseconds, turn into seconds
-        deltaT = nanos2seconds(time.monotonic_ns() - last_ts_ns)
+        deltaT = nanos2seconds(self.get_delta_t_ns())
         self._space.step(deltaT)
 
         # update labels before drawing
@@ -244,16 +249,17 @@ class InvPendulumState(State):
                                      f'{self._pend_body.angle * 57.2958:0.3f}' \
                                      f' degrees'
 
-        self._labels['force'].text = f'Force: {math.fabs(force):0.1f} newtons'
+        self._labels['force'].text = f'Force: {math.fabs(force):0.1f} ' \
+                                     f'newtons'
         self._labels['time'].text = f'DeltaT: {deltaT:f} s'
 
         # tick pyglet to draw screen
         self._pyglet_tick()
 
-        # return new world state
-        return {
-            'position': self._cart_body.position.x,
-            'speed'   : self._cart_body.velocity.x,
-            'angle'   : self._pend_body.angle,
-            'ang_vel' : self._pend_body.angular_velocity
-        }
+        # # return new world state
+        # return {
+        #     'position': self._cart_body.position.x,
+        #     'speed'   : self._cart_body.velocity.x,
+        #     'angle'   : self._pend_body.angle,
+        #     'ang_vel' : self._pend_body.angular_velocity
+        # }
