@@ -14,7 +14,7 @@
 import time
 import warnings
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Mapping, Optional, TypeVar
+from typing import Generic, Mapping, Optional, TypeVar
 
 from ..util import PhyPropType
 
@@ -64,15 +64,19 @@ class State(ABC):
     by the plant on each emulation time step.
     """
 
-    __initialized__ = False
+    def __new__(cls, *args, **kwargs):
+        inst = ABC.__new__(cls)
+        ABC.__setattr__(inst, '_sensor_vars', {})
+        ABC.__setattr__(inst, '_actuator_vars', {})
+        return inst
 
     def __init__(self, update_freq_hz: int):
         super(State, self).__init__()
-        self.__sensor_vars: Dict[str, SensorVariable] = {}
-        self.__actuator_vars: Dict[str, ActuatorVariable] = {}
+        # self.__sensor_vars: Dict[str, SensorVariable] = {}
+        # self.__actuator_vars: Dict[str, ActuatorVariable] = {}
+
         self._freq = update_freq_hz
         self._ti = time.monotonic_ns()
-        self.__initialized__ = True
 
     def get_delta_t_ns(self):
         try:
@@ -81,42 +85,37 @@ class State(ABC):
             self._ti = time.monotonic_ns()
 
     def __setattr__(self, key, value):
-        if not self.__initialized__:
-            super(State, self).__setattr__(key, value)
-        elif isinstance(value, _PhysPropVar):
+        if isinstance(value, _PhysPropVar):
             # registering a new physical property
             if isinstance(value, SensorVariable):
-                self.__sensor_vars[key] = value
+                self._sensor_vars[key] = value
             elif isinstance(value, ActuatorVariable):
-                self.__actuator_vars[key] = value
+                self._actuator_vars[key] = value
             else:
                 raise StateError('Physical properties need to be either '
                                  'Actuator or Sensor properties.')
-        elif key in self.__sensor_vars:
+        elif key in self._sensor_vars:
             # updating the value of a sensor variable
-            self.__sensor_vars[key].set_value(value)
-        elif key in self.__actuator_vars:
-            self.__actuator_vars[key].set_value(value)
-        else:
-            super(State, self).__setattr__(key, value)
+            self._sensor_vars[key].set_value(value)
+        elif key in self._actuator_vars:
+            self._actuator_vars[key].set_value(value)
+
+        super(State, self).__setattr__(key, value)
 
     def __getattribute__(self, item):
-        if not self.__initialized__:
-            return super(State, self).__getattribute__(item)
-        elif item in self.__sensor_vars:
-            return self.__sensor_vars[item].get_value()
-        elif item in self.__actuator_vars:
-            return self.__actuator_vars[item].get_value()
+        attr = super(State, self).__getattribute__(item)
+        if isinstance(attr, _PhysPropVar):
+            return attr.get_value()
         else:
-            super(State, self).__getattribute__(item)
+            return attr
 
     def get_state(self) -> Mapping[str, PhyPropType]:
-        return {name: p.get_value() for name, p in self.__sensor_vars.items()}
+        return {name: p.get_value() for name, p in self._sensor_vars.items()}
 
     def actuate(self, act: Mapping[str, PhyPropType]) -> None:
         for name, val in act.items():
             try:
-                self.__actuator_vars[name].set_value(val)
+                self._actuator_vars[name].set_value(val)
             except KeyError:
                 warnings.warn('Received update for unregistered actuated '
                               f'property "{name}!"',

@@ -233,7 +233,7 @@ class InvPendulumState(State):
     def advance(self) -> None:
         # apply actuation
         force = self.force
-        
+
         self._cart_body.apply_force_at_local_point(Vec2d(force, 0.0),
                                                    Vec2d(0, 0))
 
@@ -256,7 +256,12 @@ class InvPendulumState(State):
         # tick pyglet to draw screen
         self._pyglet_tick()
 
-        # # return new world state
+        # setup new world state
+        self.position = self._cart_body.position.x
+        self.speed = self._cart_body.velocity.x
+        self.angle = self._pend_body.angle
+        self.ang_vel = self._pend_body.angular_velocity
+
         # return {
         #     'position': self._cart_body.position.x,
         #     'speed'   : self._cart_body.velocity.x,
