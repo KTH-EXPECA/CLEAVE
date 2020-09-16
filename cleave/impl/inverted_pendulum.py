@@ -26,21 +26,18 @@
 import functools
 import math
 import warnings
-from typing import Tuple
+from typing import Mapping, Tuple
 
 import pyglet
 import pymunk
 from pymunk.vec2d import Vec2d
 
+from ..base.backend.controller import Controller
 from ..base.client import ActuatorVariable, SensorVariable, State
-from ..base.util import nanos2seconds
+from ..base.util import PhyPropType, nanos2seconds
 
 #: Gravity constants
 G_CONST = Vec2d(0, -9.8)
-
-#: Pendulum parameters
-K = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]
-NBAR = -57.25
 
 
 class InvPendulumState(State):
@@ -268,3 +265,45 @@ class InvPendulumState(State):
         #     'angle'   : self._pend_body.angle,
         #     'ang_vel' : self._pend_body.angular_velocity
         # }
+
+
+class InvPendulumController(Controller):
+    #: Pendulum parameters
+    K = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]
+    NBAR = -57.25
+
+    def __init__(self, ref: float = 0.0, max_force: float = 25):
+        super(InvPendulumController, self).__init__()
+        self._count = 0
+        self._ref = ref
+        self._max_force = max_force
+
+    def process(self, sensor_values: Mapping[str, PhyPropType]) \
+            -> Mapping[str, PhyPropType]:
+        self._count = (self._count + 1) % 1000
+        if self._count == 0:
+            self._ref *= -1
+
+        try:
+            position = sensor_values['position']
+            speed = sensor_values['speed']
+            angle = sensor_values['angle']
+            ang_vel = sensor_values['ang_vel']
+        except KeyError:
+            print(sensor_values)
+            raise
+
+        gain = self.K[0] * position + self.K[1] * speed + \
+               self.K[2] * angle + self.K[3] * ang_vel
+        force = self._ref * self.NBAR - gain
+
+        # kill our motors if we go past our linearized acceptable
+        # angles
+        if math.fabs(angle) > 0.35:
+            force = 0.0
+
+        # cap our maximum force so it doesn't go crazy
+        if math.fabs(force) > self._max_force:
+            force = math.copysign(self._max_force, force)
+
+        return {'force': force}

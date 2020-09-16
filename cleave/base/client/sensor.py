@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Collection, Dict
+from typing import Collection, Dict, Mapping
 
 from ...base.util import PhyPropType
 
@@ -32,6 +32,10 @@ class IncompatibleFrequenciesError(Exception):
 
 
 class MissingPropertyError(Exception):
+    pass
+
+
+class NoSensorUpdate(Exception):
     pass
 
 
@@ -149,7 +153,7 @@ class SensorArray:
                 self._cycle_triggers[trigger].append(sensor)
 
     def process_plant_state(self,
-                            prop_values: Dict[str, PhyPropType]) \
+                            prop_values: Mapping[str, PhyPropType]) \
             -> Dict[str, PhyPropType]:
         """
         Processes measured properties by passing them to the internal
@@ -168,8 +172,8 @@ class SensorArray:
             sensor values.
 
         """
-        processed_values = dict()
         try:
+            processed_values = dict()
             # check which sensors need to be updated this cycle
             for sensor in self._cycle_triggers[self._cycle_count]:
                 try:
@@ -181,10 +185,10 @@ class SensorArray:
                     raise MissingPropertyError(
                         'Missing expected update for property '
                         f'{sensor.measured_property_name}!')
+            return processed_values
         except KeyError:
             # no sensors on this cycle
-            pass
+            raise NoSensorUpdate()
         finally:
             # always increase the cycle counter
             self._cycle_count = (self._cycle_count + 1) % self._plant_freq
-            return processed_values

@@ -11,6 +11,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from cleave.base.backend.controller import TCPControllerService
+from cleave.impl import InvPendulumController
+import sys
 
-from .inverted_pendulum import InvPendulumState, InvPendulumController
-__all__ = ['InvPendulumState', 'InvPendulumController']
+if __name__ == '__main__':
+    _, port, *_ = sys.argv
+    port = int(port)
+    controller = InvPendulumController(ref=0.2)
+    service = TCPControllerService(controller, port)
+    service.serve()

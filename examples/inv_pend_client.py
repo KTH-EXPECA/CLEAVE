@@ -11,11 +11,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import math
-import multiprocessing
 import random
 import socket
-import time
 from typing import Mapping, Optional
 
 import msgpack
@@ -75,57 +72,6 @@ class CommClient(ThreadedCommClient):
             self._sock.close()
 
 
-def server_process(host: str, port: int):
-    unpack = msgpack.Unpacker(max_buffer_size=1024)
-    print(f'Setting up server on {host}:{port}.')
-    try:
-        with socket.create_server((host, port)) as server_socket:
-            client, addr = server_socket.accept()
-            print(f'Accepted connection from {addr}')
-            ref = -0.2
-            count = 0
-
-            while True:
-                buf = client.recv(1024)
-                if not buf:
-                    continue
-
-                unpack.feed(buf)
-                for sensor_values in unpack:
-                    count = (count + 1) % 1000
-                    if count == 0:
-                        ref = -1 * ref
-
-                    try:
-                        position = sensor_values['position']
-                        speed = sensor_values['speed']
-                        angle = sensor_values['angle']
-                        ang_vel = sensor_values['ang_vel']
-                    except KeyError:
-                        continue
-
-                    gain = K[0] * position + \
-                           K[1] * speed + \
-                           K[2] * angle + \
-                           K[3] * ang_vel
-                    force = ref * NBAR - gain
-
-                    # kill our motors if we go past our linearized acceptable
-                    # angles
-                    if math.fabs(angle) > 0.35:
-                        force = 0.0
-
-                    # cap our maximum force so it doesn't go crazy
-                    if math.fabs(force) > MAX_FORCE:
-                        force = math.copysign(MAX_FORCE, force)
-                    client.sendall(msgpack.packb({'force': force},
-                                                 use_bin_type=True))
-    except Exception as e:
-        print(f'Server: {e}')
-    finally:
-        print('Server shutting down.')
-
-
 class NoisyActuator(Actuator):
     def __init__(self,
                  prop: str,
@@ -157,10 +103,4 @@ if __name__ == '__main__':
     builder.attach_actuator(NoisyActuator('force'))
 
     plant = builder.build()
-
-    with multiprocessing.Pool(processes=1) as pool:
-        pool.apply_async(server_process, args=HOST_ADDR)
-        print('Wait for server to start accepting connections...')
-        time.sleep(3)
-        print('Starting plant!')
-        plant.execute()
+    plant.execute()

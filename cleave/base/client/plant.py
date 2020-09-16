@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from threading import Event
 
 from .actuator import Actuator, ActuatorArray
-from .sensor import Sensor, SensorArray
+from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
 from ...base.network import CommClient
 from ...base.util import nanos2seconds, seconds2nanos
@@ -116,8 +116,12 @@ class _BasePlant(Plant):
         self._state.actuate(proc_act)
         self._state.advance()
         sensor_samples = self._state.get_state()
-        proc_sens = self._sensors.process_plant_state(sensor_samples)
-        self._comm.send_sensor_values(proc_sens)
+        try:
+            # only send sensor updates if we actually have any
+            proc_sens = self._sensors.process_plant_state(sensor_samples)
+            self._comm.send_sensor_values(proc_sens)
+        except NoSensorUpdate:
+            pass
         self._cycles += 1
 
     def execute(self):

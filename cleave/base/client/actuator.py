@@ -14,7 +14,7 @@
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Collection, Dict
+from typing import Collection, Dict, Mapping
 
 from ...base.util import PhyPropType
 
@@ -101,7 +101,8 @@ class ActuatorArray:
 
             self._actuators[actuator.actuated_property_name] = actuator
 
-    def process_actuation_inputs(self, input_values: Dict[str, PhyPropType]) \
+    def process_actuation_inputs(self,
+                                 input_values: Mapping[str, PhyPropType]) \
             -> Dict[str, PhyPropType]:
         """
         Processes the actuation inputs obtained from the controller by
