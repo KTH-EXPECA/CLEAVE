@@ -1,7 +1,7 @@
 numpy
 loguru
 autodoc
-sphinx >= 3.1
+sphinx>= 3.1
 sphinxcontrib-napoleon
 m2r2
 sphinx_press_theme
@@ -11,3 +11,4 @@ msgpack
 Flask
 simplejson
 python-dotenv
+twisted
