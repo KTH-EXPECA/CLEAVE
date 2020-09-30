@@ -20,7 +20,9 @@ from typing import Collection, Dict, Mapping
 
 from ...base.util import PhyPropType
 
-__all__ = ['Sensor', 'SimpleSensor', 'SensorArray']
+__all__ = ['Sensor', 'SimpleSensor', 'SensorArray',
+           'NoSensorUpdate', 'RegisteredSensorWarning',
+           'IncompatibleFrequenciesError', 'MissingPropertyError']
 
 
 class RegisteredSensorWarning(Warning):

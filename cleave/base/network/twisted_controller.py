@@ -23,13 +23,16 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Tuple
+import warnings
+from typing import Mapping, Tuple
 
+import msgpack
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet.threads import deferToThread
-from twisted.python.failure import Failure
 
+from . import ProtocolWarning
 from ..backend.controller import Controller
+from ..util import PhyPropType
 
 
 class UDPControllerService(DatagramProtocol):
@@ -41,13 +44,14 @@ class UDPControllerService(DatagramProtocol):
         # Todo: add timestamping
         # Todo: real logging
 
-        d = deferToThread(self._controller.process_bytes, datagram)
-
-        def result_callback(result_payload: bytes) -> None:
+        def result_callback(act_cmds: Mapping[str, PhyPropType]) -> None:
+            result_payload = msgpack.packb(act_cmds, use_bin_type=True)
             self.transport.write(result_payload, addr)
 
-        def error_callback(failure: Failure) -> None:
-            failure.trap(Controller.NoSamples)
-
-        d.addCallback(result_callback)
-        d.addErrback(error_callback)
+        try:
+            sensor_samples = msgpack.unpackb(datagram)
+            d = deferToThread(self._controller.process, sensor_samples)
+            d.addCallback(result_callback)
+        except (ValueError, msgpack.FormatError, msgpack.StackError):
+            warnings.warn('Could not unpack data from {}:{}.'.format(*addr),
+                          ProtocolWarning)

@@ -14,11 +14,17 @@
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from queue import Empty
 from threading import Event, Thread
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Tuple
 
+import msgpack
+from twisted.internet.protocol import DatagramProtocol
+
+from . import ProtocolWarning
+from ..client.plant import reactor
 from ...base.util import PhyPropType, SingleElementQ
 
 _DEFAULT_TIMEOUT_S = 0.01
@@ -177,3 +183,60 @@ class ThreadedCommClient(CommClient, ABC):
             self._recv_t.join()
         if self._send_t is not None:
             self._send_t.join()
+
+
+class BaseControllerInterface(ABC):
+    @abstractmethod
+    def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
+            -> None:
+        """
+        Send a mapping of property names to sensor values to the controller.
+
+        Parameters
+        ----------
+        prop_values
+            Mapping from property names to sensor values.
+        """
+        pass
+
+    @abstractmethod
+    def get_actuator_values(self) -> Mapping[str, PhyPropType]:
+        """
+        Waits for incoming data from the controller and returns a mapping
+        from actuated property names to values.
+
+        Returns
+        -------
+        Mapping
+            Mapping from actuated property names to values.
+        """
+        pass
+
+
+class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
+    def __init__(self, controller_addr: Tuple[str, int]):
+        super(UDPControllerInterface, self).__init__()
+        self._recv_q = SingleElementQ()
+        self._caddr = controller_addr
+
+    def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
+            -> None:
+        payload = msgpack.packb(prop_values, use_bin_type=True)
+
+        # make sure the transport is called from the reactor thread
+        reactor.callInThread(self.transport.write(payload, self._caddr))
+
+    def get_actuator_values(self) -> Mapping[str, PhyPropType]:
+        try:
+            return self._recv_q.pop_nowait()
+        except Empty:
+            return dict()
+
+    def datagramReceived(self, datagram: bytes, addr: Tuple[str, int]):
+        # unpack commands
+        try:
+            actuator_cmds = msgpack.unpackb(datagram)
+            self._recv_q.put(actuator_cmds)
+        except (ValueError, msgpack.FormatError, msgpack.StackError):
+            warnings.warn('Could not unpack data from {}:{}.'.format(*addr),
+                          ProtocolWarning)

@@ -19,13 +19,19 @@ import warnings
 from abc import ABC, abstractmethod
 from threading import Event
 
+from twisted.internet import reactor, threads
+from twisted.internet.base import ReactorBase
+
 from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
 from ...base.network import CommClient
 from ...base.util import nanos2seconds, seconds2nanos
 
-__all__ = ['Plant', 'PlantBuilder']
+# noinspection PyTypeChecker
+reactor: ReactorBase = reactor
+
+__all__ = ['Plant', 'PlantBuilder', 'reactor']
 
 
 class PlantBuilderWarning(Warning):
@@ -104,7 +110,7 @@ class _BasePlant(Plant):
         self._shutdown_flag = Event()
         self._shutdown_flag.clear()
 
-    def __emu_step(self):
+    def _emu_step(self):
         # 1. get raw actuation inputs
         # 2. process actuation inputs
         # 3. advance state
@@ -132,7 +138,7 @@ class _BasePlant(Plant):
             while not self._shutdown_flag.is_set():
                 try:
                     ti = time.monotonic_ns()
-                    self.__emu_step()
+                    self._emu_step()
                     time.sleep(nanos2seconds(
                         target_dt_ns - (time.monotonic_ns() - ti)))
                 except ValueError:
@@ -160,6 +166,37 @@ class _BasePlant(Plant):
     @property
     def is_shutdown(self):
         return self._shutdown_flag.is_set()
+
+
+class _BaseTwistedPlant(_BasePlant):
+    def _timestep(self, target_dt_ns: int):
+        ti = time.monotonic_ns()
+
+        def reschedule_step_callback(*args, **kwargs):
+            dt = nanos2seconds(target_dt_ns - (time.monotonic_ns() - ti))
+            if dt >= 0:
+                reactor.callLater(dt, self._timestep, target_dt_ns)
+            else:
+                warnings.warn(
+                    'Emulation step took longer than allotted time slot!',
+                    EmulationWarning)
+                reactor.callLater(0, self._timestep, target_dt_ns)
+
+        threads \
+            .deferToThread(self._emu_step) \
+            .addCallback(reschedule_step_callback)
+
+    def execute(self):
+        target_dt_ns = seconds2nanos(1.0 / self._freq)
+        # TODO: connect comms and shit
+        reactor.callWhenRunning(0, self._timestep, target_dt_ns)
+
+        try:
+            self._comm.connect()
+            reactor.suggestThreadPoolSize(3)  # input, output and processing
+            reactor.run()
+        finally:
+            self._comm.disconnect()
 
 
 # noinspection PyAttributeOutsideInit

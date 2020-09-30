@@ -14,4 +14,10 @@
 
 from .client import CommClient, DummyCommClient, ThreadedCommClient
 
+
+# some common exceptions and warnings
+class ProtocolWarning(Warning):
+    pass
+
+
 __all__ = ['CommClient', 'ThreadedCommClient', 'DummyCommClient']
