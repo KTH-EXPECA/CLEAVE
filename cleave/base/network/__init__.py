@@ -12,12 +12,6 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from .client import CommClient, DummyCommClient, ThreadedCommClient
+from .exceptions import ProtocolWarning
 
-
-# some common exceptions and warnings
-class ProtocolWarning(Warning):
-    pass
-
-
-__all__ = ['CommClient', 'ThreadedCommClient', 'DummyCommClient']
+__all__ = ['ProtocolWarning']

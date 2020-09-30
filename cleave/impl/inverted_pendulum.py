@@ -267,6 +267,103 @@ class InvPendulumState(State):
         # }
 
 
+class InvPendulumStateNoPyglet(State):
+    def __init__(self,
+                 upd_freq_hz: int,
+                 ground_friction: float = 0.1,
+                 cart_mass: float = 0.5,
+                 cart_dims: Vec2d = Vec2d(0.3, 0.2),
+                 pend_com: float = 0.6,
+                 pend_width: float = 0.1,
+                 pend_mass: float = 0.2,
+                 pend_moment: float = 0.001,  # TODO: calculate with pymunk?
+                 ):
+        super(InvPendulumStateNoPyglet, self) \
+            .__init__(update_freq_hz=upd_freq_hz)
+        # set up state
+
+        # actuated and sensor variables
+        self.force = ActuatorVariable(persistent=False, default=0.0)
+        self.position = SensorVariable()
+        self.speed = SensorVariable()
+        self.angle = SensorVariable()
+        self.ang_vel = SensorVariable()
+
+        # space
+        self._space = pymunk.Space(threaded=True)
+        self._space.gravity = G_CONST
+
+        # populate space
+        # ground
+        filt = pymunk.ShapeFilter(group=1)
+        self._ground = pymunk.Segment(self._space.static_body,
+                                      (-4, -0.1),
+                                      (4, -0.1),
+                                      0.1)  # TODO remove magic numbers
+
+        self._ground.friction = ground_friction
+        self._ground.filter = filt
+        self._space.add(self._ground)
+
+        # cart
+        cart_moment = pymunk.moment_for_box(cart_mass, cart_dims)
+        self._cart_body = pymunk.Body(mass=cart_mass, moment=cart_moment)
+        self._cart_body.position = (0.0, cart_dims.y / 2)
+        self._cart_shape = pymunk.Poly.create_box(self._cart_body, cart_dims)
+        self._cart_shape.friction = ground_friction
+        self._space.add(self._cart_body, self._cart_shape)
+
+        # pendulum arm and mass
+        pend_dims = (pend_width, pend_com * 2)
+        self._pend_body = pymunk.Body(mass=pend_mass, moment=pend_moment)
+        self._pend_body.position = \
+            (self._cart_body.position.x,
+             self._cart_body.position.y + (cart_dims.y / 2) + pend_com)
+        self._pend_shape = pymunk.Poly.create_box(self._pend_body, pend_dims)
+        self._pend_shape.filter = filt
+        self._space.add(self._pend_body, self._pend_shape)
+
+        # joint
+        _joint_pos = self._cart_body.position + Vec2d(0, cart_dims.y / 2)
+        joint = pymunk.constraint.PivotJoint(self._cart_body, self._pend_body,
+                                             _joint_pos)
+        joint.collide_bodies = False
+        self._space.add(joint)
+
+    def advance(self) -> None:
+        # apply actuation
+        force = self.force
+
+        self._cart_body.apply_force_at_local_point(Vec2d(force, 0.0),
+                                                   Vec2d(0, 0))
+
+        # advance the world state
+        # delta T is received as nanoseconds, turn into seconds
+        deltaT = nanos2seconds(self.get_delta_t_ns())
+        self._space.step(deltaT)
+
+        state_str = \
+            f'Pos: {self._cart_body.position[0]:0.3f} m | ' \
+            f'Angle: {self._pend_body.angle * 57.2958:0.3f} degrees | ' \
+            f'Force: {math.fabs(force):0.1f} N | ' \
+            f'DeltaT: {deltaT:f} s'
+
+        print(f'\r{state_str}', end='\t\t\t')
+
+        # setup new world state
+        self.position = self._cart_body.position.x
+        self.speed = self._cart_body.velocity.x
+        self.angle = self._pend_body.angle
+        self.ang_vel = self._pend_body.angular_velocity
+
+        # return {
+        #     'position': self._cart_body.position.x,
+        #     'speed'   : self._cart_body.velocity.x,
+        #     'angle'   : self._pend_body.angle,
+        #     'ang_vel' : self._pend_body.angular_velocity
+        # }
+
+
 class InvPendulumController(Controller):
     #: Pendulum parameters
     K = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]

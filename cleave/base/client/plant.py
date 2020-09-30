@@ -17,7 +17,7 @@ from __future__ import annotations
 import time
 import warnings
 from abc import ABC, abstractmethod
-from threading import Event
+from threading import RLock
 
 from twisted.internet import reactor, threads
 from twisted.internet.base import ReactorBase
@@ -25,7 +25,7 @@ from twisted.internet.base import ReactorBase
 from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
-from ...base.network import CommClient
+from ..network.client import BaseControllerInterface
 from ...base.util import nanos2seconds, seconds2nanos
 
 # noinspection PyTypeChecker
@@ -89,71 +89,100 @@ class Plant(ABC):
         pass
 
 
-class _BasePlant(Plant):
-    """
-    Base, immutable implementation of a Plant.
-    """
+# class _BasePlant(Plant):
+#     """
+#     Base, immutable implementation of a Plant.
+#     """
+#
+#     def __init__(self,
+#                  update_freq: int,
+#                  state: State,
+#                  sensor_array: SensorArray,
+#                  actuator_array: ActuatorArray,
+#                  comm: CommClient):
+#         self._freq = update_freq
+#         self._state = state
+#         self._sensors = sensor_array
+#         self._actuators = actuator_array
+#         self._comm = comm
+#         self._cycles = 0
+#
+#         self._shutdown_flag = Event()
+#         self._shutdown_flag.clear()
+#
+#     def _emu_step(self):
+#         # 1. get raw actuation inputs
+#         # 2. process actuation inputs
+#         # 3. advance state
+#         # 4. process sensor outputs
+#         # 5. send sensor outputs
+#
+#         act = self._comm.recv_actuator_values()
+#         proc_act = self._actuators.process_actuation_inputs(act)
+#         self._state.actuate(proc_act)
+#         self._state.advance()
+#         sensor_samples = self._state.get_state()
+#         try:
+#             # only send sensor updates if we actually have any
+#             proc_sens = self._sensors.process_plant_state(sensor_samples)
+#             self._comm.send_sensor_values(proc_sens)
+#         except NoSensorUpdate:
+#             pass
+#         self._cycles += 1
+#
+#     def execute(self):
+#         target_dt_ns = seconds2nanos(1.0 / self._freq)
+#         try:
+#             self._comm.connect()
+#             self._shutdown_flag.clear()
+#             while not self._shutdown_flag.is_set():
+#                 try:
+#                     ti = time.monotonic_ns()
+#                     self._emu_step()
+#                     time.sleep(nanos2seconds(
+#                         target_dt_ns - (time.monotonic_ns() - ti)))
+#                 except ValueError:
+#                     warnings.warn(
+#                         'Emulation step took longer than allotted time slot!',
+#                         EmulationWarning
+#                     )
+#         except KeyboardInterrupt:
+#             self._shutdown_flag.set()
+#             warnings.warn(
+#                 'Shutting down plant.',
+#                 EmulationWarning
+#             )
+#         finally:
+#             self._comm.disconnect()
+#
+#     @property
+#     def update_freq_hz(self) -> int:
+#         return self._freq
+#
+#     @property
+#     def plant_state(self) -> State:
+#         return self._state
+#
+#     @property
+#     def is_shutdown(self):
+#         return self._shutdown_flag.is_set()
 
+
+class _BaseTwistedPlant(Plant):
     def __init__(self,
                  update_freq: int,
                  state: State,
                  sensor_array: SensorArray,
                  actuator_array: ActuatorArray,
-                 comm: CommClient):
+                 control_interface: BaseControllerInterface):
         self._freq = update_freq
         self._state = state
         self._sensors = sensor_array
         self._actuators = actuator_array
-        self._comm = comm
         self._cycles = 0
+        self._control = control_interface
 
-        self._shutdown_flag = Event()
-        self._shutdown_flag.clear()
-
-    def _emu_step(self):
-        # 1. get raw actuation inputs
-        # 2. process actuation inputs
-        # 3. advance state
-        # 4. process sensor outputs
-        # 5. send sensor outputs
-
-        act = self._comm.recv_actuator_values()
-        proc_act = self._actuators.process_actuation_inputs(act)
-        self._state.actuate(proc_act)
-        self._state.advance()
-        sensor_samples = self._state.get_state()
-        try:
-            # only send sensor updates if we actually have any
-            proc_sens = self._sensors.process_plant_state(sensor_samples)
-            self._comm.send_sensor_values(proc_sens)
-        except NoSensorUpdate:
-            pass
-        self._cycles += 1
-
-    def execute(self):
-        target_dt_ns = seconds2nanos(1.0 / self._freq)
-        try:
-            self._comm.connect()
-            self._shutdown_flag.clear()
-            while not self._shutdown_flag.is_set():
-                try:
-                    ti = time.monotonic_ns()
-                    self._emu_step()
-                    time.sleep(nanos2seconds(
-                        target_dt_ns - (time.monotonic_ns() - ti)))
-                except ValueError:
-                    warnings.warn(
-                        'Emulation step took longer than allotted time slot!',
-                        EmulationWarning
-                    )
-        except KeyboardInterrupt:
-            self._shutdown_flag.set()
-            warnings.warn(
-                'Shutting down plant.',
-                EmulationWarning
-            )
-        finally:
-            self._comm.disconnect()
+        self._lock = RLock()
 
     @property
     def update_freq_hz(self) -> int:
@@ -163,14 +192,37 @@ class _BasePlant(Plant):
     def plant_state(self) -> State:
         return self._state
 
-    @property
-    def is_shutdown(self):
-        return self._shutdown_flag.is_set()
+    def _emu_step(self):
+        # 1. get raw actuation inputs
+        # 2. process actuation inputs
+        # 3. advance state
+        # 4. process sensor outputs
+        # 5. send sensor outputs
 
+        act = self._control.get_actuator_values()
+        proc_act = self._actuators.process_actuation_inputs(act)
+        with self._lock:
+            # this is always called from a separate thread so add some
+            # thread-safety just in case
+            self._state.actuate(proc_act)
+            self._state.advance()
+            sensor_samples = self._state.get_state()
+            self._cycles += 1
 
-class _BaseTwistedPlant(_BasePlant):
+        try:
+            # only send sensor updates if we actually have any
+            proc_sens = self._sensors.process_plant_state(sensor_samples)
+            self._control.put_sensor_values(proc_sens)
+        except NoSensorUpdate:
+            pass
+
     def _timestep(self, target_dt_ns: int):
         ti = time.monotonic_ns()
+
+        if not self._control.is_ready():
+            # controller not ready, wait a bit
+            reactor.callLater(0.01, self._timestep, target_dt_ns)
+            return
 
         def reschedule_step_callback(*args, **kwargs):
             dt = nanos2seconds(target_dt_ns - (time.monotonic_ns() - ti))
@@ -188,15 +240,12 @@ class _BaseTwistedPlant(_BasePlant):
 
     def execute(self):
         target_dt_ns = seconds2nanos(1.0 / self._freq)
-        # TODO: connect comms and shit
-        reactor.callWhenRunning(0, self._timestep, target_dt_ns)
+        self._control.register_with_reactor(reactor)
 
-        try:
-            self._comm.connect()
-            reactor.suggestThreadPoolSize(3)  # input, output and processing
-            reactor.run()
-        finally:
-            self._comm.disconnect()
+        reactor.callWhenRunning(self._timestep, target_dt_ns)
+
+        reactor.suggestThreadPoolSize(3)  # input, output and processing
+        reactor.run()
 
 
 # noinspection PyAttributeOutsideInit
@@ -219,7 +268,8 @@ class PlantBuilder:
         """
         self._sensors = []
         self._actuators = []
-        self._comm_client = None
+        # self._comm_client = None
+        self._controller = None
         self._plant_state = None
 
     def __init__(self):
@@ -256,29 +306,38 @@ class PlantBuilder:
         """
         self._actuators.append(actuator)
 
-    def set_comm_handler(self, client: CommClient) -> None:
-        """
-        Sets the communication client for the plant under construction.
-
-        Note that any previously assigned communication handler will be
-        overwritten by this operation.
-
-        Parameters
-        ----------
-        client
-            A ClientCommHandler instance to assign to the plant.
-
-        Returns
-        -------
-
-        """
-        if self._comm_client is not None:
+    def set_controller(self, controller: BaseControllerInterface) -> None:
+        if self._controller is not None:
             warnings.warn(
-                'Replacing already set communication client for plant.',
+                'Replacing already set controller for plant.',
                 PlantBuilderWarning
             )
 
-        self._comm_client = client
+        self._controller = controller
+
+    # def set_comm_handler(self, client: CommClient) -> None:
+    #     """
+    #     Sets the communication client for the plant under construction.
+    #
+    #     Note that any previously assigned communication handler will be
+    #     overwritten by this operation.
+    #
+    #     Parameters
+    #     ----------
+    #     client
+    #         A ClientCommHandler instance to assign to the plant.
+    #
+    #     Returns
+    #     -------
+    #
+    #     """
+    #     if self._comm_client is not None:
+    #         warnings.warn(
+    #             'Replacing already set communication client for plant.',
+    #             PlantBuilderWarning
+    #         )
+    #
+    #     self._comm_client = client
 
     def set_plant_state(self, plant_state: State) -> None:
         """
@@ -309,11 +368,6 @@ class PlantBuilder:
         Builds a Plant instance and returns it. The actual subtype of this
         plant will depend on the previously provided parameters.
 
-        Parameters
-        ----------
-        plant_upd_freq
-            Update frequency of the built plant in Hz.
-
         Returns
         -------
         Plant
@@ -324,14 +378,14 @@ class PlantBuilder:
         # TODO: raise error if missing parameters OR instantiate different
         #  types of plants?
         try:
-            return _BasePlant(
+            return _BaseTwistedPlant(
                 update_freq=self._plant_state.update_frequency,
                 state=self._plant_state,
                 sensor_array=SensorArray(
                     plant_freq=self._plant_state.update_frequency,
                     sensors=self._sensors),
                 actuator_array=ActuatorArray(actuators=self._actuators),
-                comm=self._comm_client
+                control_interface=self._controller
             )
         finally:
             self.reset()

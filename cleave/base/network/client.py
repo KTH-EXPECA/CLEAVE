@@ -18,12 +18,13 @@ import warnings
 from abc import ABC, abstractmethod
 from queue import Empty
 from threading import Event, Thread
-from typing import Mapping, Optional, Tuple
+from typing import Any, Mapping, Optional, Tuple
 
 import msgpack
+from twisted.internet.interfaces import IReactorUDP
 from twisted.internet.protocol import DatagramProtocol
 
-from . import ProtocolWarning
+from .exceptions import ProtocolWarning
 from ..client.plant import reactor
 from ...base.util import PhyPropType, SingleElementQ
 
@@ -186,6 +187,10 @@ class ThreadedCommClient(CommClient, ABC):
 
 
 class BaseControllerInterface(ABC):
+    def __init__(self):
+        self._ready = Event()
+        self._ready.clear()
+
     @abstractmethod
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
             -> None:
@@ -212,6 +217,13 @@ class BaseControllerInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    def register_with_reactor(self, reactor: Any) -> None:
+        pass
+
+    def is_ready(self) -> bool:
+        return self._ready.is_set()
+
 
 class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
     def __init__(self, controller_addr: Tuple[str, int]):
@@ -219,12 +231,15 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self._recv_q = SingleElementQ()
         self._caddr = controller_addr
 
+    def startProtocol(self):
+        self._ready.set()
+
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
             -> None:
         payload = msgpack.packb(prop_values, use_bin_type=True)
 
         # make sure the transport is called from the reactor thread
-        reactor.callInThread(self.transport.write(payload, self._caddr))
+        reactor.callInThread(self.transport.write, payload, self._caddr)
 
     def get_actuator_values(self) -> Mapping[str, PhyPropType]:
         try:
@@ -240,3 +255,6 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         except (ValueError, msgpack.FormatError, msgpack.StackError):
             warnings.warn('Could not unpack data from {}:{}.'.format(*addr),
                           ProtocolWarning)
+
+    def register_with_reactor(self, reactor: IReactorUDP):
+        reactor.listenUDP(0, self)
