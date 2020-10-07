@@ -25,6 +25,7 @@ from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
 from .exceptions import ProtocolWarning
+from .protocol import Message, MessageFactory, NoMessage
 from ...base.util import PhyPropType, SingleElementQ
 
 _DEFAULT_TIMEOUT_S = 0.01
@@ -229,16 +230,17 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         super(UDPControllerInterface, self).__init__()
         self._recv_q = SingleElementQ()
         self._caddr = controller_addr
+        self._msg_fact = MessageFactory()
 
     def startProtocol(self):
         self._ready.set()
 
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
             -> None:
-        payload = msgpack.packb(prop_values, use_bin_type=True)
-
+        # TODO: log!
+        msg = self._msg_fact.create_sensor_message(prop_values)
         # this should always be called from the reactor thread
-        self.transport.write(payload, self._caddr)
+        self.transport.write(msg.serialize(), self._caddr)
 
     def get_actuator_values(self) -> Mapping[str, PhyPropType]:
         try:
@@ -249,8 +251,11 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
     def datagramReceived(self, datagram: bytes, addr: Tuple[str, int]):
         # unpack commands
         try:
-            actuator_cmds = msgpack.unpackb(datagram)
-            self._recv_q.put(actuator_cmds)
+            msg = Message.from_bytes(datagram)
+            # TODO: log!
+            self._recv_q.put(msg.payload)
+        except NoMessage:
+            pass
         except (ValueError, msgpack.FormatError, msgpack.StackError):
             warnings.warn('Could not unpack data from {}:{}.'.format(*addr),
                           ProtocolWarning)

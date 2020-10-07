@@ -130,10 +130,10 @@ class _BasePlant(Plant):
             self._cycles += 1
 
             # this will only send sensor updates if we actually have any,
-            # since otherwise it raises an exception which will be catched in
+            # since otherwise it raises an exception which will be caught in
             # the callback
-            proc_sens = self._sensors.process_plant_state(sensor_samples)
-            self._control.put_sensor_values(proc_sens)
+            return self._sensors.process_plant_state(sensor_samples)
+            # self._control.put_sensor_values(proc_sens)
 
     def _timestep(self, target_dt_ns: int):
         ti = time.monotonic_ns()
@@ -149,6 +149,7 @@ class _BasePlant(Plant):
             return
 
         def send_step_results(sensor_samples: Mapping[str, PhyPropType]):
+            # TODO: log!
             self._control.put_sensor_values(sensor_samples)
 
         def reschedule_step_callback(*args, **kwargs):

@@ -12,3 +12,4 @@ Flask
 simplejson
 python-dotenv
 twisted
+msgpack-numpy
