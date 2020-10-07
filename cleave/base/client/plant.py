@@ -17,16 +17,18 @@ from __future__ import annotations
 import time
 import warnings
 from abc import ABC, abstractmethod
+from collections import Mapping
 from threading import RLock
 
 from twisted.internet import threads
 from twisted.internet.posixbase import PosixReactorBase
+from twisted.python.failure import Failure
 
 from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
 from ..network.client import BaseControllerInterface
-from ...base.util import nanos2seconds, seconds2nanos
+from ...base.util import PhyPropType, nanos2seconds, seconds2nanos
 
 
 class PlantBuilderWarning(Warning):
@@ -127,12 +129,11 @@ class _BasePlant(Plant):
             sensor_samples = self._state.get_state()
             self._cycles += 1
 
-        try:
-            # only send sensor updates if we actually have any
+            # this will only send sensor updates if we actually have any,
+            # since otherwise it raises an exception which will be catched in
+            # the callback
             proc_sens = self._sensors.process_plant_state(sensor_samples)
             self._control.put_sensor_values(proc_sens)
-        except NoSensorUpdate:
-            pass
 
     def _timestep(self, target_dt_ns: int):
         ti = time.monotonic_ns()
@@ -141,6 +142,14 @@ class _BasePlant(Plant):
             # controller not ready, wait a bit
             self._reactor.callLater(0.01, self._timestep, target_dt_ns)
             return
+
+        def no_samples_to_send(failure: Failure):
+            failure.trap(NoSensorUpdate)
+            # no sensor data to send, ignore
+            return
+
+        def send_step_results(sensor_samples: Mapping[str, PhyPropType]):
+            self._control.put_sensor_values(sensor_samples)
 
         def reschedule_step_callback(*args, **kwargs):
             dt = nanos2seconds(target_dt_ns - (time.monotonic_ns() - ti))
@@ -158,6 +167,8 @@ class _BasePlant(Plant):
         threads.deferToThreadPool(self._reactor,
                                   self._reactor.getThreadPool(),
                                   self._emu_step) \
+            .addCallback(send_step_results) \
+            .addErrback(no_samples_to_send) \
             .addCallback(reschedule_step_callback)
 
         # threads \

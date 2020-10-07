@@ -11,17 +11,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import sys
 
-from cleave.base.eventloop import reactor
-from cleave.base.network.backend import UDPControllerService
-from cleave.impl import InvPendulumController
 
-if __name__ == '__main__':
-    _, port, *_ = sys.argv
-    port = int(port)
-    controller = InvPendulumController(ref=0.2)
-    service = UDPControllerService(controller)
+from twisted.internet import selectreactor
 
-    reactor.listenUDP(port, service)
-    reactor.run()
+selectreactor.install()
+
+from twisted.internet import reactor
+
+__all__ = ['reactor']

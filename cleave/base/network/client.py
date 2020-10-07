@@ -18,14 +18,13 @@ import warnings
 from abc import ABC, abstractmethod
 from queue import Empty
 from threading import Event, Thread
-from typing import Any, Mapping, Optional, Tuple
+from typing import Mapping, Optional, Tuple
 
 import msgpack
-from twisted.internet.interfaces import IReactorUDP
+from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
 from .exceptions import ProtocolWarning
-from ..client.plant import reactor
 from ...base.util import PhyPropType, SingleElementQ
 
 _DEFAULT_TIMEOUT_S = 0.01
@@ -218,7 +217,7 @@ class BaseControllerInterface(ABC):
         pass
 
     @abstractmethod
-    def register_with_reactor(self, reactor: Any) -> None:
+    def register_with_reactor(self, reactor: PosixReactorBase) -> None:
         pass
 
     def is_ready(self) -> bool:
@@ -238,8 +237,8 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
             -> None:
         payload = msgpack.packb(prop_values, use_bin_type=True)
 
-        # make sure the transport is called from the reactor thread
-        reactor.callInThread(self.transport.write, payload, self._caddr)
+        # this should always be called from the reactor thread
+        self.transport.write(payload, self._caddr)
 
     def get_actuator_values(self) -> Mapping[str, PhyPropType]:
         try:
@@ -256,5 +255,5 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
             warnings.warn('Could not unpack data from {}:{}.'.format(*addr),
                           ProtocolWarning)
 
-    def register_with_reactor(self, reactor: IReactorUDP):
+    def register_with_reactor(self, reactor: PosixReactorBase):
         reactor.listenUDP(0, self)

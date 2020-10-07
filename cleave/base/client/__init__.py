@@ -16,9 +16,11 @@ from .actuator import Actuator, SimpleActuator
 from .plant import Plant, PlantBuilder
 from .sensor import Sensor, SimpleSensor
 from .state import ActuatorVariable, SensorVariable, State
+from ..eventloop import reactor
+
 
 #: Global PlantBuilder instance
-builder = PlantBuilder()
+builder = PlantBuilder(reactor)
 
 __all__ = ['builder', 'Plant',
            'Sensor', 'SimpleSensor',
