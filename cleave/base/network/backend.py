@@ -40,7 +40,7 @@ class UDPControllerService(DatagramProtocol):
     def __init__(self, controller: Controller):
         super(UDPControllerService, self).__init__()
         self._controller = controller
-        self._msg_fact = MessageFactory()
+        self._msg_fact = ControlMessageFactory()
 
     def datagramReceived(self, datagram: bytes, addr: Tuple[str, int]):
         # Todo: add timestamping
@@ -52,8 +52,8 @@ class UDPControllerService(DatagramProtocol):
             self.transport.write(out_msg.serialize(), addr)
 
         try:
-            in_msg = Message.from_bytes(datagram)
-            assert in_msg.msg_type == MsgType.SENSOR_SAMPLE
+            in_msg = ControlMessage.from_bytes(datagram)
+            assert in_msg.msg_type == ControlMsgType.SENSOR_SAMPLE
 
             # TODO: log
             # TODO: use object oriented interface
@@ -64,7 +64,7 @@ class UDPControllerService(DatagramProtocol):
             pass
         except AssertionError:
             warnings.warn(f'Expected message with type '
-                          f'{MsgType.SENSOR_SAMPLE.name}, instead got '
+                          f'{ControlMsgType.SENSOR_SAMPLE.name}, instead got '
                           f'{in_msg.msg_type.name}.')
         except (ValueError, msgpack.FormatError, msgpack.StackError):
             warnings.warn('Could not unpack data from {}:{}.'.format(*addr),

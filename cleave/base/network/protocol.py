@@ -25,27 +25,28 @@ from msgpack import Timestamp
 
 from ..util import PhyPropType
 
-__all__ = ['MsgType', 'Message', 'MessageFactory', 'NoMessage']
+__all__ = ['ControlMsgType', 'ControlMessage', 'ControlMessageFactory',
+           'NoMessage']
 
 # patch msgpack for numpy
 m.patch()
 
 
-class MsgType(Enum):
+class ControlMsgType(Enum):
     SENSOR_SAMPLE = auto()
     ACTUATION_CMD = auto()
 
 
 # custom (de)serialization functions to handle message types
 def _serialize(obj: Any) -> Any:
-    if isinstance(obj, MsgType):
+    if isinstance(obj, ControlMsgType):
         return {'__msgtype__': obj.value}
     return obj
 
 
 def _deserialize(obj: Dict) -> Any:
     if '__msgtype__' in obj:
-        return MsgType(obj['__msgtype__'])
+        return ControlMsgType(obj['__msgtype__'])
     return obj
 
 
@@ -64,8 +65,8 @@ class NoMessage(Exception):
 
 
 @dataclass
-class Message:
-    msg_type: MsgType
+class ControlMessage:
+    msg_type: ControlMsgType
     seq: int
     timestamp: Timestamp
     payload: Any
@@ -75,11 +76,11 @@ class Message:
         return _packer.pack(package)
 
     @staticmethod
-    def from_bytes(data: bytes) -> Message:
+    def from_bytes(data: bytes) -> ControlMessage:
         _unpacker.feed(data)
         try:
             deser = next(_unpacker)
-            return Message(
+            return ControlMessage(
                 deser['msg_type'],
                 deser['seq'],
                 deser['timestamp'],
@@ -89,7 +90,7 @@ class Message:
             raise NoMessage()
 
 
-class MessageFactory:
+class ControlMessageFactory:
     def __init__(self):
         self._msg_count = 0
 
@@ -100,9 +101,10 @@ class MessageFactory:
     def message_count(self) -> int:
         return self._msg_count
 
-    def create_sensor_message(self, data: Mapping[str, PhyPropType]) -> Message:
-        msg = Message(
-            msg_type=MsgType.SENSOR_SAMPLE,
+    def create_sensor_message(self, data: Mapping[str, PhyPropType]) \
+            -> ControlMessage:
+        msg = ControlMessage(
+            msg_type=ControlMsgType.SENSOR_SAMPLE,
             seq=self._msg_count,
             timestamp=Timestamp.from_datetime(datetime.datetime.now()),
             payload=data
@@ -111,10 +113,10 @@ class MessageFactory:
         self._msg_count += 1
         return msg
 
-    def create_actuation_message(self,
-                                 data: Mapping[str, PhyPropType]) -> Message:
-        msg = Message(
-            msg_type=MsgType.ACTUATION_CMD,
+    def create_actuation_message(self, data: Mapping[str, PhyPropType]) \
+            -> ControlMessage:
+        msg = ControlMessage(
+            msg_type=ControlMsgType.ACTUATION_CMD,
             seq=self._msg_count,
             timestamp=Timestamp.from_datetime(datetime.datetime.now()),
             payload=data

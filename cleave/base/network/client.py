@@ -25,7 +25,7 @@ from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
 from .exceptions import ProtocolWarning
-from .protocol import Message, MessageFactory, NoMessage
+from .protocol import ControlMessage, ControlMessageFactory, NoMessage
 from ...base.util import PhyPropType, SingleElementQ
 
 _DEFAULT_TIMEOUT_S = 0.01
@@ -230,7 +230,7 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         super(UDPControllerInterface, self).__init__()
         self._recv_q = SingleElementQ()
         self._caddr = controller_addr
-        self._msg_fact = MessageFactory()
+        self._msg_fact = ControlMessageFactory()
 
     def startProtocol(self):
         self._ready.set()
@@ -251,7 +251,7 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
     def datagramReceived(self, datagram: bytes, addr: Tuple[str, int]):
         # unpack commands
         try:
-            msg = Message.from_bytes(datagram)
+            msg = ControlMessage.from_bytes(datagram)
             # TODO: log!
             self._recv_q.put(msg.payload)
         except NoMessage:
