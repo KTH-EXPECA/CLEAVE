@@ -14,14 +14,13 @@
 
 from __future__ import annotations
 
-import datetime
+import time
 from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from typing import Any, Dict, Mapping
 
 import msgpack
 import msgpack_numpy as m
-from msgpack import Timestamp
 
 from ..util import PhyPropType
 
@@ -68,7 +67,7 @@ class NoMessage(Exception):
 class ControlMessage:
     msg_type: ControlMsgType
     seq: int
-    timestamp: Timestamp
+    timestamp: float
     payload: Any
 
     def serialize(self) -> bytes:
@@ -106,7 +105,7 @@ class ControlMessageFactory:
         msg = ControlMessage(
             msg_type=ControlMsgType.SENSOR_SAMPLE,
             seq=self._msg_count,
-            timestamp=Timestamp.from_datetime(datetime.datetime.now()),
+            timestamp=time.time(),
             payload=data
         )
 
@@ -118,7 +117,7 @@ class ControlMessageFactory:
         msg = ControlMessage(
             msg_type=ControlMsgType.ACTUATION_CMD,
             seq=self._msg_count,
-            timestamp=Timestamp.from_datetime(datetime.datetime.now()),
+            timestamp=time.time(),
             payload=data
         )
 

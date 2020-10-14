@@ -23,6 +23,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import time
 import warnings
 from typing import Mapping, Tuple
 
@@ -33,6 +34,7 @@ from twisted.internet.threads import deferToThread
 from . import ProtocolWarning
 from .protocol import *
 from ..backend.controller import Controller
+from ..stats.stats import RollingStatistics
 from ..util import PhyPropType
 
 
@@ -41,25 +43,53 @@ class UDPControllerService(DatagramProtocol):
         super(UDPControllerService, self).__init__()
         self._controller = controller
         self._msg_fact = ControlMessageFactory()
+        self._stats = RollingStatistics(
+            columns=['seq', 'in_size_b', 'out_size_b',
+                     'recv_timestamp', 'process_time',
+                     'send_timestamp'])
 
-    def datagramReceived(self, datagram: bytes, addr: Tuple[str, int]):
+    def _log_input_output(self,
+                          in_msg: ControlMessage,
+                          in_dgram: bytes,
+                          out_msg: ControlMessage,
+                          out_dgram: bytes,
+                          recv_time: float):
+        record = {
+            'seq'           : in_msg.seq,
+            'in_size_b'     : len(in_dgram),
+            'out_size_b'    : len(out_dgram),
+            'recv_timestamp': recv_time,
+            'process_time'  : out_msg.timestamp - recv_time,
+            'send_timestamp': out_msg.timestamp
+        }
+        self._stats.add_sample(record)
+        print(self._stats.rolling_window_stats(5))
+
+    def datagramReceived(self, in_dgram: bytes, addr: Tuple[str, int]):
         # Todo: add timestamping
         # Todo: real logging
-
-        def result_callback(act_cmds: Mapping[str, PhyPropType]) -> None:
-            # TODO: log
-            out_msg = self._msg_fact.create_actuation_message(act_cmds)
-            self.transport.write(out_msg.serialize(), addr)
+        recv_time = time.time()
 
         try:
-            in_msg = ControlMessage.from_bytes(datagram)
-            assert in_msg.msg_type == ControlMsgType.SENSOR_SAMPLE
+            in_msg = ControlMessage.from_bytes(in_dgram)
+            if in_msg.msg_type == ControlMsgType.SENSOR_SAMPLE:
+                # TODO: use object oriented interface
 
-            # TODO: log
-            # TODO: use object oriented interface
-            d = deferToThread(self._controller.process, in_msg.payload)
-            d.addCallback(result_callback)
+                def result_callback(act_cmds: Mapping[str, PhyPropType]) \
+                        -> None:
+                    # TODO: log
+                    out_msg = self._msg_fact.create_actuation_message(act_cmds)
+                    out_dgram = out_msg.serialize()
+                    self.transport.write(out_dgram, addr)
 
+                    # log after sending
+                    deferToThread(self._log_input_output, in_msg, in_dgram,
+                                  out_msg, out_dgram, recv_time)
+
+                d = deferToThread(self._controller.process, in_msg.payload)
+                d.addCallback(result_callback)
+            else:
+                pass
         except NoMessage:
             pass
         except AssertionError:
