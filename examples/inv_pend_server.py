@@ -11,9 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import signal
 import sys
-
 
 from cleave.base.eventloop import reactor
 from cleave.base.network.backend import UDPControllerService
@@ -26,6 +24,8 @@ if __name__ == '__main__':
     service = UDPControllerService(controller)
 
     # callback for shutdown
+    # Doesn't work on windows
+    # TODO: rework controller
     reactor.addSystemEventTrigger('before', 'shutdown',
                                   lambda: service.get_stats()
                                   .to_csv('./stats.csv', index=False))

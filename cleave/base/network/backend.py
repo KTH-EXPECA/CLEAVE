@@ -67,7 +67,7 @@ class UDPControllerService(DatagramProtocol):
             'send_timestamp': out_msg.timestamp
         }
         self._stats.add_record(record)
-        print(self._stats.rolling_window_stats(5))
+        # print(self._stats.rolling_window_stats(5))
 
     def datagramReceived(self, in_dgram: bytes, addr: Tuple[str, int]):
         # Todo: add timestamping
