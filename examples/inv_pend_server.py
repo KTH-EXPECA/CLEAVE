@@ -15,11 +15,6 @@ import signal
 import sys
 
 
-def _handler(*args, **kwargs):
-    print(f'got {args}, {kwargs}')
-    exit(0)
-
-
 from cleave.base.eventloop import reactor
 from cleave.base.network.backend import UDPControllerService
 from cleave.impl import InvPendulumController
@@ -29,9 +24,6 @@ if __name__ == '__main__':
     port = int(port)
     controller = InvPendulumController(ref=0.2)
     service = UDPControllerService(controller)
-
-    signal.signal(signal.SIGINT, _handler)
-    signal.signal(signal.SIGTERM, _handler)
 
     # callback for shutdown
     reactor.addSystemEventTrigger('before', 'shutdown',
