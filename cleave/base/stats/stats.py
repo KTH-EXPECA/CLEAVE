@@ -39,7 +39,8 @@ class RollingStatistics:
                               dtype='float64')
 
     def to_pandas(self) -> pd.DataFrame:
-        return pd.DataFrame(data=self._data, columns=self._columns)
+        return pd.DataFrame(data=self._data[:self._index, :],
+                            columns=self._columns)
 
     def rolling_window_stats(self, window_sz: int) -> Dict:
         window = self._data[
