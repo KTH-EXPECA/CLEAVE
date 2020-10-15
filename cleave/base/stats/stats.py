@@ -55,7 +55,7 @@ class RollingStatistics:
         except ValueError:
             return {c: 0 for c in self._columns}
 
-    def add_sample(self, values: Mapping[str, Any]) -> None:
+    def add_record(self, values: Mapping[str, Any]) -> None:
         self._data[self._index, :] = np.array(
             [values.get(col, self._missing_value) for col in self._columns]
         )

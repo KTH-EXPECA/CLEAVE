@@ -28,6 +28,7 @@ import warnings
 from typing import Mapping, Tuple
 
 import msgpack
+import pandas as pd
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet.threads import deferToThread
 
@@ -48,6 +49,9 @@ class UDPControllerService(DatagramProtocol):
                      'recv_timestamp', 'process_time',
                      'send_timestamp'])
 
+    def get_stats(self) -> pd.DataFrame:
+        return self._stats.to_pandas()
+
     def _log_input_output(self,
                           in_msg: ControlMessage,
                           in_dgram: bytes,
@@ -62,7 +66,7 @@ class UDPControllerService(DatagramProtocol):
             'process_time'  : out_msg.timestamp - recv_time,
             'send_timestamp': out_msg.timestamp
         }
-        self._stats.add_sample(record)
+        self._stats.add_record(record)
         print(self._stats.rolling_window_stats(5))
 
     def datagramReceived(self, in_dgram: bytes, addr: Tuple[str, int]):

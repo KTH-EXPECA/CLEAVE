@@ -21,7 +21,7 @@ if __name__ == '__main__':
     import timeit
 
     stats = RollingStatistics(['test'])
-    results = np.array(timeit.repeat(lambda: stats.add_sample({'test': 100}),
+    results = np.array(timeit.repeat(lambda: stats.add_record({'test': 100}),
                                      number=1,
                                      repeat=int(1e6)))
 
