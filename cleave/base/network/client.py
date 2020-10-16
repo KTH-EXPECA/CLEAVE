@@ -135,7 +135,7 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
                 how='outer',  # use sequence number for both
                 on='seq',
                 suffixes=('_send', '_recv'),
-                validate='one_to_one'
+                # validate='one_to_one'
             )
 
             total_stats.to_csv('./udp_client_stats.csv', index=False)
