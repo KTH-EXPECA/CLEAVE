@@ -359,7 +359,7 @@ class InvPendulumStateNoPyglet(State):
         joint.collide_bodies = False
         self._space.add(joint)
 
-        self._screen = Screen(size=(600, 100))
+        self._screen = Screen(size=(300, 100))
 
         # drawing rate
         self._drawing_rate = upd_freq_hz // 5
