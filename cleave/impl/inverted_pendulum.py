@@ -459,9 +459,9 @@ class InvPendulumStateNoPyglet(State):
             sns.lineplot(x='timestamp', y='force', color=next(colors),
                          data=force, ax=ax_force)
 
-            ax_angle.set_ylabel('Pendulum Angle [°]')
-            ax_pos.set_ylabel('Cart X-Axis Position')
-            ax_force.set_ylabel('Applied Forced [N]')
+            ax_angle.set_ylabel('Pendulum\nAngle [°]')
+            ax_pos.set_ylabel('Cart X-Axis\nPosition')
+            ax_force.set_ylabel('Applied\nForce [N]')
 
             ax_force.set_xlabel('Time [s]')
             # TODO: parameterize
