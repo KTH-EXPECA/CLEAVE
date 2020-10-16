@@ -46,6 +46,29 @@ def _to_screen_coords(screen: Screen, v: Vec2d, scale: float = 50.0):
                  int(screen.height / 2 - v.y * scale))
 
 
+class _SortVec2D(Vec2d):
+    def __gt__(self, other):
+        if self.x != other.x:
+            return self.x > other.x
+        else:
+            return self.y > other.y
+
+    def __lt__(self, other):
+        if self.x != other.x:
+            return self.x < other.x
+        else:
+            return self.y < other.y
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def __ge__(self, other):
+        return self > other or self == other
+
+    def __le__(self, other):
+        return self < other or self == other
+
+
 class InvPendulumState(State):
     PYGLET_CAPTION = 'Inverted Pendulum Simulator'
 
@@ -373,11 +396,12 @@ class InvPendulumStateNoPyglet(State):
             self._screen.clear()
             self._screen.context.color = 1, 0, 0
 
-            for v in self._cart_shape.get_vertices():
-                v = v.rotated(self._cart_body.angle) + self._cart_body.position
-                # start = _to_screen_coords(self._screen, start)
-                v = _to_screen_coords(self._screen, v)
-                self._screen.draw.set(v)
+            verts = [_SortVec2D(
+                v.rotated(self._cart_body.angle) + self._cart_body.position)
+                for v in self._cart_shape.get_vertices()]
+            ll = _to_screen_coords(self._screen, verts[0])
+            ur = _to_screen_coords(self._screen, verts[-1])
+            self._screen.draw.rect(ll, ur, fill=True)
 
         self._update_count += 1
 
