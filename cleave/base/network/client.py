@@ -97,9 +97,9 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
 
         # log
         self._send_stats.add_record({
-            'seq'       : msg.seq,
-            'send_time' : msg.timestamp,
-            'size_bytes': len(payload)
+            'seq'           : msg.seq,
+            'send_timestamp': msg.timestamp,
+            'out_size_b'    : len(payload)
         })
 
     def get_actuator_values(self) -> Mapping[str, PhyPropType]:
@@ -115,10 +115,10 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
             msg = ControlMessage.from_bytes(datagram)
             self._recv_q.put(msg.payload)
             # log
-            self._send_stats.add_record({
-                'seq'       : msg.seq,
-                'recv_time' : recv_time,
-                'size_bytes': len(datagram)
+            self._recv_stats.add_record({
+                'seq'           : msg.seq,
+                'recv_timestamp': recv_time,
+                'in_size_b'     : len(datagram)
             })
         except NoMessage:
             pass
@@ -135,9 +135,10 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
                 how='outer',  # use sequence number for both
                 on='seq',
                 suffixes=('_send', '_recv'),
-                # validate='one_to_one'
+                validate='one_to_one'
             )
-
+            total_stats[['seq', 'out_size_b', 'in_size_b']] = \
+                total_stats[['seq', 'out_size_b', 'in_size_b']].astype('int32')
             total_stats.to_csv('./udp_client_stats.csv', index=False)
 
         reactor.addSystemEventTrigger('before', 'shutdown', _save_stats)
