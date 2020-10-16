@@ -26,10 +26,12 @@
 import functools
 import math
 import warnings
-from typing import Mapping, Tuple
+from typing import Mapping, Sequence, Tuple
 
+import numpy as np
 import pyglet
 import pymunk
+from drawille import Canvas
 from pymunk.vec2d import Vec2d
 
 from ..base.backend.controller import Controller
@@ -38,6 +40,19 @@ from ..base.util import PhyPropType, nanos2seconds
 
 #: Gravity constants
 G_CONST = Vec2d(0, -9.8)
+
+
+def _draw_poly(canvas: Canvas, verts: Sequence[Vec2d]):
+    start_v = verts
+    end_v = verts[1:] + verts[0]
+    for v1, v2 in zip(start_v, end_v):
+        # canvas.set(*v1)
+        x_points = np.arange(v1.x, v2.x)
+        y_points = np.arange(v1.y, v2.y)
+
+        for x, y in zip(x_points, y_points):
+            canvas.set(x, y)
+        canvas.set(*v2)
 
 
 class InvPendulumState(State):
@@ -330,6 +345,9 @@ class InvPendulumStateNoPyglet(State):
         joint.collide_bodies = False
         self._space.add(joint)
 
+        # set up terminal drawing
+        self._canvas = Canvas()
+
     def advance(self) -> None:
         # apply actuation
         force = self.force
@@ -355,6 +373,9 @@ class InvPendulumStateNoPyglet(State):
         self.speed = self._cart_body.velocity.x
         self.angle = self._pend_body.angle
         self.ang_vel = self._pend_body.angular_velocity
+
+        # draw
+        _draw_poly(self._canvas, self._cart_shape.get_vertices())
 
         # return {
         #     'position': self._cart_body.position.x,
