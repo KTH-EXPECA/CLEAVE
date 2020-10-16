@@ -78,10 +78,10 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self._caddr = controller_addr
         self._msg_fact = ControlMessageFactory()
         self._send_stats = RollingStatistics(
-            columns=['seq', 'send_time', 'size_bytes']
+            columns=['seq', 'send_timestamp', 'out_size_b']
         )
         self._recv_stats = RollingStatistics(
-            columns=['seq', 'recv_time', 'size_bytes']
+            columns=['seq', 'recv_timestamp', 'in_size_b']
         )
 
     def startProtocol(self):
