@@ -375,6 +375,7 @@ class InvPendulumStateNoPyglet(State):
         self.ang_vel = self._pend_body.angular_velocity
 
         # draw
+        self._canvas.clear()
         _draw_poly(self._canvas, self._cart_shape.get_vertices())
 
         # return {
