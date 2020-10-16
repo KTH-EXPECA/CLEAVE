@@ -87,6 +87,9 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
     def startProtocol(self):
         self._ready.set()
 
+    def stopProtocol(self):
+        print('Stopping')  # just a test
+
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
             -> None:
         # TODO: log!
@@ -138,7 +141,8 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
                 validate='one_to_one'
             )
             # total_stats[['seq', 'out_size_b', 'in_size_b']] = \
-            #     total_stats[['seq', 'out_size_b', 'in_size_b']].astype('int32')
+            #     total_stats[['seq', 'out_size_b', 'in_size_b']].astype(
+            #     'int32')
             total_stats.to_csv('./udp_client_stats.csv', index=False)
 
         reactor.addSystemEventTrigger('before', 'shutdown', _save_stats)
