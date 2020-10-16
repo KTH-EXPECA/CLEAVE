@@ -88,7 +88,19 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self._ready.set()
 
     def stopProtocol(self):
-        print('Stopping')  # just a test
+        # write stats to disk on shutdown
+        # TODO: parameterize
+        total_stats = pd.merge(
+            self._send_stats.to_pandas(),
+            self._recv_stats.to_pandas(),
+            how='outer',  # use sequence number for both
+            on='seq',
+            suffixes=('_send', '_recv'),
+            validate='one_to_one'
+        )
+        total_stats.to_csv('./udp_client_stats.csv', index=False)
+
+        # plot some stats
 
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
             -> None:
@@ -115,7 +127,7 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         # unpack commands
         recv_time = time.time()
         try:
-            msg = ControlMessage.from_bytes(datagram)
+            msg = self._msg_fact.parse_message_from_bytes(datagram)
             self._recv_q.put(msg.payload)
             # log
             self._recv_stats.add_record({
@@ -130,20 +142,4 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
                           ProtocolWarning)
 
     def register_with_reactor(self, reactor: PosixReactorBase):
-        # TODO: parameterize
-        def _save_stats():
-            total_stats = pd.merge(
-                self._send_stats.to_pandas(),
-                self._recv_stats.to_pandas(),
-                how='outer',  # use sequence number for both
-                on='seq',
-                suffixes=('_send', '_recv'),
-                validate='one_to_one'
-            )
-            # total_stats[['seq', 'out_size_b', 'in_size_b']] = \
-            #     total_stats[['seq', 'out_size_b', 'in_size_b']].astype(
-            #     'int32')
-            total_stats.to_csv('./udp_client_stats.csv', index=False)
-
-        reactor.addSystemEventTrigger('before', 'shutdown', _save_stats)
         reactor.listenUDP(0, self)

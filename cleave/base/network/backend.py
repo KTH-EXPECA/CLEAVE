@@ -75,14 +75,14 @@ class UDPControllerService(DatagramProtocol):
         recv_time = time.time()
 
         try:
-            in_msg = ControlMessage.from_bytes(in_dgram)
+            in_msg = self._msg_fact.parse_message_from_bytes(in_dgram)
             if in_msg.msg_type == ControlMsgType.SENSOR_SAMPLE:
                 # TODO: use object oriented interface
 
                 def result_callback(act_cmds: Mapping[str, PhyPropType]) \
                         -> None:
                     # TODO: log
-                    out_msg = self._msg_fact.create_actuation_message(act_cmds)
+                    out_msg = in_msg.make_control_reply(act_cmds)
                     out_dgram = out_msg.serialize()
                     self.transport.write(out_dgram, addr)
 

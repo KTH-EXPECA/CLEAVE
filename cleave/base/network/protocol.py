@@ -14,10 +14,11 @@
 
 from __future__ import annotations
 
+import abc
 import time
 from dataclasses import asdict, dataclass
 from enum import Enum, auto
-from typing import Any, Dict, Mapping
+from typing import Any, Dict, Mapping, Optional, Union
 
 import msgpack
 import msgpack_numpy as m
@@ -64,7 +65,7 @@ class NoMessage(Exception):
 
 
 @dataclass
-class ControlMessage:
+class ControlMessage(abc.ABC):
     msg_type: ControlMsgType
     seq: int
     timestamp: float
@@ -74,19 +75,46 @@ class ControlMessage:
         package = asdict(self)
         return _packer.pack(package)
 
-    @staticmethod
-    def from_bytes(data: bytes) -> ControlMessage:
-        _unpacker.feed(data)
-        try:
-            deser = next(_unpacker)
-            return ControlMessage(
-                deser['msg_type'],
-                deser['seq'],
-                deser['timestamp'],
-                deser['payload']
-            )
-        except StopIteration:
-            raise NoMessage()
+
+@dataclass
+class ActuationMessage(ControlMessage):
+    def __init__(self,
+                 seq: int,
+                 payload: Mapping[str, PhyPropType],
+                 timestamp: Optional[float] = None):
+        super(ActuationMessage, self).__init__(
+            msg_type=ControlMsgType.ACTUATION_CMD,
+            seq=seq,
+            timestamp=timestamp if timestamp is not None else time.time(),
+            payload=payload
+        )
+
+
+@dataclass
+class SampleMessage(ControlMessage):
+    def __init__(self,
+                 seq: int,
+                 payload: Mapping[str, PhyPropType],
+                 timestamp: Optional[float] = None):
+        super(SampleMessage, self).__init__(
+            msg_type=ControlMsgType.SENSOR_SAMPLE,
+            seq=seq,
+            timestamp=timestamp if timestamp is not None else time.time(),
+            payload=payload
+        )
+
+    def make_control_reply(self, act_cmd: Mapping[str, PhyPropType]) \
+            -> ActuationMessage:
+        return ActuationMessage(
+            seq=self.seq,
+            payload=act_cmd
+        )
+
+
+_msg_type_map = {
+    ControlMsgType.SENSOR_SAMPLE: SampleMessage,
+    ControlMsgType.ACTUATION_CMD: ActuationMessage
+}
 
 
 class ControlMessageFactory:
@@ -101,9 +129,8 @@ class ControlMessageFactory:
         return self._msg_count
 
     def create_sensor_message(self, data: Mapping[str, PhyPropType]) \
-            -> ControlMessage:
-        msg = ControlMessage(
-            msg_type=ControlMsgType.SENSOR_SAMPLE,
+            -> SampleMessage:
+        msg = SampleMessage(
             seq=self._msg_count,
             timestamp=time.time(),
             payload=data
@@ -112,14 +139,16 @@ class ControlMessageFactory:
         self._msg_count += 1
         return msg
 
-    def create_actuation_message(self, data: Mapping[str, PhyPropType]) \
-            -> ControlMessage:
-        msg = ControlMessage(
-            msg_type=ControlMsgType.ACTUATION_CMD,
-            seq=self._msg_count,
-            timestamp=time.time(),
-            payload=data
-        )
+    @staticmethod
+    def parse_message_from_bytes(data: bytes) -> Union[ActuationMessage,
+                                                       SampleMessage]:
+        _unpacker.feed(data)
+        try:
+            deser = next(_unpacker)
 
-        self._msg_count += 1
-        return msg
+            cls = _msg_type_map[deser['msg_type']]
+            return cls(seq=deser['seq'],
+                       timestamp=deser['timestamp'],
+                       payload=deser['payload'])
+        except StopIteration:
+            raise NoMessage()
