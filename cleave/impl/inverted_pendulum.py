@@ -41,7 +41,7 @@ from ..base.util import PhyPropType, nanos2seconds
 G_CONST = Vec2d(0, -9.8)
 
 
-def _to_screen_coords(screen: Screen, v: Vec2d, scale: float = 100.0):
+def _to_screen_coords(screen: Screen, v: Vec2d, scale: float = 50.0):
     return Vec2d(int(screen.width / 2 + v.x * scale),
                  int(screen.height / 2 - v.y * scale))
 
@@ -336,7 +336,7 @@ class InvPendulumStateNoPyglet(State):
         joint.collide_bodies = False
         self._space.add(joint)
 
-        self._screen = Screen(size=(500, 500))
+        self._screen = Screen(size=(100, 100))
 
         # drawing rate
         self._drawing_rate = upd_freq_hz // 5
