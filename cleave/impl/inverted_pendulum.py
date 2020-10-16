@@ -338,6 +338,10 @@ class InvPendulumStateNoPyglet(State):
 
         self._screen = Screen(size=(200, 200))
 
+        # drawing rate
+        self._drawing_rate = upd_freq_hz // 24
+        self._update_count = 0
+
     def advance(self) -> None:
         # apply actuation
         force = self.force
@@ -365,16 +369,19 @@ class InvPendulumStateNoPyglet(State):
         self.ang_vel = self._pend_body.angular_velocity
 
         # draw
-        self._screen.clear()
-        self._screen.context.color = 1, 0, 0
+        if self._update_count % self._drawing_rate == 0:
+            self._screen.clear()
+            self._screen.context.color = 1, 0, 0
 
-        verts = self._cart_shape.get_vertices()
-        end_v = verts[1:] + verts[0]
+            verts = self._cart_shape.get_vertices()
+            end_v = verts[1:] + verts[0]
 
-        for start, end in zip(verts, end_v):
-            start = _to_screen_coords(self._screen, start)
-            end = _to_screen_coords(self._screen, end)
-            self._screen.draw.line(start, end)
+            for start, end in zip(verts, end_v):
+                start = _to_screen_coords(self._screen, start)
+                end = _to_screen_coords(self._screen, end)
+                self._screen.draw.line(start, end)
+
+        self._update_count += 1
 
         # return {
         #     'position': self._cart_body.position.x,
