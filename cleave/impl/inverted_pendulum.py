@@ -46,7 +46,7 @@ def _draw_poly(canvas: Canvas, verts: Sequence[Vec2d]):
     end_v = verts[1:] + verts[0]
     for v1, v2 in zip(start_v, end_v):
         # canvas.set(*v1)
-        for v in line(v1, v2):
+        for v in line(*v1, *v2):
             canvas.set(*v)
 
 
