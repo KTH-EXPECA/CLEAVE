@@ -30,8 +30,8 @@ if __name__ == '__main__':
     # todo: paremeterize
     def _write_stats():
         stats = service.get_stats()
-        stats[['seq', 'out_size_b', 'in_size_b']] = \
-            stats[['seq', 'out_size_b', 'in_size_b']].astype('int32')
+        # stats[['seq', 'out_size_b', 'in_size_b']] = \
+        #     stats[['seq', 'out_size_b', 'in_size_b']].astype('int32')
         stats.to_csv('udp_control_stats.csv', index=False)
 
 

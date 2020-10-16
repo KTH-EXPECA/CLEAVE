@@ -137,8 +137,8 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
                 suffixes=('_send', '_recv'),
                 validate='one_to_one'
             )
-            total_stats[['seq', 'out_size_b', 'in_size_b']] = \
-                total_stats[['seq', 'out_size_b', 'in_size_b']].astype('int32')
+            # total_stats[['seq', 'out_size_b', 'in_size_b']] = \
+            #     total_stats[['seq', 'out_size_b', 'in_size_b']].astype('int32')
             total_stats.to_csv('./udp_client_stats.csv', index=False)
 
         reactor.addSystemEventTrigger('before', 'shutdown', _save_stats)
