@@ -373,10 +373,8 @@ class InvPendulumStateNoPyglet(State):
             self._screen.clear()
             self._screen.context.color = 1, 0, 0
 
-            verts = list(self._cart_body.shapes)[0].get_vertices()
-            # end_v = verts[1:] + verts[0]
-
-            for v in verts:
+            for v in self._cart_shape.get_vertices():
+                v = v.rotated(self._cart_body.angle) + self._cart_body.position
                 # start = _to_screen_coords(self._screen, start)
                 v = _to_screen_coords(self._screen, v)
                 self._screen.draw.set(v)
