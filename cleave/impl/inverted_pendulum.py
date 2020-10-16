@@ -31,7 +31,7 @@ from typing import Mapping, Tuple
 import pyglet
 import pymunk
 from pymunk.vec2d import Vec2d
-from terminedia import Screen, pause
+from terminedia import Screen
 
 from ..base.backend.controller import Controller
 from ..base.client import ActuatorVariable, SensorVariable, State
@@ -39,6 +39,10 @@ from ..base.util import PhyPropType, nanos2seconds
 
 #: Gravity constants
 G_CONST = Vec2d(0, -9.8)
+
+
+def _to_screen_coords(screen: Screen, v: Vec2d):
+    return Vec2d(int(screen.width / 2 + v.x), int(screen.height / 2 - v.y))
 
 
 class InvPendulumState(State):
@@ -331,7 +335,7 @@ class InvPendulumStateNoPyglet(State):
         joint.collide_bodies = False
         self._space.add(joint)
 
-        self._screen = Screen()
+        self._screen = Screen(size=(200, 200))
 
     def advance(self) -> None:
         # apply actuation
@@ -367,8 +371,8 @@ class InvPendulumStateNoPyglet(State):
         end_v = verts[1:] + verts[0]
 
         for start, end in zip(verts, end_v):
-            start = map(int, start)
-            end = map(int, end)
+            start = _to_screen_coords(self._screen, start)
+            end = _to_screen_coords(self._screen, end)
             self._screen.draw.line(start, end)
 
         # return {
