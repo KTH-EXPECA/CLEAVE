@@ -51,7 +51,7 @@ def _draw_poly(canvas: Canvas, verts: Sequence[Vec2d]):
         y_points = np.arange(v1.y, v2.y).astype('int32')
 
         for x, y in zip(x_points, y_points):
-            canvas.set(x, y)
+            canvas.set(int(x), int(y))
         canvas.set(*v2)
 
 
