@@ -63,7 +63,8 @@ class RollingStatistics:
         self._index += 1
 
         if self._index >= self._data.shape[0]:
-            self._data = np.vstack(self._data, np.empty(shape=self._data.shape))
+            self._data = np.vstack((self._data, np.empty(
+                shape=self._data.shape)))
 
 # class ControllerStatCollector:
 #     class Record(NamedTuple):
