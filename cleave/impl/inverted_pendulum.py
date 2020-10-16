@@ -29,6 +29,7 @@ import time
 import warnings
 from typing import Mapping, Tuple
 
+import numpy as np
 import pyglet
 import pymunk
 from pymunk.vec2d import Vec2d
@@ -384,9 +385,11 @@ class InvPendulumStateNoPyglet(State):
         deltaT = nanos2seconds(self.get_delta_t_ns())
         self._space.step(deltaT)
 
+        angle_deg = np.degrees(self._pend_body.angle)
+
         state_str = \
             f'Pos: {self._cart_body.position[0]:0.3f} m | ' \
-            f'Angle: {self._pend_body.angle * 57.2958:0.3f} degrees | ' \
+            f'Angle: {angle_deg:0.3f} degrees | ' \
             f'Force: {math.fabs(force):0.1f} N | ' \
             f'DeltaT: {deltaT:f} s'
 
@@ -401,7 +404,7 @@ class InvPendulumStateNoPyglet(State):
         # store stats
         self._stats.add_record(
             {'timestamp': time.time(),
-             'angle'    : self.angle,
+             'angle'    : angle_deg,
              'position' : self.position,
              'force'    : force}
         )

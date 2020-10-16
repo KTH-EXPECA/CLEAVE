@@ -16,3 +16,6 @@ msgpack-numpy
 pandas
 scipy
 -e git://github.com/jsbueno/terminedia.git@0.3.1#egg=terminedia
+matplotlib
+scipy
+seaborn
