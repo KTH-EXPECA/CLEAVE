@@ -339,7 +339,7 @@ class InvPendulumStateNoPyglet(State):
         self._screen = Screen(size=(200, 200))
 
         # drawing rate
-        self._drawing_rate = upd_freq_hz // 24
+        self._drawing_rate = upd_freq_hz // 10
         self._update_count = 0
 
     def advance(self) -> None:
