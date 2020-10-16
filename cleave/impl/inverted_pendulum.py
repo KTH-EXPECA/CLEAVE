@@ -26,12 +26,12 @@
 import functools
 import math
 import warnings
-from typing import Mapping, Sequence, Tuple
+from typing import Mapping, Tuple
 
 import pyglet
 import pymunk
-from drawille import Canvas, line
 from pymunk.vec2d import Vec2d
+from terminedia import Screen, pause
 
 from ..base.backend.controller import Controller
 from ..base.client import ActuatorVariable, SensorVariable, State
@@ -39,15 +39,6 @@ from ..base.util import PhyPropType, nanos2seconds
 
 #: Gravity constants
 G_CONST = Vec2d(0, -9.8)
-
-
-def _draw_poly(canvas: Canvas, verts: Sequence[Vec2d]):
-    start_v = verts
-    end_v = verts[1:] + verts[0]
-    for v1, v2 in zip(start_v, end_v):
-        # canvas.set(*v1)
-        for v in line(*v1, *v2):
-            canvas.set(*v)
 
 
 class InvPendulumState(State):
@@ -340,8 +331,7 @@ class InvPendulumStateNoPyglet(State):
         joint.collide_bodies = False
         self._space.add(joint)
 
-        # set up terminal drawing
-        self._canvas = Canvas()
+        self._screen = Screen()
 
     def advance(self) -> None:
         # apply actuation
@@ -370,8 +360,16 @@ class InvPendulumStateNoPyglet(State):
         self.ang_vel = self._pend_body.angular_velocity
 
         # draw
-        self._canvas.clear()
-        _draw_poly(self._canvas, self._cart_shape.get_vertices())
+        self._screen.clear()
+        self._screen.context.color = 1, 0, 0
+
+        verts = self._cart_shape.get_vertices()
+        end_v = verts[1:] + verts[0]
+
+        for start, end in zip(verts, end_v):
+            start = map(int, start)
+            end = map(int, end)
+            self._screen.draw.line(start, end)
 
         # return {
         #     'position': self._cart_body.position.x,
