@@ -374,12 +374,12 @@ class InvPendulumStateNoPyglet(State):
             self._screen.context.color = 1, 0, 0
 
             verts = self._cart_shape.get_vertices()
-            end_v = verts[1:] + verts[0]
+            # end_v = verts[1:] + verts[0]
 
-            for start, end in zip(verts, end_v):
-                start = _to_screen_coords(self._screen, start)
-                end = _to_screen_coords(self._screen, end)
-                self._screen.draw.line(start, end)
+            for v in verts:
+                # start = _to_screen_coords(self._screen, start)
+                v = _to_screen_coords(self._screen, v)
+                self._screen.draw.set(v)
 
         self._update_count += 1
 
