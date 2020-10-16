@@ -41,8 +41,9 @@ from ..base.util import PhyPropType, nanos2seconds
 G_CONST = Vec2d(0, -9.8)
 
 
-def _to_screen_coords(screen: Screen, v: Vec2d):
-    return Vec2d(int(screen.width / 2 + v.x), int(screen.height / 2 - v.y))
+def _to_screen_coords(screen: Screen, v: Vec2d, scale: float = 10.0):
+    return Vec2d(int(screen.width / 2 + v.x * scale),
+                 int(screen.height / 2 - v.y * scale))
 
 
 class InvPendulumState(State):
