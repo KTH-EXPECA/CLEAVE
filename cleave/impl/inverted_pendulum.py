@@ -366,7 +366,7 @@ class InvPendulumStateNoPyglet(State):
             f'Force: {math.fabs(force):0.1f} N | ' \
             f'DeltaT: {deltaT:f} s'
 
-        print(f'\r{state_str}', end='\t\t\t')
+        # print(f'\r{state_str}', end='\t\t\t')
 
         # setup new world state
         self.position = self._cart_body.position.x
