@@ -131,3 +131,9 @@ class State(ABC):
         Called by the plant on every time step to advance the emulation.
         """
         pass
+
+    def on_shutdown(self) -> None:
+        """
+        Callback for clean shutdown in case it's needed.
+        """
+        pass

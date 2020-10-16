@@ -25,6 +25,7 @@
 #  limitations under the License.
 import functools
 import math
+import time
 import warnings
 from typing import Mapping, Tuple
 
@@ -35,6 +36,7 @@ from terminedia import Screen
 
 from ..base.backend.controller import Controller
 from ..base.client import ActuatorVariable, SensorVariable, State
+from ..base.stats.stats import RollingStatistics
 from ..base.util import PhyPropType, nanos2seconds
 
 #: Gravity constants
@@ -359,11 +361,16 @@ class InvPendulumStateNoPyglet(State):
         joint.collide_bodies = False
         self._space.add(joint)
 
-        self._screen = Screen(size=(100, 100))
+        # save some stats
+        self._stats = RollingStatistics(
+            columns=['timestamp', 'angle', 'position', 'force']
+        )
 
-        # drawing rate
-        self._drawing_rate = upd_freq_hz // 5
-        self._update_count = 0
+        # self._screen = Screen(size=(100, 100))
+        #
+        # # drawing rate
+        # self._drawing_rate = upd_freq_hz // 5
+        # self._update_count = 0
 
     def advance(self) -> None:
         # apply actuation
@@ -383,7 +390,7 @@ class InvPendulumStateNoPyglet(State):
             f'Force: {math.fabs(force):0.1f} N | ' \
             f'DeltaT: {deltaT:f} s'
 
-        # print(f'\r{state_str}', end='\t\t\t')
+        print(f'\r{state_str}', end='\t' * 10)
 
         # setup new world state
         self.position = self._cart_body.position.x
@@ -391,21 +398,30 @@ class InvPendulumStateNoPyglet(State):
         self.angle = self._pend_body.angle
         self.ang_vel = self._pend_body.angular_velocity
 
+        # store stats
+        self._stats.add_record(
+            {'timestamp': time.time(),
+             'angle'    : self.angle,
+             'position' : self.position,
+             'force'    : force}
+        )
+
         # draw
-        if self._update_count % self._drawing_rate == 0:
-            self._screen.clear()
-            self._screen.context.color = 0, 0, 0
-            self._screen.draw.fill()
-            self._screen.context.color = 1, 1, 1
-
-            verts = [_SortVec2D(
-                v.rotated(self._cart_body.angle) + self._cart_body.position)
-                for v in self._cart_shape.get_vertices()]
-            ll = _to_screen_coords(self._screen, verts[0])
-            ur = _to_screen_coords(self._screen, verts[-1])
-            self._screen.draw.rect(ll, ur, fill=True)
-
-        self._update_count += 1
+        # TODO: discuss if implement or not
+        # if self._update_count % self._drawing_rate == 0:
+        #     self._screen.clear()
+        #     self._screen.context.color = 0, 0, 0
+        #     self._screen.draw.fill()
+        #     self._screen.context.color = 1, 1, 1
+        #
+        #     verts = [_SortVec2D(
+        #         v.rotated(self._cart_body.angle) + self._cart_body.position)
+        #         for v in self._cart_shape.get_vertices()]
+        #     ll = _to_screen_coords(self._screen, verts[0])
+        #     ur = _to_screen_coords(self._screen, verts[-1])
+        #     self._screen.draw.rect(ll, ur, fill=True)
+        #
+        # self._update_count += 1
 
         # return {
         #     'position': self._cart_body.position.x,
@@ -413,6 +429,11 @@ class InvPendulumStateNoPyglet(State):
         #     'angle'   : self._pend_body.angle,
         #     'ang_vel' : self._pend_body.angular_velocity
         # }
+
+    def on_shutdown(self) -> None:
+        # output stats on shutdown
+        # TODO: parameterize
+        self._stats.to_pandas().to_csv('./plant_metrics.csv', index=False)
 
 
 class InvPendulumController(Controller):

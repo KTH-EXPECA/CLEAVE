@@ -85,6 +85,13 @@ class Plant(ABC):
         """
         pass
 
+    @abstractmethod
+    def on_shutdown(self) -> None:
+        """
+        Handle shutdown stuff.
+        """
+        pas
+
 
 class _BasePlant(Plant):
     def __init__(self,
@@ -176,11 +183,18 @@ class _BasePlant(Plant):
         #     .deferToThread(self._emu_step) \
         #     .addCallback(reschedule_step_callback)
 
+    def on_shutdown(self) -> None:
+        self._state.on_shutdown()
+
     def execute(self):
         target_dt_ns = seconds2nanos(1.0 / self._freq)
         self._control.register_with_reactor(self._reactor)
 
         self._reactor.callWhenRunning(self._timestep, target_dt_ns)
+
+        # callback for shutdown
+        self._reactor.addSystemEventTrigger('before', 'shutdown',
+                                            self.on_shutdown)
 
         self._reactor.suggestThreadPoolSize(3)  # input, output and processing
         self._reactor.run()
