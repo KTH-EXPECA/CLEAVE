@@ -27,7 +27,8 @@ from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
 from .exceptions import ProtocolWarning
-from .protocol import ControlMessage, ControlMessageFactory, NoMessage
+from .protocol import ControlMessageFactory, NoMessage
+from ..stats.plotting import plot_client_network_metrics
 from ..stats.stats import RollingStatistics
 from ...base.util import PhyPropType, SingleElementQ
 
@@ -101,6 +102,9 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         total_stats.to_csv('./udp_client_stats.csv', index=False)
 
         # plot some stats
+        # TODO: folder, maybe?
+        plot_client_network_metrics(total_stats, './',
+                                    fname_prefix='udp_')
 
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
             -> None:

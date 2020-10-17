@@ -239,6 +239,7 @@ class _BasePlant(Plant):
         metrics.to_csv('./plant_metrics.csv', index=False)
 
         # TODO: parameterize!
+        # TODO: put in a folder?
         plot_plant_metrics(
             metrics=metrics,
             sens_vars=self._state.get_sensed_props(),
