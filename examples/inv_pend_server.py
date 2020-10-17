@@ -13,7 +13,8 @@
 #  limitations under the License.
 import sys
 
-from cleave.base.eventloop import reactor
+from twisted.internet import reactor
+
 from cleave.base.network.backend import UDPControllerService
 from cleave.impl import InvPendulumController
 
@@ -21,21 +22,7 @@ if __name__ == '__main__':
     _, port, *_ = sys.argv
     port = int(port)
     controller = InvPendulumController(ref=0.2)
-    service = UDPControllerService(controller)
+    # TODO: factory?
+    service = UDPControllerService(port, controller, reactor)
 
-
-    # callback for shutdown
-    # Doesn't work on windows
-    # TODO: rework controller: this whole thing needs to be inside
-    # todo: paremeterize
-    def _write_stats():
-        stats = service.get_stats()
-        # stats[['seq', 'out_size_b', 'in_size_b']] = \
-        #     stats[['seq', 'out_size_b', 'in_size_b']].astype('int32')
-        stats.to_csv('udp_control_stats.csv', index=False)
-
-
-    reactor.addSystemEventTrigger('before', 'shutdown', _write_stats)
-
-    reactor.listenUDP(port, service)
-    reactor.run()
+    service.serve()

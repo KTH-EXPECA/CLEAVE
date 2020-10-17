@@ -28,29 +28,46 @@ import warnings
 from typing import Mapping, Tuple
 
 import msgpack
-import pandas as pd
+from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet.threads import deferToThread
 
 from . import ProtocolWarning
 from .protocol import *
 from ..backend.controller import Controller
+from ..stats.plotting import plot_controller_network_metrics
 from ..stats.stats import RollingStatistics
 from ..util import PhyPropType
 
 
 class UDPControllerService(DatagramProtocol):
-    def __init__(self, controller: Controller):
+    def __init__(self,
+                 port: int,
+                 controller: Controller,
+                 reactor: PosixReactorBase):
         super(UDPControllerService, self).__init__()
+        self._port = port
         self._controller = controller
+        self._reactor = reactor
         self._msg_fact = ControlMessageFactory()
         self._stats = RollingStatistics(
             columns=['seq', 'in_size_b', 'out_size_b',
                      'recv_timestamp', 'process_time',
                      'send_timestamp'])
 
-    def get_stats(self) -> pd.DataFrame:
-        return self._stats.to_pandas()
+    def serve(self):
+        # start listening
+        self._reactor.listenUDP(self._port, self)
+        self._reactor.run()
+
+    def stopProtocol(self):
+        # Todo: use logging!!
+        print('Shutting down, please wait...')
+        stats = self._stats.to_pandas()
+        # TODO: parameterize
+        stats.to_csv('udp_control_stats.csv', index=False)
+        plot_controller_network_metrics(stats, out_path='.',
+                                        fname_prefix='udp_')
 
     def _log_input_output(self,
                           in_msg: ControlMessage,

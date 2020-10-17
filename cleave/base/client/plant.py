@@ -235,6 +235,8 @@ class _BasePlant(Plant):
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
+        # TODO: use twisted logger
+        print('Shutting down, please wait...')
         metrics = self._stats.to_pandas()
         metrics.to_csv('./plant_metrics.csv', index=False)
 

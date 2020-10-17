@@ -98,6 +98,20 @@ def plot_plant_metrics(metrics: pd.DataFrame,
     sns.reset_defaults()
 
 
+def __plot_rate_per_time_unit(df: pd.DataFrame,
+                              x: str,
+                              timestamp: str,
+                              ax: Axes,
+                              color: Any,
+                              label: str,
+                              window_size: str = 's'):
+    df = df[[x, timestamp]].copy()
+    df[timestamp] = df[timestamp].map(lambda t: pd.Timestamp(t, unit='s'))
+    df['rate'] = df.rolling(window=window_size, on=timestamp)[x].count()
+    sns.lineplot(x=x, y='rate', ax=ax, color=color, label=label,
+                 data=df[~np.isnan(df['rate'])])
+
+
 def plot_client_network_metrics(metrics: pd.DataFrame,
                                 out_path: str,
                                 fname_prefix: str = ''):
@@ -111,19 +125,6 @@ def plot_client_network_metrics(metrics: pd.DataFrame,
     metrics['rtt'] = metrics['recv_timestamp'] - metrics['send_timestamp']
     metrics['rtt_ms'] = metrics['rtt'] * 1000.0
     metrics['recv_timestamp_rel'] = metrics['recv_timestamp'] - start_time
-
-    metrics['send_timestamp'] = metrics['send_timestamp'].map(
-        lambda t: pd.Timestamp(t, unit='s')
-    )
-
-    metrics['recv_timestamp'] = metrics['recv_timestamp'].map(
-        lambda t: pd.Timestamp(t, unit='s')
-    )
-
-    metrics['send_rate'] = metrics.rolling(window='1s',
-                                           on='send_timestamp')['seq'].count()
-    metrics['recv_rate'] = metrics.rolling(window='1s',
-                                           on='recv_timestamp')['seq'].count()
 
     sns.set_theme(context='paper', palette='Dark2')
     with sns.color_palette('Dark2') as colors:
@@ -145,18 +146,71 @@ def plot_client_network_metrics(metrics: pd.DataFrame,
         ax[1].set_xlabel('RTT (bins) [ms]')
 
         # packet rate
-        sns.lineplot(x='recv_timestamp_rel', y='send_rate',
-                     ax=ax[2], color=next(colors), label='Send rate',
-                     data=metrics[~np.isnan(metrics['send_rate'])])
-        sns.lineplot(x='recv_timestamp_rel', y='recv_rate',
-                     ax=ax[2], color=next(colors), label='Receive rate',
-                     data=metrics[~np.isnan(metrics['recv_rate'])])
+        __plot_rate_per_time_unit(df=metrics,
+                                  x='recv_timestamp_rel',
+                                  timestamp='send_timestamp',
+                                  ax=ax[2],
+                                  label='Send rate',
+                                  color=next(colors))
+
+        __plot_rate_per_time_unit(df=metrics,
+                                  x='recv_timestamp_rel',
+                                  timestamp='recv_timestamp',
+                                  ax=ax[2],
+                                  label='Receive rate',
+                                  color=next(colors))
 
         ax[2].set_xlabel('Time [s]')
         ax[2].set_ylabel('Packets / second')
-        ax[2].set_title('Packet rates over time')
+        ax[2].set_title('Packet rates over time.')
         fig.tight_layout()
         fig.savefig(out_path / f'{fname_prefix}client_metrics.png')
+
+    plt.close('all')
+    sns.reset_defaults()
+
+
+def plot_controller_network_metrics(metrics: pd.DataFrame,
+                                    out_path: str,
+                                    fname_prefix: str = ''):
+    out_path = Path(out_path)
+    assert out_path.is_dir()
+
+    # plot processing time distributions and rates
+    metrics = metrics.copy()
+    metrics['process_time'] *= 1000.0
+    metrics['timestamp'] = \
+        metrics['recv_timestamp'] - metrics['recv_timestamp'].min()
+
+    sns.set_theme(context='paper', palette='Dark2')
+    with sns.color_palette('Dark2') as colors:
+        colors = iter(colors)
+        fig, ax = plt.subplots(nrows=2)
+
+        sns.histplot(data=metrics, x='process_time', stat='density',
+                     kde=True, color=next(colors), ax=ax[0])
+        ax[0].set_title('Distribution of sample processing times.')
+        ax[0].set_xlabel('Processing time (bins) [ms]')
+
+        __plot_rate_per_time_unit(df=metrics,
+                                  x='timestamp',
+                                  timestamp='recv_timestamp',
+                                  ax=ax[1],
+                                  label='Receive rate',
+                                  color=next(colors))
+
+        __plot_rate_per_time_unit(df=metrics,
+                                  x='timestamp',
+                                  timestamp='send_timestamp',
+                                  ax=ax[1],
+                                  label='Send rate',
+                                  color=next(colors))
+        ax[1].set_xlabel('Time [s]')
+        ax[1].set_ylabel('Packets / second')
+        ax[1].set_title('Packet rates over time.')
+
+        fig.tight_layout()
+        fig.savefig(out_path / f'{fname_prefix}controller_metrics.png')
 
     plt.close('all')
     sns.reset_defaults()
