@@ -76,6 +76,7 @@ def plot_plant_metrics(metrics: pd.DataFrame,
                                    proc_label='Sensor Reading',
                                    ax=ax.item())
         fig.suptitle('Monitored values & sensor readings')
+        fig.tight_layout()
         fig.savefig(out_path / f'{fname_prefix}_sensors.png')
 
         # actuator outputs
@@ -90,6 +91,7 @@ def plot_plant_metrics(metrics: pd.DataFrame,
                                    proc_label='Actuator Output',
                                    ax=ax.item())
         fig.suptitle('Actuated values & actuator outputs')
+        fig.tight_layout()
         fig.savefig(out_path / f'{fname_prefix}_actuators.png')
 
     plt.close('all')
@@ -153,6 +155,7 @@ def plot_client_network_metrics(metrics: pd.DataFrame,
         ax[2].set_xlabel('Time [s]')
         ax[2].set_ylabel('Packets / second')
         ax[2].set_title('Packet rates over time')
+        fig.tight_layout()
         fig.savefig(out_path / f'{fname_prefix}client_metrics.png')
 
     plt.close('all')
