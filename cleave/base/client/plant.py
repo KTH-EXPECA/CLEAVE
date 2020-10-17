@@ -28,6 +28,7 @@ from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
 from ..network.client import BaseControllerInterface
+from ..stats.plotting import plot_plant_metrics
 from ..stats.stats import RollingStatistics
 from ...base.util import PhyPropType, nanos2seconds, seconds2nanos
 
@@ -234,38 +235,17 @@ class _BasePlant(Plant):
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
-        # TODO: parameterize!
         metrics = self._stats.to_pandas()
         metrics.to_csv('./plant_metrics.csv', index=False)
 
-        # # plot and save
-        # metrics['timestamp'] = metrics['timestamp'] - metrics[
-        # 'timestamp'].min()
-
-        # sns.set_theme(context='paper', palette='Dark2')
-        # with sns.color_palette('Dark2') as colors:
-        #     colors = iter(colors)
-        #     fig, (ax_angle, ax_pos, ax_force) = plt.subplots(ncols=1, nrows=3,
-        #                                                      sharex='all')
-        #
-        #     sns.lineplot(x='timestamp', y='angle', color=next(colors),
-        #                  data=metrics, ax=ax_angle)
-        #     sns.lineplot(x='timestamp', y='position', color=next(colors),
-        #                  data=metrics, ax=ax_pos)
-        #
-        #     force = metrics[~np.isclose(metrics['force'], 0.0)]
-        #     sns.lineplot(x='timestamp', y='force', color=next(colors),
-        #                  data=force, ax=ax_force)
-        #
-        #     ax_angle.set_ylabel('Pendulum\nAngle [°]')
-        #     ax_pos.set_ylabel('Cart X-Axis\nPosition')
-        #     ax_force.set_ylabel('Applied\nForce [N]')
-        #
-        #     ax_force.set_xlabel('Time [s]')
-        #     # TODO: parameterize
-        #     fig.savefig('./plant.png')
-        #     plt.close(fig)
-        # sns.reset_defaults()
+        # TODO: parameterize!
+        plot_plant_metrics(
+            metrics=metrics,
+            sens_vars=self._state.get_sensed_props(),
+            act_vars=self._state.get_actuated_props(),
+            out_path='./',
+            fname_prefix='plant'
+        )
 
         # call state shutdown
         self._state.on_shutdown()
