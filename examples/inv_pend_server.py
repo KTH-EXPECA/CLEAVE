@@ -13,8 +13,7 @@
 #  limitations under the License.
 import sys
 
-from twisted.internet import reactor
-
+from cleave.base.eventloop import reactor
 from cleave.base.network.backend import UDPControllerService
 from cleave.impl import InvPendulumController
 

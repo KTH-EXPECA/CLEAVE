@@ -95,6 +95,7 @@ class UDPControllerService(DatagramProtocol):
             in_msg = self._msg_fact.parse_message_from_bytes(in_dgram)
             if in_msg.msg_type == ControlMsgType.SENSOR_SAMPLE:
                 # TODO: use object oriented interface
+                print('Received samples from {}:{}...'.format(*addr))
 
                 def result_callback(act_cmds: Mapping[str, PhyPropType]) \
                         -> None:
@@ -102,6 +103,7 @@ class UDPControllerService(DatagramProtocol):
                     out_msg = in_msg.make_control_reply(act_cmds)
                     out_dgram = out_msg.serialize()
                     self.transport.write(out_dgram, addr)
+                    print('Sent command to {}:{}.'.format(*addr))
 
                     # log after sending
                     deferToThread(self._log_input_output, in_msg, in_dgram,
