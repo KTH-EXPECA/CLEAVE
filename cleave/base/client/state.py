@@ -14,7 +14,7 @@
 import time
 import warnings
 from abc import ABC, abstractmethod
-from typing import Generic, Mapping, Optional, TypeVar
+from typing import Generic, Mapping, Optional, Set, TypeVar
 
 from ..util import PhyPropType
 
@@ -137,3 +137,19 @@ class State(ABC):
         Callback for clean shutdown in case it's needed.
         """
         pass
+
+    def get_sensed_props(self) -> Set[str]:
+        """
+        Returns
+        -------
+            Set containing the identifiers of the sensed variables.
+        """
+        return set(self._sensor_vars.keys())
+
+    def get_actuated_props(self) -> Set[str]:
+        """
+        Returns
+        -------
+            Set containing the identifiers of the actuated variables.
+        """
+        return set(self._actuator_vars.keys())

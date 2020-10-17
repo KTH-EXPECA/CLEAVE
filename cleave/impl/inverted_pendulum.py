@@ -25,21 +25,17 @@
 #  limitations under the License.
 import functools
 import math
-import time
 import warnings
 from typing import Mapping, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pyglet
 import pymunk
-import seaborn as sns
 from pymunk.vec2d import Vec2d
 from terminedia import Screen
 
 from ..base.backend.controller import Controller
 from ..base.client import ActuatorVariable, SensorVariable, State
-from ..base.stats.stats import RollingStatistics
 from ..base.util import PhyPropType, nanos2seconds
 
 #: Gravity constants
@@ -364,11 +360,6 @@ class InvPendulumStateNoPyglet(State):
         joint.collide_bodies = False
         self._space.add(joint)
 
-        # save some stats
-        self._stats = RollingStatistics(
-            columns=['timestamp', 'angle', 'position', 'force']
-        )
-
         # self._screen = Screen(size=(100, 100))
         #
         # # drawing rate
@@ -403,14 +394,6 @@ class InvPendulumStateNoPyglet(State):
         self.angle = self._pend_body.angle
         self.ang_vel = self._pend_body.angular_velocity
 
-        # store stats
-        self._stats.add_record(
-            {'timestamp': time.time(),
-             'angle'    : angle_deg,
-             'position' : self.position,
-             'force'    : force}
-        )
-
         # draw
         # TODO: discuss if implement or not
         # if self._update_count % self._drawing_rate == 0:
@@ -434,40 +417,6 @@ class InvPendulumStateNoPyglet(State):
         #     'angle'   : self._pend_body.angle,
         #     'ang_vel' : self._pend_body.angular_velocity
         # }
-
-    def on_shutdown(self) -> None:
-        # output stats on shutdown
-        # TODO: parameterize!
-        metrics = self._stats.to_pandas()
-        metrics.to_csv('./plant_metrics.csv', index=False)
-
-        # plot and save
-        metrics['timestamp'] = metrics['timestamp'] - metrics['timestamp'].min()
-
-        sns.set_theme(context='paper', palette='Dark2')
-        with sns.color_palette('Dark2') as colors:
-            colors = iter(colors)
-            fig, (ax_angle, ax_pos, ax_force) = plt.subplots(ncols=1, nrows=3,
-                                                             sharex='all')
-
-            sns.lineplot(x='timestamp', y='angle', color=next(colors),
-                         data=metrics, ax=ax_angle)
-            sns.lineplot(x='timestamp', y='position', color=next(colors),
-                         data=metrics, ax=ax_pos)
-
-            force = metrics[~np.isclose(metrics['force'], 0.0)]
-            sns.lineplot(x='timestamp', y='force', color=next(colors),
-                         data=force, ax=ax_force)
-
-            ax_angle.set_ylabel('Pendulum\nAngle [°]')
-            ax_pos.set_ylabel('Cart X-Axis\nPosition')
-            ax_force.set_ylabel('Applied\nForce [N]')
-
-            ax_force.set_xlabel('Time [s]')
-            # TODO: parameterize
-            fig.savefig('./plant.png')
-            plt.close(fig)
-        sns.reset_defaults()
 
 
 class InvPendulumController(Controller):

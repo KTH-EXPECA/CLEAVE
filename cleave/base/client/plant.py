@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from collections import Mapping
 from threading import RLock
 
-from twisted.internet import threads
+from twisted.internet import task, threads
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.python.failure import Failure
 
@@ -28,6 +28,7 @@ from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
 from ..network.client import BaseControllerInterface
+from ..stats.stats import RollingStatistics
 from ...base.util import PhyPropType, nanos2seconds, seconds2nanos
 
 
@@ -90,7 +91,7 @@ class Plant(ABC):
         """
         Handle shutdown stuff.
         """
-        pas
+        pass
 
 
 class _BasePlant(Plant):
@@ -111,6 +112,20 @@ class _BasePlant(Plant):
 
         self._lock = RLock()
 
+        # save state stats, i.e., every actuator and sensor variable both
+        # before and after processing
+
+        stat_cols = ['timestamp']
+        for var in state.get_sensed_props():
+            stat_cols.append(f'sens_{var}_raw')
+            stat_cols.append(f'sens_{var}_proc')
+
+        for var in state.get_actuated_props():
+            stat_cols.append(f'act_{var}_raw')
+            stat_cols.append(f'act_{var}_proc')
+
+        self._stats = RollingStatistics(columns=stat_cols)
+
     @property
     def update_freq_hz(self) -> int:
         return self._freq
@@ -119,28 +134,62 @@ class _BasePlant(Plant):
     def plant_state(self) -> State:
         return self._state
 
+    def _record_stats(self,
+                      timestamp: float,
+                      act: Mapping[str, PhyPropType],
+                      act_proc: Mapping[str, PhyPropType],
+                      sens: Mapping[str, PhyPropType],
+                      sens_proc: Mapping[str, PhyPropType]):
+
+        # helper function to defer recording of stats after a step
+
+        record = {'timestamp': timestamp}
+        for var, val in act.items():
+            record[f'act_{var}_raw'] = val
+
+        for var, val in act_proc.items():
+            record[f'act_{var}_proc'] = val
+
+        for var, val in sens.items():
+            record[f'sens_{var}_raw'] = val
+
+        for var, val in sens_proc.items():
+            record[f'sens_{var}_proc'] = val
+
+        self._stats.add_record(record)
+
     def _emu_step(self):
         # 1. get raw actuation inputs
         # 2. process actuation inputs
         # 3. advance state
         # 4. process sensor outputs
         # 5. send sensor outputs
-
         act = self._control.get_actuator_values()
         proc_act = self._actuators.process_actuation_inputs(act)
+
         with self._lock:
             # this is always called from a separate thread so add some
             # thread-safety just in case
             self._state.actuate(proc_act)
             self._state.advance()
-            sensor_samples = self._state.get_state()
+            sensor_raw = self._state.get_state()
             self._cycles += 1
 
-            # this will only send sensor updates if we actually have any,
-            # since otherwise it raises an exception which will be caught in
-            # the callback
-            return self._sensors.process_plant_state(sensor_samples)
-            # self._control.put_sensor_values(proc_sens)
+        # this will only send sensor updates if we actually have any,
+        # since otherwise it raises an exception which will be caught in
+        # the callback
+        sensor_proc = {}
+        try:
+            sensor_proc = self._sensors.process_plant_state(sensor_raw)
+            return sensor_proc
+        finally:
+            # immediately schedule the function to record the stats
+            task.deferLater(self._reactor, 0, self._record_stats,
+                            timestamp=time.time(),
+                            act=act,
+                            act_proc=proc_act,
+                            sens=sensor_raw,
+                            sens_proc=sensor_proc)
 
     def _timestep(self, target_dt_ns: int):
         ti = time.monotonic_ns()
@@ -184,12 +233,48 @@ class _BasePlant(Plant):
         #     .addCallback(reschedule_step_callback)
 
     def on_shutdown(self) -> None:
+        # output stats on shutdown
+        # TODO: parameterize!
+        metrics = self._stats.to_pandas()
+        metrics.to_csv('./plant_metrics.csv', index=False)
+
+        # # plot and save
+        # metrics['timestamp'] = metrics['timestamp'] - metrics[
+        # 'timestamp'].min()
+
+        # sns.set_theme(context='paper', palette='Dark2')
+        # with sns.color_palette('Dark2') as colors:
+        #     colors = iter(colors)
+        #     fig, (ax_angle, ax_pos, ax_force) = plt.subplots(ncols=1, nrows=3,
+        #                                                      sharex='all')
+        #
+        #     sns.lineplot(x='timestamp', y='angle', color=next(colors),
+        #                  data=metrics, ax=ax_angle)
+        #     sns.lineplot(x='timestamp', y='position', color=next(colors),
+        #                  data=metrics, ax=ax_pos)
+        #
+        #     force = metrics[~np.isclose(metrics['force'], 0.0)]
+        #     sns.lineplot(x='timestamp', y='force', color=next(colors),
+        #                  data=force, ax=ax_force)
+        #
+        #     ax_angle.set_ylabel('Pendulum\nAngle [°]')
+        #     ax_pos.set_ylabel('Cart X-Axis\nPosition')
+        #     ax_force.set_ylabel('Applied\nForce [N]')
+        #
+        #     ax_force.set_xlabel('Time [s]')
+        #     # TODO: parameterize
+        #     fig.savefig('./plant.png')
+        #     plt.close(fig)
+        # sns.reset_defaults()
+
+        # call state shutdown
         self._state.on_shutdown()
 
     def execute(self):
         target_dt_ns = seconds2nanos(1.0 / self._freq)
         self._control.register_with_reactor(self._reactor)
 
+        # TODO: schedule with loop?
         self._reactor.callWhenRunning(self._timestep, target_dt_ns)
 
         # callback for shutdown
