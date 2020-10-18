@@ -27,6 +27,7 @@ from twisted.python.failure import Failure
 from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
+from ..logging import Logger
 from ..network.client import BaseControllerInterface
 from ..stats.plotting import plot_plant_metrics
 from ..stats.stats import RollingStatistics
@@ -45,6 +46,9 @@ class Plant(ABC):
     """
     Interface for all plants.
     """
+
+    def __init__(self):
+        self._logger = Logger()
 
     @abstractmethod
     def execute(self):
@@ -103,6 +107,7 @@ class _BasePlant(Plant):
                  sensor_array: SensorArray,
                  actuator_array: ActuatorArray,
                  control_interface: BaseControllerInterface):
+        super(_BasePlant, self).__init__()
         self._reactor = reactor
         self._freq = update_freq
         self._state = state
@@ -195,11 +200,6 @@ class _BasePlant(Plant):
     def _timestep(self, target_dt_ns: int):
         ti = time.monotonic_ns()
 
-        if not self._control.is_ready():
-            # controller not ready, wait a bit
-            self._reactor.callLater(0.01, self._timestep, target_dt_ns)
-            return
-
         def no_samples_to_send(failure: Failure):
             failure.trap(NoSensorUpdate)
             # no sensor data to send, ignore
@@ -235,8 +235,8 @@ class _BasePlant(Plant):
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
-        # TODO: use twisted logger
-        print('Shutting down, please wait...')
+        self._logger.warn('Shutting down plant, please wait...')
+        self._logger.info('Saving plant metrics to file...')
         metrics = self._stats.to_pandas()
         metrics.to_csv('./plant_metrics.csv', index=False)
 
@@ -252,18 +252,29 @@ class _BasePlant(Plant):
 
         # call state shutdown
         self._state.on_shutdown()
+        self._logger.info('Plant shutdown completed.')
 
     def execute(self):
+        self._logger.info('Initializing plant...')
         target_dt_ns = seconds2nanos(1.0 / self._freq)
+
+        # callback to wait for network before starting simloop
+        def _wait_for_network_and_init():
+            if not self._control.is_ready():
+                # controller not ready, wait a bit
+                self._logger.warn('Waiting for controller...')
+                self._reactor.callLater(0.01, _wait_for_network_and_init)
+            else:
+                # schedule timestep
+                self._logger.info('Starting simulation...')
+                self._reactor.callLater(0, self._timestep, target_dt_ns)
+
         self._control.register_with_reactor(self._reactor)
-
-        # TODO: schedule with loop?
-        self._reactor.callWhenRunning(self._timestep, target_dt_ns)
-
         # callback for shutdown
         self._reactor.addSystemEventTrigger('before', 'shutdown',
                                             self.on_shutdown)
 
+        self._reactor.callWhenRunning(_wait_for_network_and_init)
         self._reactor.suggestThreadPoolSize(3)  # input, output and processing
         self._reactor.run()
 

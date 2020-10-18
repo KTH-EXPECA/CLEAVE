@@ -24,7 +24,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import time
-import warnings
 from typing import Mapping, Tuple
 
 import msgpack
@@ -32,9 +31,9 @@ from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet.threads import deferToThread
 
-from . import ProtocolWarning
 from .protocol import *
 from ..backend.controller import Controller
+from ..logging import Logger
 from ..stats.plotting import plot_controller_network_metrics
 from ..stats.stats import RollingStatistics
 from ..util import PhyPropType
@@ -54,20 +53,23 @@ class UDPControllerService(DatagramProtocol):
             columns=['seq', 'in_size_b', 'out_size_b',
                      'recv_timestamp', 'process_time',
                      'send_timestamp'])
+        self._logger = Logger()
 
     def serve(self):
         # start listening
+        self._logger.info('Starting controller service...')
         self._reactor.listenUDP(self._port, self)
         self._reactor.run()
 
     def stopProtocol(self):
-        # Todo: use logging!!
-        print('Shutting down, please wait...')
+        self._logger.warn('Shutting down controller service, please wait...')
         stats = self._stats.to_pandas()
         # TODO: parameterize
+        self._logger.info('Writing metrics to file...')
         stats.to_csv('udp_control_stats.csv', index=False)
         plot_controller_network_metrics(stats, out_path='.',
                                         fname_prefix='udp_')
+        self._logger.info('Controller service shutdown complete.')
 
     def _log_input_output(self,
                           in_msg: ControlMessage,
@@ -95,7 +97,9 @@ class UDPControllerService(DatagramProtocol):
             in_msg = self._msg_fact.parse_message_from_bytes(in_dgram)
             if in_msg.msg_type == ControlMsgType.SENSOR_SAMPLE:
                 # TODO: use object oriented interface
-                print('Received samples from {}:{}...'.format(*addr))
+                self._logger.debug(
+                    'Received samples from {addr[0]}:{addr[1]}...',
+                    addr=addr)
 
                 def result_callback(act_cmds: Mapping[str, PhyPropType]) \
                         -> None:
@@ -103,7 +107,8 @@ class UDPControllerService(DatagramProtocol):
                     out_msg = in_msg.make_control_reply(act_cmds)
                     out_dgram = out_msg.serialize()
                     self.transport.write(out_dgram, addr)
-                    print('Sent command to {}:{}.'.format(*addr))
+                    self._logger.debug('Sent command to {addr[0]}:{addr[1]}.',
+                                       addr=addr)
 
                     # log after sending
                     deferToThread(self._log_input_output, in_msg, in_dgram,
@@ -116,9 +121,13 @@ class UDPControllerService(DatagramProtocol):
         except NoMessage:
             pass
         except AssertionError:
-            warnings.warn(f'Expected message with type '
-                          f'{ControlMsgType.SENSOR_SAMPLE.name}, instead got '
-                          f'{in_msg.msg_type.name}.')
+            self._logger.warn(
+                'Expected message with type {e_type}, instead got {act_type}!',
+                e_type=ControlMsgType.SENSOR_SAMPLE.name,
+                act_type=in_msg.msg_type.name
+            )
         except (ValueError, msgpack.FormatError, msgpack.StackError):
-            warnings.warn('Could not unpack data from {}:{}.'.format(*addr),
-                          ProtocolWarning)
+            self._logger.warn(
+                'Could not unpack data from {addr[0]}:{addr[1]}',
+                addr=addr
+            )
