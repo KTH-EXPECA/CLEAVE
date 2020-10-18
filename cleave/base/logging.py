@@ -26,16 +26,24 @@ loguru.logger.add(sys.stderr,
                          '<level><b>{level}</b></level> '
                          '{message}')
 
+__level_mapping = {
+    LogLevel.debug   : loguru.logger.debug,
+    LogLevel.info    : loguru.logger.info,
+    LogLevel.warn    : loguru.logger.warning,
+    LogLevel.error   : loguru.logger.error,
+    LogLevel.critical: loguru.logger.critical,
+}
+
 
 # TODO: improve time handling.
 @provider(ILogObserver)
 def log_to_loguru(event: Dict) -> None:
-    level = event.get('log_level', LogLevel.debug).name.upper()
+    level = event.get('log_level', LogLevel.debug)
     src = event.get('log_source', '')
     fmt_str = event.get('log_format', '')
     timestamp = event.get('log_time', None)
 
-    loguru.logger.log(level, fmt_str, **event)
+    __level_mapping[level](fmt_str, **event)
 
 
 globalLogPublisher.addObserver(log_to_loguru)
