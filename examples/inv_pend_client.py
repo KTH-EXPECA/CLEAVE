@@ -59,5 +59,5 @@ if __name__ == '__main__':
     builder.attach_sensor(SimpleSensor('ang_vel', 100))
     builder.attach_actuator(SimpleActuator('force'))
 
-    plant = builder.build()
+    plant = builder.build(plotting=True)
     plant.execute()

@@ -154,6 +154,10 @@ class SensorArray:
 
                 self._cycle_triggers[trigger].append(sensor)
 
+    def get_sensor_rates(self) -> Mapping[str, int]:
+        return {prop: sensor.sampling_frequency
+                for prop, sensor in self._prop_sensors.items()}
+
     def process_plant_state(self,
                             prop_values: Mapping[str, PhyPropType]) \
             -> Dict[str, PhyPropType]:

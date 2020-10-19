@@ -14,7 +14,7 @@
 import time
 import warnings
 from abc import ABC, abstractmethod
-from typing import Generic, Mapping, Optional, Set, TypeVar
+from typing import Generic, Mapping, Optional, Type, TypeVar
 
 from ..util import PhyPropType
 
@@ -22,22 +22,23 @@ T = TypeVar('T', int, float, bool, bytes)
 
 
 class _PhysPropVar(Generic[T]):
-    def __init__(self,
-                 persistent: bool = True,
-                 default: Optional[T] = None):
-        self._persistent = persistent
-        self._default = default
-        self._value = default
+    def __init__(self, value: T):
+        # self._persistent = persistent
+        # self._default = default
+        self._value = value
 
     def get_value(self) -> T:
-        try:
-            return self._value
-        finally:
-            if not self._persistent:
-                self._value = self._default
+        # try:
+        return self._value
+        # finally:
+        #     if not self._persistent:
+        #         self._value = self._default
 
     def set_value(self, value: T):
         self._value = value
+
+    def get_type(self) -> Type:
+        return type(self._value)
 
 
 class SensorVariable(_PhysPropVar):
@@ -138,18 +139,18 @@ class State(ABC):
         """
         pass
 
-    def get_sensed_props(self) -> Set[str]:
+    def get_sensed_props(self) -> Mapping[str, Type]:
         """
         Returns
         -------
             Set containing the identifiers of the sensed variables.
         """
-        return set(self._sensor_vars.keys())
+        return {k: v.get_type() for k, v in self._sensor_vars.items()}
 
-    def get_actuated_props(self) -> Set[str]:
+    def get_actuated_props(self) -> Mapping[str, Type]:
         """
         Returns
         -------
             Set containing the identifiers of the actuated variables.
         """
-        return set(self._actuator_vars.keys())
+        return {k: v.get_type() for k, v in self._actuator_vars.items()}

@@ -30,8 +30,12 @@ from .state import State
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
 from ..stats.plotting import plot_plant_metrics
+from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
 from ..stats.stats import RollingStatistics
 from ...base.util import PhyPropType, nanos2seconds, seconds2nanos
+
+# TODO: move somewhere else maybe
+_SCALAR_TYPES = (int, float, bool)
 
 
 class PlantBuilderWarning(Warning):
@@ -122,13 +126,15 @@ class _BasePlant(Plant):
         # before and after processing
 
         stat_cols = ['timestamp']
-        for var in state.get_sensed_props():
-            stat_cols.append(f'sens_{var}_raw')
-            stat_cols.append(f'sens_{var}_proc')
+        for var, t in state.get_sensed_props().items():
+            if t in _SCALAR_TYPES:
+                stat_cols.append(f'sens_{var}_raw')
+                stat_cols.append(f'sens_{var}_proc')
 
-        for var in state.get_actuated_props():
-            stat_cols.append(f'act_{var}_raw')
-            stat_cols.append(f'act_{var}_proc')
+        for var, t in state.get_actuated_props().items():
+            if t in _SCALAR_TYPES:
+                stat_cols.append(f'act_{var}_raw')
+                stat_cols.append(f'act_{var}_proc')
 
         self._stats = RollingStatistics(columns=stat_cols)
 
@@ -279,6 +285,64 @@ class _BasePlant(Plant):
         self._reactor.run()
 
 
+class _RealtimePlottingPlant(_BasePlant):
+    def __init__(self,
+                 reactor: PosixReactorBase,
+                 update_freq: int,
+                 state: State,
+                 sensor_array: SensorArray,
+                 actuator_array: ActuatorArray,
+                 control_interface: BaseControllerInterface):
+        super(_RealtimePlottingPlant, self).__init__(
+            reactor=reactor, update_freq=update_freq, state=state,
+            sensor_array=sensor_array, actuator_array=actuator_array,
+            control_interface=control_interface
+        )
+
+        props = dict(**state.get_sensed_props(), **state.get_actuated_props())
+        scalar_vars = [var for var, t in props.items() if t in _SCALAR_TYPES]
+
+        # realtime plotter
+        # TODO: parameterize or move out of here
+        # TODO: default rate handles the rate for actuator values,
+        #  but there's gotta be a better way...
+        rates = self._sensors.get_sensor_rates()
+        default_rate = max(rates.values())
+        self._plotter = RealtimeTimeseriesPlotter(
+            vars_sampling_rate={
+                var: rates.get(var, default_rate) for var in scalar_vars
+            }
+        )
+
+    def _record_stats(self,
+                      timestamp: float,
+                      act: Mapping[str, PhyPropType],
+                      act_proc: Mapping[str, PhyPropType],
+                      sens: Mapping[str, PhyPropType],
+                      sens_proc: Mapping[str, PhyPropType]):
+        super(_RealtimePlottingPlant, self)._record_stats(
+            timestamp=timestamp,
+            act=act, act_proc=act_proc,
+            sens=sens, sens_proc=sens_proc
+        )
+
+        # plot
+        self._plotter.put_sample(dict(**act_proc, **sens_proc))
+
+    def on_shutdown(self) -> None:
+        # plotter shutdown
+        self._logger.info('Shutting down realtime plotter...')
+        self._plotter.shutdown()
+        self._plotter.join(timeout=10)
+        super(_RealtimePlottingPlant, self).on_shutdown()
+
+    def execute(self):
+        self._logger.info('Starting realtime plotting interface...')
+        # start plotter
+        self._plotter.start()
+        super(_RealtimePlottingPlant, self).execute()
+
+
 # noinspection PyAttributeOutsideInit
 class PlantBuilder:
     """
@@ -371,10 +435,15 @@ class PlantBuilder:
 
         self._plant_state = plant_state
 
-    def build(self) -> Plant:
+    def build(self, plotting: bool = False) -> Plant:
         """
         Builds a Plant instance and returns it. The actual subtype of this
         plant will depend on the previously provided parameters.
+
+        Parameters
+        ----------
+        plotting:
+            Whether to initialize a plant with realtime plotting capabilities.
 
         Returns
         -------
@@ -385,16 +454,20 @@ class PlantBuilder:
 
         # TODO: raise error if missing parameters OR instantiate different
         #  types of plants?
+
+        params = dict(
+            reactor=self._reactor,
+            update_freq=self._plant_state.update_frequency,
+            state=self._plant_state,
+            sensor_array=SensorArray(
+                plant_freq=self._plant_state.update_frequency,
+                sensors=self._sensors),
+            actuator_array=ActuatorArray(actuators=self._actuators),
+            control_interface=self._controller
+        )
+
         try:
-            return _BasePlant(
-                reactor=self._reactor,
-                update_freq=self._plant_state.update_frequency,
-                state=self._plant_state,
-                sensor_array=SensorArray(
-                    plant_freq=self._plant_state.update_frequency,
-                    sensors=self._sensors),
-                actuator_array=ActuatorArray(actuators=self._actuators),
-                control_interface=self._controller
-            )
+            return _RealtimePlottingPlant(**params) \
+                if plotting else _BasePlant(**params)
         finally:
             self.reset()

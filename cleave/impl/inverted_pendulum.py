@@ -314,13 +314,6 @@ class InvPendulumStateNoPyglet(State):
             .__init__(update_freq_hz=upd_freq_hz)
         # set up state
 
-        # actuated and sensor variables
-        self.force = ActuatorVariable(persistent=False, default=0.0)
-        self.position = SensorVariable()
-        self.speed = SensorVariable()
-        self.angle = SensorVariable()
-        self.ang_vel = SensorVariable()
-
         # space
         self._space = pymunk.Space(threaded=True)
         self._space.gravity = G_CONST
@@ -361,6 +354,13 @@ class InvPendulumStateNoPyglet(State):
                                              _joint_pos)
         joint.collide_bodies = False
         self._space.add(joint)
+
+        # actuated and sensor variables
+        self.force = ActuatorVariable(0.0)
+        self.position = SensorVariable(self._cart_body.position.x)
+        self.speed = SensorVariable(self._cart_body.velocity.x)
+        self.angle = SensorVariable(self._pend_body.angle)
+        self.ang_vel = SensorVariable(self._pend_body.angular_velocity)
 
         # self._screen = Screen(size=(100, 100))
         #
