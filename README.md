@@ -80,16 +80,22 @@ scipy
 
 3. (Optional) To build the documentation using Sphinx:
 
-    1. Document code using the Numpy docstring format (see below).
+    1. Install the documentation dependencies:
     
-    2. Generate reStructured text files for the code using `sphinx-apidocs` from the top-level directory:
+        ```bash
+        (venv) $ pip install -Ur requirements_docs.txt
+        ```
+    
+    2. Document code using the Numpy docstring format (see below).
+    
+    3. Generate reStructured text files for the code using `sphinx-apidocs` from the top-level directory:
     
         ```bash
         $ sphinx-apidoc -fo docs/source . ./setup.py ./cleave/client/actuator.py ./cleave/client/sensor.py ./cleave/client/plant.py ./cleave/network/handler.py ./tests ./examples
         ```
        
        Note the exclude directives in the command, to avoid generating documentation for files such as `setup.py` and files deep within the project structure. 
-    3. (Optional) To preview what the documentation will look like when published on [cleave.readthedocs.io
+    4. (Optional) To preview what the documentation will look like when published on [cleave.readthedocs.io
     ](https://cleave.readthedocs.io), build it with `GNU Make`:
     
         ```bash
