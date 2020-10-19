@@ -12,5 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .inverted_pendulum import InvPendulumState, InvPendulumController
-__all__ = ['InvPendulumState', 'InvPendulumController']
+from .inverted_pendulum import InvPendulumController, InvPendulumStateNoPyglet
+
+__all__ = ['InvPendulumStateNoPyglet', 'InvPendulumController']
