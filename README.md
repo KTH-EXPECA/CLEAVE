@@ -98,6 +98,20 @@ scipy
         ```
        
        The compiled HTML structure will be output to `docs/build`, from where it can be viewed in a browser.
+       
+### Running the Inverted Pendulum example implementation
+
+Example implementations of an inverted pendulum plant and controller setup are included in the files `examples\inv_pend_client.py` and `examples\inv_pend_server.py`, respectively.
+
+To run the server:
+```bash
+(venv) $ python examples/inv_pend_server.py <port>
+```
+
+To run the client:
+```bash
+(venv) $ python examples/inv_pend_client.py <host> <port>
+```
 
 ### Code style and standards:
 

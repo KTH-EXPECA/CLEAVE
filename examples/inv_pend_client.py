@@ -12,6 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import random
+import site
+
+# extend path to find cleave package from inside the examples directory
+site.addsitedir('../cleave')
 
 from cleave.base.client import Actuator, SimpleActuator, SimpleSensor, builder
 from cleave.base.network.client import UDPControllerInterface

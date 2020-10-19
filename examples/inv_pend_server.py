@@ -11,7 +11,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import site
 import sys
+
+# extend path to find cleave package from inside the examples directory
+site.addsitedir('../cleave')
 
 from cleave.base.eventloop import reactor
 from cleave.base.network.backend import UDPControllerService
