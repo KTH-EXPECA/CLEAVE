@@ -13,6 +13,8 @@
 #  limitations under the License.
 import random
 import site
+import socket
+import sys
 
 # extend path to find cleave package from inside the examples directory
 site.addsitedir('../cleave')
@@ -22,11 +24,11 @@ from cleave.base.network.client import UDPControllerInterface
 from cleave.base.util import PhyPropType
 from cleave.impl.inverted_pendulum import InvPendulumStateNoPyglet
 
-HOST_ADDR = ('127.0.0.1', 50000)
+# HOST_ADDR = ('127.0.0.1', 50000)
 #: Pendulum parameters
-K = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]
-NBAR = -57.25
-MAX_FORCE = 25
+# K = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]
+# NBAR = -57.25
+# MAX_FORCE = 25
 
 
 class NoisyActuator(Actuator):
@@ -49,9 +51,16 @@ class NoisyActuator(Actuator):
 
 
 if __name__ == '__main__':
+    # TODO: handle this with click
+    _, host, port, *_ = sys.argv
+    port = int(port)
+    host = socket.gethostbyname(host)
+
+    # TODO ADD OPTION FOR PLOTTING
+
     state = InvPendulumStateNoPyglet(upd_freq_hz=200)
 
-    builder.set_controller(UDPControllerInterface(HOST_ADDR))
+    builder.set_controller(UDPControllerInterface((host, port)))
     builder.set_plant_state(state)
     builder.attach_sensor(SimpleSensor('position', 100))
     builder.attach_sensor(SimpleSensor('speed', 100))
