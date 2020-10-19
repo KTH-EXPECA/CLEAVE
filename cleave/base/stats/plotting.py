@@ -139,8 +139,9 @@ def plot_client_network_metrics(metrics: pd.DataFrame,
         ax[0].set_title('RTT over time')
 
         # rtt distribution
-        sns.histplot(data=metrics, x='rtt_ms', stat='density',
-                     kde=True, log_scale=True,
+        sns.histplot(data=metrics[~metrics['rtt_ms'].isna()],
+                     x='rtt_ms', stat='density',
+                     kde=True, # log_scale=True,
                      color=next(colors), ax=ax[1])
         ax[1].set_title('Distribution of RTTs (milliseconds, log-scaled)')
         ax[1].set_xlabel('RTT (bins) [ms]')
