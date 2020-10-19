@@ -12,27 +12,34 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import queue
+import sys
+import time
 from collections import deque
 from multiprocessing import Event, Process, Queue
-from typing import Mapping, Union
+from typing import Mapping, Set, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 
 class RealtimeTimeseriesPlotter(Process):
     def __init__(self,
-                 vars_sampling_rate: Mapping[str, int],
-                 time_window_s: float = 15.0):
+                 variables: Set[str],
+                 plot_fps: int = 24,
+                 time_window_s: float = 30.0):
         super(RealtimeTimeseriesPlotter, self).__init__()
-        self._vars = set(vars_sampling_rate.keys())
-        self._var_rates = vars_sampling_rate
+
+        # TODO parameterize in plant building routine!
+
+        self._vars = variables
         self._time_window = time_window_s
         self._sample_q = Queue()
         self._shutdown = Event()
+        self._plot_fps = plot_fps
 
     def put_sample(self, sample: Mapping[str, Union[float, int]]):
-        self._sample_q.put(sample)
+        self._sample_q.put((time.monotonic(), sample))
 
     def shutdown(self):
         self._shutdown.set()
@@ -41,66 +48,81 @@ class RealtimeTimeseriesPlotter(Process):
         try:
             # set up figure, one plot per variable
             nvars = len(self._vars)
-            smpls_per_wndw = {
-                var: int(rate * self._time_window) for var, rate in
-                self._var_rates.items()
-            }
-
-            fig, axes = plt.subplots(nrows=nvars, sharex='all')
-            plt.ion()
-            plt.show()
-
-            axes[-1].set_xlabel('Time window [s]')
-
-            # assign plots to variables and initialize labels
-            var_axes = {}
-            for var, ax in zip(self._vars, axes):
-                var_axes[var] = ax
-                ax.set_ylabel(var)
 
             # time windows
-            windows = {v: deque(maxlen=count)
-                       for v, count in smpls_per_wndw.items()}
-            x_time = {v: np.linspace(0, self._time_window,
-                                     endpoint=True, num=count)
-                      for v, count in smpls_per_wndw.items()}
+            # TODO: implicit maximum sample rate is 1kHz, should be
+            #  parameterized somehow somewhere
+            windows = {v: deque(maxlen=int(self._time_window * 1000))
+                       for v in self._vars}
 
-            while not self._shutdown.is_set():
-                # get samples from queue
-                new_samples = []
-                try:
-                    while True:
-                        new_samples.append(self._sample_q.get_nowait())
-                except queue.Empty:
-                    pass
+            var_maxs = {}
+            var_mins = {}
 
-                for sample in new_samples:
-                    # append samples to windows
-                    for var, value in sample.items():
-                        try:
-                            windows[var].append(value)
-                        except KeyError:
-                            pass
+            dt = 1 / self._plot_fps
 
-                # all windows have been updated, plot
-                for var in self._vars:
-                    ax = var_axes[var]
+            sns.set_theme(context='paper', palette='Dark2')
+            with sns.color_palette('Dark2', nvars) as colors:
+                # colors = list(colors)
 
-                    data = list(windows[var])
-                    n_points = len(data)
-                    x = x_time[var][:n_points]
+                fig, axes = plt.subplots(nrows=nvars, sharex='all')
+                plt.ion()
+                plt.show()
 
-                    ax.clear()
-                    ax.plot(x, data)
-                    ax.set_xlim(0, self._time_window)
+                # assign plots to variables and initialize labels
+                var_axes = {}
+                for var, ax in zip(self._vars, axes):
+                    var_axes[var] = ax
                     ax.set_ylabel(var)
 
-                plt.draw()
-                plt.pause(1 / 25)
+                while not self._shutdown.is_set():
+                    ti = time.monotonic()
+                    # get samples from queue
+                    new_samples = deque()
+                    try:
+                        while True:
+                            new_samples.append(self._sample_q.get_nowait())
+                    except queue.Empty:
+                        pass
+
+                    for timestamp, sample in new_samples:
+                        # append samples to windows
+                        for var, value in sample.items():
+                            try:
+                                windows[var].append((timestamp, value))
+                            except KeyError:
+                                pass
+
+                    # all windows have been updated, plot
+                    for var, c in zip(self._vars, colors):
+                        ax = var_axes[var]
+
+                        data = np.array(list(windows[var]))
+                        relative_x_time = data[:, 0] - np.max(data[:, 0])
+
+                        # don't plot stuff we can't see
+                        time_filter = relative_x_time >= -self._time_window
+                        relative_x_time = relative_x_time[time_filter]
+                        y = data[time_filter, 1]
+
+                        # update var ranges to make plot a bit more smooth
+                        var_maxs[var] = np.max((y.max(),
+                                                var_maxs.get(var, -np.inf)))
+                        var_mins[var] = np.min((y.min(),
+                                                var_mins.get(var, np.inf)))
+
+                        ax.clear()
+                        sns.lineplot(x=relative_x_time, y=y, color=c, ax=ax)
+                        ax.set_xlim(-self._time_window, 0)
+                        ax.set_ylim(var_mins[var] * 1.5, var_maxs[var] * 1.5)
+                        ax.set_ylabel(var)
+
+                    axes[-1].set_xlabel('Time window [s]')
+                    plt.draw()
+                    plt.pause(max(dt - (time.monotonic() - ti), 1e-3))
 
         except Exception as e:
-            print(e)
-            raise e
+            print(e, file=sys.stderr)
+            return
 
 
 class NullPlotter(RealtimeTimeseriesPlotter):

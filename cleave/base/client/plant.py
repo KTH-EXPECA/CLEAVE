@@ -300,19 +300,14 @@ class _RealtimePlottingPlant(_BasePlant):
         )
 
         props = dict(**state.get_sensed_props(), **state.get_actuated_props())
-        scalar_vars = [var for var, t in props.items() if t in _SCALAR_TYPES]
+        scalar_vars = set([var for var, t in props.items()
+                           if t in _SCALAR_TYPES])
 
         # realtime plotter
         # TODO: parameterize or move out of here
         # TODO: default rate handles the rate for actuator values,
         #  but there's gotta be a better way...
-        rates = self._sensors.get_sensor_rates()
-        default_rate = max(rates.values())
-        self._plotter = RealtimeTimeseriesPlotter(
-            vars_sampling_rate={
-                var: rates.get(var, default_rate) for var in scalar_vars
-            }
-        )
+        self._plotter = RealtimeTimeseriesPlotter(variables=scalar_vars)
 
     def _record_stats(self,
                       timestamp: float,
