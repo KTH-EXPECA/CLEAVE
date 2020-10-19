@@ -16,11 +16,12 @@ import sys
 import time
 from collections import deque
 from multiprocessing import Event, Process, Queue
-from typing import Mapping, Set, Union
+from typing import Iterator, Mapping, Set, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from matplotlib import animation
 
 
 class RealtimeTimeseriesPlotter(Process):
@@ -55,9 +56,6 @@ class RealtimeTimeseriesPlotter(Process):
             windows = {v: deque(maxlen=int(self._time_window * 1000))
                        for v in self._vars}
 
-            var_maxs = {}
-            var_mins = {}
-
             dt = 1 / self._plot_fps
 
             sns.set_theme(context='paper', palette='Dark2')
@@ -65,25 +63,33 @@ class RealtimeTimeseriesPlotter(Process):
                 # colors = list(colors)
 
                 fig, axes = plt.subplots(nrows=nvars, sharex='all')
-                plt.ion()
-                plt.show()
+                axes[-1].set_xlabel('Time window [s]')
+                # plt.ion()
+                # plt.show()
+
+                var_maxs = {}
+                var_mins = {}
+                var_lines = {}
 
                 # assign plots to variables and initialize labels
                 var_axes = {}
-                for var, ax in zip(self._vars, axes):
+                for var, ax, c in zip(self._vars, axes, colors):
                     var_axes[var] = ax
+                    var_lines[var], = ax.plot([], [], color=c)  # note the ","
                     ax.set_ylabel(var)
+                    ax.set_xlim(-self._time_window, 0)
 
-                while not self._shutdown.is_set():
-                    ti = time.monotonic()
-                    # get samples from queue
-                    new_samples = deque()
-                    try:
-                        while True:
-                            new_samples.append(self._sample_q.get_nowait())
-                    except queue.Empty:
-                        pass
+                # generator for the data
+                def _get_samples(*args, **kwargs) -> Iterator[deque]:
+                    while not self._shutdown.is_set():
+                        new_samples = deque()
+                        try:
+                            while True:
+                                new_samples.append(self._sample_q.get_nowait())
+                        except queue.Empty:
+                            yield new_samples
 
+                def _plot_update(new_samples: deque):
                     for timestamp, sample in new_samples:
                         # append samples to windows
                         for var, value in sample.items():
@@ -105,20 +111,28 @@ class RealtimeTimeseriesPlotter(Process):
                         y = data[time_filter, 1]
 
                         # update var ranges to make plot a bit more smooth
-                        var_maxs[var] = np.max((y.max(),
-                                                var_maxs.get(var, -np.inf)))
-                        var_mins[var] = np.min((y.min(),
-                                                var_mins.get(var, np.inf)))
+                        prev_max = var_maxs.get(var, -np.inf)
+                        var_maxs[var] = np.max((y.max(), prev_max))
+                        prev_min = var_mins.get(var, np.inf)
+                        var_mins[var] = np.min((y.min(), prev_min))
 
-                        ax.clear()
-                        sns.lineplot(x=relative_x_time, y=y, color=c, ax=ax)
-                        ax.set_xlim(-self._time_window, 0)
-                        ax.set_ylim(var_mins[var] * 1.5, var_maxs[var] * 1.5)
-                        ax.set_ylabel(var)
+                        if (prev_max != var_maxs[var]) or \
+                                (prev_min != var_mins[var]):
+                            ax.set_ylim(var_mins[var] * 1.5,
+                                        var_maxs[var] * 1.5)
+                            ax.figure.canvas.draw()
 
-                    axes[-1].set_xlabel('Time window [s]')
-                    plt.draw()
-                    plt.pause(max(dt - (time.monotonic() - ti), 1e-3))
+                        var_lines[var].set_data(relative_x_time, y)
+
+                    return list(var_lines.values())
+
+                ani = animation.FuncAnimation(fig,
+                                              _plot_update,
+                                              _get_samples,
+                                              blit=True,
+                                              interval=dt * 1e3,
+                                              repeat=False)
+                plt.show()
 
         except Exception as e:
             print(e, file=sys.stderr)

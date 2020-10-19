@@ -326,9 +326,9 @@ class _RealtimePlottingPlant(_BasePlant):
 
     def on_shutdown(self) -> None:
         # plotter shutdown
-        self._logger.info('Shutting down realtime plotter...')
+        self._logger.info('Please close plot window manually...')
         self._plotter.shutdown()
-        self._plotter.join(timeout=10)
+        self._plotter.join()
         super(_RealtimePlottingPlant, self).on_shutdown()
 
     def execute(self):
