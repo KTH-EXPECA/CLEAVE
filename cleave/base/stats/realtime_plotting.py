@@ -64,8 +64,8 @@ class RealtimeTimeseriesPlotter(Process):
 
                 fig, axes = plt.subplots(nrows=nvars, sharex='all')
                 axes[-1].set_xlabel('Time window [s]')
-                # plt.ion()
-                # plt.show()
+                fig.suptitle(f'Plant variables over a {self._time_window} '
+                             f'second time window')
 
                 var_maxs = {}
                 var_mins = {}
@@ -78,6 +78,8 @@ class RealtimeTimeseriesPlotter(Process):
                     var_lines[var], = ax.plot([], [], color=c)  # note the ","
                     ax.set_ylabel(var)
                     ax.set_xlim(-self._time_window, 0)
+
+                fig.tight_layout()
 
                 # generator for the data
                 def _get_samples(*args, **kwargs) -> Iterator[deque]:
