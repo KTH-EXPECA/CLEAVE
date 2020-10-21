@@ -67,8 +67,10 @@ class RealtimeTimeseriesPlotter(Process):
                 fig.suptitle(f'Plant variables over a {self._time_window} '
                              f'second time window')
 
-                var_maxs = {}
-                var_mins = {}
+                # note the reversed inf values, this is so they will get
+                # immediately replaced in the loop
+                var_ranges = {v: np.array([np.inf, -np.inf])
+                              for v in self._vars}
                 var_lines = {}
 
                 # assign plots to variables and initialize labels
@@ -105,26 +107,35 @@ class RealtimeTimeseriesPlotter(Process):
                         ax = var_axes[var]
 
                         data = np.array(list(windows[var]))
-                        relative_x_time = data[:, 0] - np.max(data[:, 0])
+                        if data.size == 0:
+                            continue
+
+                        relative_x_time = data[:, 0] - time.monotonic()
 
                         # don't plot stuff we can't see
                         time_filter = relative_x_time >= -self._time_window
                         relative_x_time = relative_x_time[time_filter]
                         y = data[time_filter, 1]
 
-                        # update var ranges to make plot a bit more smooth
-                        prev_max = var_maxs.get(var, -np.inf)
-                        var_maxs[var] = np.max((y.max(), prev_max))
-                        prev_min = var_mins.get(var, np.inf)
-                        var_mins[var] = np.min((y.min(), prev_min))
+                        if relative_x_time.size == 0:
+                            # nothing to plot
+                            var_lines[var].set_data([], [])
+                        else:
+                            # update var ranges to make plot a bit more smooth
+                            old_range = var_ranges[var]
+                            new_min = np.min((y.min(), old_range[0]))
+                            new_max = np.max((y.max(), old_range[1]))
+                            new_range = np.array([new_min, new_max])
 
-                        if (prev_max != var_maxs[var]) or \
-                                (prev_min != var_mins[var]):
-                            ax.set_ylim(var_mins[var] * 1.5,
-                                        var_maxs[var] * 1.5)
-                            ax.figure.canvas.draw()
+                            if not (np.any(np.isinf(new_range))
+                                    or np.any(np.isnan(new_range))) \
+                                    and not np.all(np.isclose(new_range,
+                                                              old_range)):
+                                ax.set_ylim(new_range * 1.5)
+                                ax.figure.canvas.draw()
 
-                        var_lines[var].set_data(relative_x_time, y)
+                            var_ranges[var] = new_range
+                            var_lines[var].set_data(relative_x_time, y)
 
                     return list(var_lines.values())
 

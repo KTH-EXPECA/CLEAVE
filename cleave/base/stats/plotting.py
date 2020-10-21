@@ -106,6 +106,7 @@ def __plot_rate_per_time_unit(df: pd.DataFrame,
                               label: str,
                               window_size: str = 's'):
     df = df[[x, timestamp]].copy()
+    df[timestamp] = df[~np.isnan(df[timestamp])]
     df[timestamp] = df[timestamp].map(lambda t: pd.Timestamp(t, unit='s'))
     df['rate'] = df.rolling(window=window_size, on=timestamp)[x].count()
     sns.lineplot(x=x, y='rate', ax=ax, color=color, label=label,
@@ -141,9 +142,9 @@ def plot_client_network_metrics(metrics: pd.DataFrame,
         # rtt distribution
         sns.histplot(data=metrics[~metrics['rtt_ms'].isna()],
                      x='rtt_ms', stat='density',
-                     kde=True, # log_scale=True,
+                     kde=True,  # log_scale=True,
                      color=next(colors), ax=ax[1])
-        ax[1].set_title('Distribution of RTTs (milliseconds, log-scaled)')
+        ax[1].set_title('Distribution of RTTs (milliseconds)')
         ax[1].set_xlabel('RTT (bins) [ms]')
 
         # packet rate
