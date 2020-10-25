@@ -29,9 +29,9 @@ from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
-from ..stats.plotting import plot_plant_metrics
-from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
-from ..stats.stats import RollingStatistics
+# from ..stats.plotting import plot_plant_metrics
+# from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
+# from ..stats.stats import RollingStatistics
 from ...base.util import PhyPropType, nanos2seconds, seconds2nanos
 
 # TODO: move somewhere else maybe
@@ -124,19 +124,20 @@ class _BasePlant(Plant):
 
         # save state stats, i.e., every actuator and sensor variable both
         # before and after processing
+        # TODO: reimplement stats
 
-        stat_cols = ['timestamp']
-        for var, t in state.get_sensed_props().items():
-            if t in _SCALAR_TYPES:
-                stat_cols.append(f'sens_{var}_raw')
-                stat_cols.append(f'sens_{var}_proc')
-
-        for var, t in state.get_actuated_props().items():
-            if t in _SCALAR_TYPES:
-                stat_cols.append(f'act_{var}_raw')
-                stat_cols.append(f'act_{var}_proc')
-
-        self._stats = RollingStatistics(columns=stat_cols)
+        # stat_cols = ['timestamp']
+        # for var, t in state.get_sensed_props().items():
+        #     if t in _SCALAR_TYPES:
+        #         stat_cols.append(f'sens_{var}_raw')
+        #         stat_cols.append(f'sens_{var}_proc')
+        #
+        # for var, t in state.get_actuated_props().items():
+        #     if t in _SCALAR_TYPES:
+        #         stat_cols.append(f'act_{var}_raw')
+        #         stat_cols.append(f'act_{var}_proc')
+        #
+        # self._stats = RollingStatistics(columns=stat_cols)
 
     @property
     def update_freq_hz(self) -> int:
@@ -146,29 +147,30 @@ class _BasePlant(Plant):
     def plant_state(self) -> State:
         return self._state
 
-    def _record_stats(self,
-                      timestamp: float,
-                      act: Mapping[str, PhyPropType],
-                      act_proc: Mapping[str, PhyPropType],
-                      sens: Mapping[str, PhyPropType],
-                      sens_proc: Mapping[str, PhyPropType]):
-
-        # helper function to defer recording of stats after a step
-
-        record = {'timestamp': timestamp}
-        for var, val in act.items():
-            record[f'act_{var}_raw'] = val
-
-        for var, val in act_proc.items():
-            record[f'act_{var}_proc'] = val
-
-        for var, val in sens.items():
-            record[f'sens_{var}_raw'] = val
-
-        for var, val in sens_proc.items():
-            record[f'sens_{var}_proc'] = val
-
-        self._stats.add_record(record)
+    # TODO: reimplement
+    # def _record_stats(self,
+    #                   timestamp: float,
+    #                   act: Mapping[str, PhyPropType],
+    #                   act_proc: Mapping[str, PhyPropType],
+    #                   sens: Mapping[str, PhyPropType],
+    #                   sens_proc: Mapping[str, PhyPropType]):
+    #
+    #     # helper function to defer recording of stats after a step
+    #
+    #     record = {'timestamp': timestamp}
+    #     for var, val in act.items():
+    #         record[f'act_{var}_raw'] = val
+    #
+    #     for var, val in act_proc.items():
+    #         record[f'act_{var}_proc'] = val
+    #
+    #     for var, val in sens.items():
+    #         record[f'sens_{var}_raw'] = val
+    #
+    #     for var, val in sens_proc.items():
+    #         record[f'sens_{var}_proc'] = val
+    #
+    #     self._stats.add_record(record)
 
     def _emu_step(self):
         # 1. get raw actuation inputs
@@ -195,13 +197,15 @@ class _BasePlant(Plant):
             sensor_proc = self._sensors.process_plant_state(sensor_raw)
             return sensor_proc
         finally:
+            # TODO: reimplement
             # immediately schedule the function to record the stats
-            task.deferLater(self._reactor, 0, self._record_stats,
-                            timestamp=time.time(),
-                            act=act,
-                            act_proc=proc_act,
-                            sens=sensor_raw,
-                            sens_proc=sensor_proc)
+            # task.deferLater(self._reactor, 0, self._record_stats,
+            #                 timestamp=time.time(),
+            #                 act=act,
+            #                 act_proc=proc_act,
+            #                 sens=sensor_raw,
+            #                 sens_proc=sensor_proc)
+            pass
 
     def _timestep(self, target_dt_ns: int):
         ti = time.monotonic_ns()
@@ -243,18 +247,19 @@ class _BasePlant(Plant):
         # output stats on shutdown
         self._logger.warn('Shutting down plant, please wait...')
         self._logger.info('Saving plant metrics to file...')
-        metrics = self._stats.to_pandas()
-        metrics.to_csv('./plant_metrics.csv', index=False)
+        # metrics = self._stats.to_pandas()
+        # metrics.to_csv('./plant_metrics.csv', index=False)
 
         # TODO: parameterize!
         # TODO: put in a folder?
-        plot_plant_metrics(
-            metrics=metrics,
-            sens_vars=self._state.get_sensed_props(),
-            act_vars=self._state.get_actuated_props(),
-            out_path='./',
-            fname_prefix='plant'
-        )
+        # TODO: redesign and reimplement
+        # plot_plant_metrics(
+        #     metrics=metrics,
+        #     sens_vars=self._state.get_sensed_props(),
+        #     act_vars=self._state.get_actuated_props(),
+        #     out_path='./',
+        #     fname_prefix='plant'
+        # )
 
         # call state shutdown
         self._state.on_shutdown()
@@ -285,57 +290,58 @@ class _BasePlant(Plant):
         self._reactor.run()
 
 
-class _RealtimePlottingPlant(_BasePlant):
-    def __init__(self,
-                 reactor: PosixReactorBase,
-                 update_freq: int,
-                 state: State,
-                 sensor_array: SensorArray,
-                 actuator_array: ActuatorArray,
-                 control_interface: BaseControllerInterface):
-        super(_RealtimePlottingPlant, self).__init__(
-            reactor=reactor, update_freq=update_freq, state=state,
-            sensor_array=sensor_array, actuator_array=actuator_array,
-            control_interface=control_interface
-        )
-
-        props = dict(**state.get_sensed_props(), **state.get_actuated_props())
-        scalar_vars = set([var for var, t in props.items()
-                           if t in _SCALAR_TYPES])
-
-        # realtime plotter
-        # TODO: parameterize or move out of here
-        # TODO: default rate handles the rate for actuator values,
-        #  but there's gotta be a better way...
-        self._plotter = RealtimeTimeseriesPlotter(variables=scalar_vars)
-
-    def _record_stats(self,
-                      timestamp: float,
-                      act: Mapping[str, PhyPropType],
-                      act_proc: Mapping[str, PhyPropType],
-                      sens: Mapping[str, PhyPropType],
-                      sens_proc: Mapping[str, PhyPropType]):
-        super(_RealtimePlottingPlant, self)._record_stats(
-            timestamp=timestamp,
-            act=act, act_proc=act_proc,
-            sens=sens, sens_proc=sens_proc
-        )
-
-        # plot
-        self._plotter.put_sample(dict(**act_proc, **sens_proc))
-
-    def on_shutdown(self) -> None:
-        # plotter shutdown
-        self._logger.info('Please close plot window manually...')
-        self._plotter.shutdown()
-        self._plotter.join()
-        super(_RealtimePlottingPlant, self).on_shutdown()
-
-    def execute(self):
-        self._logger.info('Starting realtime plotting interface...')
-        # start plotter
-        self._plotter.start()
-        super(_RealtimePlottingPlant, self).execute()
+# TODO: reimplement plotting
+# class _RealtimePlottingPlant(_BasePlant):
+#     def __init__(self,
+#                  reactor: PosixReactorBase,
+#                  update_freq: int,
+#                  state: State,
+#                  sensor_array: SensorArray,
+#                  actuator_array: ActuatorArray,
+#                  control_interface: BaseControllerInterface):
+#         super(_RealtimePlottingPlant, self).__init__(
+#             reactor=reactor, update_freq=update_freq, state=state,
+#             sensor_array=sensor_array, actuator_array=actuator_array,
+#             control_interface=control_interface
+#         )
+#
+#         props = dict(**state.get_sensed_props(), **state.get_actuated_props())
+#         scalar_vars = set([var for var, t in props.items()
+#                            if t in _SCALAR_TYPES])
+#
+#         # realtime plotter
+#         # TODO: parameterize or move out of here
+#         # TODO: default rate handles the rate for actuator values,
+#         #  but there's gotta be a better way...
+#         self._plotter = RealtimeTimeseriesPlotter(variables=scalar_vars)
+#
+#     def _record_stats(self,
+#                       timestamp: float,
+#                       act: Mapping[str, PhyPropType],
+#                       act_proc: Mapping[str, PhyPropType],
+#                       sens: Mapping[str, PhyPropType],
+#                       sens_proc: Mapping[str, PhyPropType]):
+#         super(_RealtimePlottingPlant, self)._record_stats(
+#             timestamp=timestamp,
+#             act=act, act_proc=act_proc,
+#             sens=sens, sens_proc=sens_proc
+#         )
+#
+#         # plot
+#         self._plotter.put_sample(dict(**act_proc, **sens_proc))
+#
+#     def on_shutdown(self) -> None:
+#         # plotter shutdown
+#         self._logger.info('Please close plot window manually...')
+#         self._plotter.shutdown()
+#         self._plotter.join()
+#         super(_RealtimePlottingPlant, self).on_shutdown()
+#
+#     def execute(self):
+#         self._logger.info('Starting realtime plotting interface...')
+#         # start plotter
+#         self._plotter.start()
+#         super(_RealtimePlottingPlant, self).execute()
 
 
 # noinspection PyAttributeOutsideInit
@@ -462,7 +468,8 @@ class PlantBuilder:
         )
 
         try:
-            return _RealtimePlottingPlant(**params) \
-                if plotting else _BasePlant(**params)
+            # return _RealtimePlottingPlant(**params) \
+            #     if plotting else _BasePlant(**params)
+            return _BasePlant(**params)
         finally:
             self.reset()

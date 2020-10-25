@@ -34,8 +34,8 @@ from twisted.internet.threads import deferToThread
 from .protocol import *
 from ..backend.controller import Controller
 from ..logging import Logger
-from ..stats.plotting import plot_controller_network_metrics
-from ..stats.stats import RollingStatistics
+# from ..stats.plotting import plot_controller_network_metrics
+# from ..stats.stats import RollingStatistics
 from ..util import PhyPropType
 
 
@@ -49,10 +49,10 @@ class UDPControllerService(DatagramProtocol):
         self._controller = controller
         self._reactor = reactor
         self._msg_fact = ControlMessageFactory()
-        self._stats = RollingStatistics(
-            columns=['seq', 'in_size_b', 'out_size_b',
-                     'recv_timestamp', 'process_time',
-                     'send_timestamp'])
+        # self._stats = RollingStatistics(
+        #     columns=['seq', 'in_size_b', 'out_size_b',
+        #              'recv_timestamp', 'process_time',
+        #              'send_timestamp'])
         self._logger = Logger()
 
     def serve(self):
@@ -63,30 +63,31 @@ class UDPControllerService(DatagramProtocol):
 
     def stopProtocol(self):
         self._logger.warn('Shutting down controller service, please wait...')
-        stats = self._stats.to_pandas()
-        # TODO: parameterize
-        self._logger.info('Writing metrics to file...')
-        stats.to_csv('udp_control_stats.csv', index=False)
-        plot_controller_network_metrics(stats, out_path='.',
-                                        fname_prefix='udp_')
+        # TODO: reimplement stats and plotting
+        # stats = self._stats.to_pandas()
+        # # TODO: parameterize
+        # self._logger.info('Writing metrics to file...')
+        # stats.to_csv('udp_control_stats.csv', index=False)
+        # plot_controller_network_metrics(stats, out_path='.',
+        #                                 fname_prefix='udp_')
         self._logger.info('Controller service shutdown complete.')
 
-    def _log_input_output(self,
-                          in_msg: ControlMessage,
-                          in_dgram: bytes,
-                          out_msg: ControlMessage,
-                          out_dgram: bytes,
-                          recv_time: float):
-        record = {
-            'seq'           : in_msg.seq,
-            'in_size_b'     : len(in_dgram),
-            'out_size_b'    : len(out_dgram),
-            'recv_timestamp': recv_time,
-            'process_time'  : out_msg.timestamp - recv_time,
-            'send_timestamp': out_msg.timestamp
-        }
-        self._stats.add_record(record)
-        # print(self._stats.rolling_window_stats(5))
+    # def _log_input_output(self,
+    #                       in_msg: ControlMessage,
+    #                       in_dgram: bytes,
+    #                       out_msg: ControlMessage,
+    #                       out_dgram: bytes,
+    #                       recv_time: float):
+    #     record = {
+    #         'seq'           : in_msg.seq,
+    #         'in_size_b'     : len(in_dgram),
+    #         'out_size_b'    : len(out_dgram),
+    #         'recv_timestamp': recv_time,
+    #         'process_time'  : out_msg.timestamp - recv_time,
+    #         'send_timestamp': out_msg.timestamp
+    #     }
+    #     self._stats.add_record(record)
+    # print(self._stats.rolling_window_stats(5))
 
     def datagramReceived(self, in_dgram: bytes, addr: Tuple[str, int]):
         # Todo: add timestamping
@@ -110,9 +111,10 @@ class UDPControllerService(DatagramProtocol):
                     self._logger.debug('Sent command to {addr[0]}:{addr[1]}.',
                                        addr=addr)
 
+                    # TODO: reimplement
                     # log after sending
-                    deferToThread(self._log_input_output, in_msg, in_dgram,
-                                  out_msg, out_dgram, recv_time)
+                    # deferToThread(self._log_input_output, in_msg, in_dgram,
+                    #               out_msg, out_dgram, recv_time)
 
                 d = deferToThread(self._controller.process, in_msg.payload)
                 d.addCallback(result_callback)

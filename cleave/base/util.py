@@ -1,11 +1,12 @@
 from queue import Empty
 from threading import Condition
-from typing import Any, Optional, Union
+from typing import Any, Mapping, Optional, Union
 
 import numpy as np
 
 #: Type of properties that can be handled by sensors and actuators.
 PhyPropType = Union[int, float, bytes, bool, np.ndarray]
+PhyPropMapping = Mapping[str, PhyPropType]
 
 
 class SingleElementQ:
