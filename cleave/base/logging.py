@@ -11,7 +11,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import sys
 from typing import Dict
 
 import loguru
@@ -20,11 +19,6 @@ from zope.interface import provider
 
 # replace the default handler
 loguru.logger.remove()
-loguru.logger.add(sys.stderr,
-                  colorize=True,
-                  format='<light-green>{time}</light-green> '
-                         '<level><b>{level}</b></level> '
-                         '{message}')
 
 __level_mapping = {
     LogLevel.debug   : loguru.logger.debug,
@@ -48,4 +42,4 @@ def log_to_loguru(event: Dict) -> None:
 
 globalLogPublisher.addObserver(log_to_loguru)
 
-__all__ = ['Logger']
+__all__ = ['Logger', 'loguru']
