@@ -13,9 +13,7 @@
 #  limitations under the License.
 
 # example config for a controller for an inverted pendulum plant
-from cleave.base.network.backend import UDPControllerService
 from cleave.impl import InvPendulumController
 
 port = 50000
 controller = InvPendulumController(ref=0.2)
-controller_service = UDPControllerService

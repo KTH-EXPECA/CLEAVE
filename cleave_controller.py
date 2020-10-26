@@ -18,6 +18,11 @@ import click
 from cleave.base.config import ConfigWrapper
 from cleave.base.eventloop import reactor
 from cleave.base.logging import loguru
+from cleave.base.network.backend import UDPControllerService
+
+_control_defaults = dict(
+    controller_service=UDPControllerService
+)
 
 
 @click.command()
@@ -51,6 +56,7 @@ def run_controller(bind_port: int,
     config = ConfigWrapper(
         config_path=config_file_path,
         cmd_line_overrides=port_override,
+        defaults=_control_defaults
     )
 
     # TODO: modularize obtaining the reactor?
