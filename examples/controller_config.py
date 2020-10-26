@@ -11,21 +11,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import site
-import sys
 
-# extend path to find cleave package from inside the examples directory
-site.addsitedir('../cleave')
-
-from cleave.base.eventloop import reactor
+# example config for a controller for an inverted pendulum plant
 from cleave.base.network.backend import UDPControllerService
 from cleave.impl import InvPendulumController
 
-if __name__ == '__main__':
-    _, port, *_ = sys.argv
-    port = int(port)
-    controller = InvPendulumController(ref=0.2)
-    # TODO: factory?
-    service = UDPControllerService(port, controller, reactor)
-
-    service.serve()
+port = 50000
+controller = InvPendulumController(ref=0.2)
+controller_service = UDPControllerService
