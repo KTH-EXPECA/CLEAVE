@@ -22,14 +22,11 @@ from threading import Event
 from typing import Mapping, Tuple
 
 import msgpack
-import pandas as pd
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
 from .exceptions import ProtocolWarning
 from .protocol import ControlMessageFactory, NoMessage
-from ..stats.plotting import plot_client_network_metrics
-from ..stats.stats import RollingStatistics
 from ...base.util import PhyPropType, SingleElementQ
 
 
@@ -78,33 +75,34 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self._recv_q = SingleElementQ()
         self._caddr = controller_addr
         self._msg_fact = ControlMessageFactory()
-        self._send_stats = RollingStatistics(
-            columns=['seq', 'send_timestamp', 'out_size_b']
-        )
-        self._recv_stats = RollingStatistics(
-            columns=['seq', 'recv_timestamp', 'in_size_b']
-        )
+        # self._send_stats = RollingStatistics(
+        #     columns=['seq', 'send_timestamp', 'out_size_b']
+        # )
+        # self._recv_stats = RollingStatistics(
+        #     columns=['seq', 'recv_timestamp', 'in_size_b']
+        # )
 
     def startProtocol(self):
         self._ready.set()
 
     def stopProtocol(self):
+        pass
         # write stats to disk on shutdown
         # TODO: parameterize
-        total_stats = pd.merge(
-            self._send_stats.to_pandas(),
-            self._recv_stats.to_pandas(),
-            how='outer',  # use sequence number for both
-            on='seq',
-            suffixes=('_send', '_recv'),
-            validate='one_to_one'
-        )
-        total_stats.to_csv('./udp_client_stats.csv', index=False)
-
-        # plot some stats
-        # TODO: folder, maybe?
-        plot_client_network_metrics(total_stats, './',
-                                    fname_prefix='udp_')
+        # total_stats = pd.merge(
+        #     self._send_stats.to_pandas(),
+        #     self._recv_stats.to_pandas(),
+        #     how='outer',  # use sequence number for both
+        #     on='seq',
+        #     suffixes=('_send', '_recv'),
+        #     validate='one_to_one'
+        # )
+        # total_stats.to_csv('./udp_client_stats.csv', index=False)
+        #
+        # # plot some stats
+        # # TODO: folder, maybe?
+        # plot_client_network_metrics(total_stats, './',
+        #                             fname_prefix='udp_')
 
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
             -> None:
@@ -115,11 +113,11 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self.transport.write(payload, self._caddr)
 
         # log
-        self._send_stats.add_record({
-            'seq'           : msg.seq,
-            'send_timestamp': msg.timestamp,
-            'out_size_b'    : len(payload)
-        })
+        # self._send_stats.add_record({
+        #     'seq'           : msg.seq,
+        #     'send_timestamp': msg.timestamp,
+        #     'out_size_b'    : len(payload)
+        # })
 
     def get_actuator_values(self) -> Mapping[str, PhyPropType]:
         try:
@@ -134,11 +132,11 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
             msg = self._msg_fact.parse_message_from_bytes(datagram)
             self._recv_q.put(msg.payload)
             # log
-            self._recv_stats.add_record({
-                'seq'           : msg.seq,
-                'recv_timestamp': recv_time,
-                'in_size_b'     : len(datagram)
-            })
+            # self._recv_stats.add_record({
+            #     'seq'           : msg.seq,
+            #     'recv_timestamp': recv_time,
+            #     'in_size_b'     : len(datagram)
+            # })
         except NoMessage:
             pass
         except (ValueError, msgpack.FormatError, msgpack.StackError):
