@@ -107,17 +107,23 @@ scipy
        
 ### Running the Inverted Pendulum example implementation
 
-Example implementations of an inverted pendulum plant and controller setup are included in the files `examples\inv_pend_client.py` and `examples\inv_pend_server.py`, respectively.
+Example implementations of an inverted pendulum plant and controller setup are included.
 
 To run the server:
 ```bash
-(venv) $ python examples/inv_pend_server.py <port>
+(venv) $ python cleave_controller.py examples/controller_config.py
 ```
+
+By default, the controller listens on UDP port 50000. This can be changed from the command line using the `--bind-port <port>` option.
 
 To run the client:
 ```bash
-(venv) $ python examples/inv_pend_client.py <host> <port>
+(venv) $ python cleave_plant.py examples/plant_config.py
 ```
+
+Again, by default the plant connects to UDP port 50000 on `localhost`. This can be altered from the command line using the `--host-address <ip/hostname> <port>` option.
+
+Both the plant and controller run scripts have additional options -- see their respective help menus for details (`--help` flag).
 
 ### Code style and standards:
 
