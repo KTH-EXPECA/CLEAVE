@@ -31,6 +31,10 @@ from ...base.util import PhyPropType, SingleElementQ
 
 
 class BaseControllerInterface(ABC):
+    """
+    Defines the base interface for interacting with controllers.
+    """
+
     def __init__(self):
         self._ready = Event()
         self._ready.clear()
@@ -70,6 +74,11 @@ class BaseControllerInterface(ABC):
 
 
 class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
+    """
+    Controller interface which abstracts over-the-network interaction with a
+    controller over UDP.
+    """
+
     def __init__(self, controller_addr: Tuple[str, int]):
         super(UDPControllerInterface, self).__init__()
         self._recv_q = SingleElementQ()
