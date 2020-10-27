@@ -1,11 +1,6 @@
 cleave package
 ==============
 
-.. automodule:: cleave
-   :members:
-   :private-members:
-   :show-inheritance:
-
 Subpackages
 -----------
 
@@ -14,3 +9,11 @@ Subpackages
 
    cleave.base
    cleave.impl
+
+Module contents
+---------------
+
+.. automodule:: cleave
+   :members:
+   :undoc-members:
+   :show-inheritance:
