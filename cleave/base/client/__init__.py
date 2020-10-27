@@ -18,8 +18,8 @@ from .sensor import Sensor, SimpleSensor
 from .state import ActuatorVariable, SensorVariable, State
 from ..eventloop import reactor
 
-
 #: Global PlantBuilder instance
+# TODO: remove Factory pattern now that we're using modular config files?
 builder = PlantBuilder(reactor)
 
 __all__ = ['builder', 'Plant',

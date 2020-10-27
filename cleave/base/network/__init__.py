@@ -13,5 +13,7 @@
 #   limitations under the License.
 
 from .exceptions import ProtocolWarning
+from .backend import UDPControllerService
+from .client import UDPControllerInterface
 
-__all__ = ['ProtocolWarning']
+__all__ = ['ProtocolWarning', 'UDPControllerInterface', 'UDPControllerService']
