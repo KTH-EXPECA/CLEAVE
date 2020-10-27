@@ -111,19 +111,19 @@ Example implementations of an inverted pendulum plant and controller setup are i
 
 To run the server:
 ```bash
-(venv) $ python cleave_controller.py examples/controller_config.py
+(venv) $ python cleave.py run-controller examples/controller_config.py
 ```
 
 By default, the controller listens on UDP port 50000. This can be changed from the command line using the `--bind-port <port>` option.
 
 To run the client:
 ```bash
-(venv) $ python cleave_plant.py examples/plant_config.py
+(venv) $ python cleave.py run-plant examples/plant_config.py
 ```
 
 Again, by default the plant connects to UDP port 50000 on `localhost`. This can be altered from the command line using the `--host-address <ip/hostname> <port>` option.
 
-Both the plant and controller run scripts have additional options -- see their respective help menus for details (`--help` flag).
+Both the plant and controller have additional options -- see their respective help menus for details (`--help` flag).
 
 ### Code style and standards:
 
