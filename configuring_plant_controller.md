@@ -12,11 +12,11 @@ In turn, these components are themselves composed of smaller sub-components:
     - A collection of `Sensors`, which implement the processing and sampling of physical measures of the system.
     - A collection of `Actuators`, which receive inputs from the `Controller` and apply them to the system.
     
-    ![CLEAVE Plant](docs/images/CLEAVE_PLANT.png)
+![CLEAVE Plant](docs/images/CLEAVE_PLANT.png)
     
 - Controllers are simpler, and have a single sub-component: a `ControllerService`, which simply implements a method to obtain an actuation from a set of samples from the plant.
 
-    ![CLEAVE Controller](docs/images/CLEAVE_CONTROL.png)
+![CLEAVE Controller](docs/images/CLEAVE_CONTROL.png)
 
 In the following, we will give an introduction to the configuration of `Plants` and `Controllers` in CLEAVE. A key point here is that the configuration of any of these components is done in Python, and thus allows for the easy extension of CLEAVE with new physical simulations, sensors, actuators and controllers.
 
