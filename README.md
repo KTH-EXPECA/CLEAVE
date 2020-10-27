@@ -125,6 +125,10 @@ Again, by default the plant connects to UDP port 50000 on `localhost`. This can 
 
 Both the plant and controller have additional options -- see their respective help menus for details (`--help` flag).
 
+### Configuring the Plant and Controller
+
+See [this file](configuring_plant_controller.md) for details.
+
 ### Code style and standards:
 
 *When developing on this project, please configure your IDE to adhere to the following guidelines.*
