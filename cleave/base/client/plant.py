@@ -14,10 +14,8 @@
 
 from __future__ import annotations
 
-import time
 import warnings
 from abc import ABC, abstractmethod
-from collections import Mapping
 from threading import RLock
 
 from twisted.internet import threads
@@ -27,12 +25,13 @@ from twisted.python.failure import Failure
 from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
+from .time import SimClock
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
 # from ..stats.plotting import plot_plant_metrics
 # from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
 # from ..stats.stats import RollingStatistics
-from ...base.util import PhyPropType, nanos2seconds, seconds2nanos
+from ...base.util import PhyPropMapping
 
 # TODO: move somewhere else maybe
 _SCALAR_TYPES = (int, float, bool)
@@ -53,6 +52,7 @@ class Plant(ABC):
 
     def __init__(self):
         self._logger = Logger()
+        self._clock = SimClock()
 
     @abstractmethod
     def execute(self):
@@ -205,27 +205,36 @@ class _BasePlant(Plant):
             #                 sens_proc=sensor_proc)
             pass
 
-    def _timestep(self, target_dt_ns: int):
-        ti = time.monotonic_ns()
+    @staticmethod
+    def no_samples_errback(failure: Failure):
+        failure.trap(NoSensorUpdate)
+        # no sensor data to send, ignore
+        return
 
-        def no_samples_to_send(failure: Failure):
-            failure.trap(NoSensorUpdate)
-            # no sensor data to send, ignore
-            return
+    def send_samples_callback(self, sensor_samples: PhyPropMapping):
+        # TODO: log!
+        # send samples after a sim step
+        self._control.put_sensor_values(sensor_samples)
 
-        def send_step_results(sensor_samples: Mapping[str, PhyPropType]):
-            # TODO: log!
-            self._control.put_sensor_values(sensor_samples)
+    def _timestep(self, target_dt: float):
+        # TODO: figure actual rate at runtime and adjust timing accordingly
+        ti = self._clock.get_stopwatch()
 
         def reschedule_step_callback(*args, **kwargs):
-            dt = nanos2seconds(target_dt_ns - (time.monotonic_ns() - ti))
-            if dt >= 0:
-                self._reactor.callLater(dt, self._timestep, target_dt_ns)
+            """
+            Callback for iteratively rescheduling the next timestep after
+            finishing the current one.
+            """
+            dt = ti.split()
+            if target_dt - dt > 0:
+                # TODO: fix the magic scaling factor...
+                self._reactor.callLater((target_dt - dt) * 0.97,
+                                        self._timestep, target_dt)
             else:
                 warnings.warn(
                     'Emulation step took longer than allotted time slot!',
                     EmulationWarning)
-                self._reactor.callLater(0, self._timestep, target_dt_ns)
+                self._reactor.callLater(0, self._timestep, target_dt)
 
         # instead of using the default deferToThread method
         # this way we can pass the reactor and don't have to trust the
@@ -233,8 +242,8 @@ class _BasePlant(Plant):
         threads.deferToThreadPool(self._reactor,
                                   self._reactor.getThreadPool(),
                                   self._emu_step) \
-            .addCallback(send_step_results) \
-            .addErrback(no_samples_to_send) \
+            .addCallback(self.send_samples_callback) \
+            .addErrback(self.no_samples_errback) \
             .addCallback(reschedule_step_callback)
 
         # threads \
@@ -265,7 +274,7 @@ class _BasePlant(Plant):
 
     def execute(self):
         self._logger.info('Initializing plant...')
-        target_dt_ns = seconds2nanos(1.0 / self._freq)
+        target_dt = 1.0 / self._freq
 
         # callback to wait for network before starting simloop
         def _wait_for_network_and_init():
@@ -276,7 +285,7 @@ class _BasePlant(Plant):
             else:
                 # schedule timestep
                 self._logger.info('Starting simulation...')
-                self._reactor.callLater(0, self._timestep, target_dt_ns)
+                self._reactor.callLater(0, self._timestep, target_dt)
 
         self._control.register_with_reactor(self._reactor)
         # callback for shutdown

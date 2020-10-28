@@ -11,6 +11,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from __future__ import annotations
+
 import time
 from typing import Any, Callable, NamedTuple
 
@@ -20,6 +22,15 @@ class TimingResult(NamedTuple):
     end: float
     duration: float
     results: Any
+
+
+class Stopwatch:
+    def __init__(self, clock: SimClock):
+        self._clock = clock
+        self._ti = clock.get_sim_time()
+
+    def split(self) -> float:
+        return self._clock.get_sim_time() - self._ti
 
 
 class SimClock:
@@ -81,3 +92,7 @@ class SimClock:
         tf = self.get_sim_time()
 
         return TimingResult(ti, tf, tf - ti, results)
+
+    def get_stopwatch(self) -> Stopwatch:
+        return Stopwatch(self)
+
