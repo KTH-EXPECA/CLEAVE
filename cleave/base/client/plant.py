@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from collections import Mapping
 from threading import RLock
 
-from twisted.internet import task, threads
+from twisted.internet import threads
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.python.failure import Failure
 
@@ -184,9 +184,7 @@ class _BasePlant(Plant):
         with self._lock:
             # this is always called from a separate thread so add some
             # thread-safety just in case
-            self._state.actuate(proc_act)
-            self._state.advance()
-            sensor_raw = self._state.get_state()
+            sensor_raw = self._state.state_update(proc_act)
             self._cycles += 1
 
         # this will only send sensor updates if we actually have any,

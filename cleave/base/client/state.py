@@ -14,9 +14,9 @@
 import time
 import warnings
 from abc import ABC, abstractmethod
-from typing import Generic, Mapping, Optional, Type, TypeVar
+from typing import Generic, Mapping, Type, TypeVar
 
-from ..util import PhyPropType
+from ..util import PhyPropMapping
 
 T = TypeVar('T', int, float, bool, bytes)
 
@@ -110,10 +110,10 @@ class State(ABC):
         else:
             return attr
 
-    def get_state(self) -> Mapping[str, PhyPropType]:
+    def _get_sensor_values(self) -> PhyPropMapping:
         return {name: p.get_value() for name, p in self._sensor_vars.items()}
 
-    def actuate(self, act: Mapping[str, PhyPropType]) -> None:
+    def _actuate(self, act: PhyPropMapping) -> None:
         for name, val in act.items():
             try:
                 self._actuator_vars[name].set_value(val)
@@ -143,7 +143,8 @@ class State(ABC):
         """
         Returns
         -------
-            Set containing the identifiers of the sensed variables.
+            Mapping containing the identifiers of the sensed variables and
+            their associated types.
         """
         return {k: v.get_type() for k, v in self._sensor_vars.items()}
 
@@ -151,6 +152,12 @@ class State(ABC):
         """
         Returns
         -------
-            Set containing the identifiers of the actuated variables.
+            Mapping containing the identifiers of the actuated variables and
+            their associated types.
         """
         return {k: v.get_type() for k, v in self._actuator_vars.items()}
+
+    def state_update(self, act_values: PhyPropMapping) -> PhyPropMapping:
+        self._actuate(act_values)
+        self.advance()
+        return self._get_sensor_values()
