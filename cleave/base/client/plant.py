@@ -16,11 +16,13 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
+from collections import deque
 from threading import RLock
+from typing import NamedTuple
 
+import numpy as np
 from twisted.internet import threads
 from twisted.internet.posixbase import PosixReactorBase
-from twisted.python.failure import Failure
 
 from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
@@ -35,6 +37,13 @@ from ...base.util import PhyPropMapping
 
 # TODO: move somewhere else maybe
 _SCALAR_TYPES = (int, float, bool)
+
+
+class _EmuStepResult(NamedTuple):
+    raw_act_values: PhyPropMapping
+    proc_act_values: PhyPropMapping
+    raw_sens_values: PhyPropMapping
+    proc_sens_values: PhyPropMapping
 
 
 class PlantBuilderWarning(Warning):
@@ -114,6 +123,7 @@ class _BasePlant(Plant):
         super(_BasePlant, self).__init__()
         self._reactor = reactor
         self._freq = update_freq
+        self._target_dt = 1.0 / update_freq
         self._state = state
         self._sensors = sensor_array
         self._actuators = actuator_array
@@ -121,6 +131,12 @@ class _BasePlant(Plant):
         self._control = control_interface
 
         self._lock = RLock()
+
+        # enq_time_diff stores a sliding window of the differences in
+        # expected and actual enqueuing times for the emulation steps. This
+        # way, when enqueuing the next emulation step, we can take into
+        # consideration the average additional delay and compensate for it.
+        self._enq_time_diff = deque(maxlen=3)
 
         # save state stats, i.e., every actuator and sensor variable both
         # before and after processing
@@ -142,6 +158,10 @@ class _BasePlant(Plant):
     @property
     def update_freq_hz(self) -> int:
         return self._freq
+
+    @property
+    def target_step_dt(self) -> float:
+        return self._target_dt
 
     @property
     def plant_state(self) -> State:
@@ -172,7 +192,7 @@ class _BasePlant(Plant):
     #
     #     self._stats.add_record(record)
 
-    def _emu_step(self):
+    def _emu_step(self) -> _EmuStepResult:
         # 1. get raw actuation inputs
         # 2. process actuation inputs
         # 3. advance state
@@ -187,13 +207,11 @@ class _BasePlant(Plant):
             sensor_raw = self._state.state_update(proc_act)
             self._cycles += 1
 
-        # this will only send sensor updates if we actually have any,
-        # since otherwise it raises an exception which will be caught in
-        # the callback
         sensor_proc = {}
         try:
             sensor_proc = self._sensors.process_plant_state(sensor_raw)
-            return sensor_proc
+        except NoSensorUpdate:
+            pass
         finally:
             # TODO: reimplement
             # immediately schedule the function to record the stats
@@ -203,38 +221,68 @@ class _BasePlant(Plant):
             #                 act_proc=proc_act,
             #                 sens=sensor_raw,
             #                 sens_proc=sensor_proc)
-            pass
+            return _EmuStepResult(
+                raw_act_values=act,
+                proc_act_values=proc_act,
+                raw_sens_values=sensor_raw,
+                proc_sens_values=sensor_proc
+            )
 
-    @staticmethod
-    def no_samples_errback(failure: Failure):
-        failure.trap(NoSensorUpdate)
-        # no sensor data to send, ignore
-        return
+    def _timestep(self,
+                  enqueued: float,
+                  target_enq_dt: float):
+        """
+        TODO: Document
 
-    def send_samples_callback(self, sensor_samples: PhyPropMapping):
-        # TODO: log!
-        # send samples after a sim step
-        self._control.put_sensor_values(sensor_samples)
+        Parameters
+        ----------
+        enqueued
+        target_enq_dt
 
-    def _timestep(self, target_dt: float):
-        # TODO: figure actual rate at runtime and adjust timing accordingly
-        ti = self._clock.get_stopwatch()
+        Returns
+        -------
 
-        def reschedule_step_callback(*args, **kwargs):
-            """
-            Callback for iteratively rescheduling the next timestep after
-            finishing the current one.
-            """
-            dt = ti.split()
-            if target_dt - dt > 0:
-                # TODO: fix the magic scaling factor...
-                self._reactor.callLater((target_dt - dt) * 0.97,
-                                        self._timestep, target_dt)
+        """
+        step_start = self._clock.get_sim_time()
+
+        def post_step_callback(step_results: _EmuStepResult) -> None:
+            # handles everything that needs to happen after an emulation step,
+            # such as sending samples out to the controller and re-scheduling
+            # the next step.
+
+            # first, send out any potential samples
+            if len(step_results.proc_sens_values) > 0:
+                self._control.put_sensor_values(step_results.proc_sens_values)
+
+            # now, we calculate timings
+            actual_enq_dt = step_start - enqueued
+            self._enq_time_diff.append(actual_enq_dt - target_enq_dt)
+            mean_enq_diff = np.mean(self._enq_time_diff)
+
+            # dt corresponds to the delta t before a new timestep needs to be
+            # executed, assuming ideal conditions. This value will later be
+            # adjusted using mean_enq_diff
+            enq = self._clock.get_sim_time()
+            dt = self._target_dt - (enq - step_start)
+
+            # and finally, we reschedule based on the calculated timings
+            if dt > 0:
+                self._reactor.callLater(
+                    _seconds=max(dt - mean_enq_diff, 0),
+                    _f=self._timestep,
+                    enqueued=enq,
+                    target_enq_dt=dt
+                )
             else:
                 warnings.warn(
                     'Emulation step took longer than allotted time slot!',
                     EmulationWarning)
-                self._reactor.callLater(0, self._timestep, target_dt)
+                self._reactor.callLater(
+                    _seconds=0,
+                    _f=self._timestep,
+                    enqueued=enq,
+                    target_enq_dt=dt
+                )
 
         # instead of using the default deferToThread method
         # this way we can pass the reactor and don't have to trust the
@@ -242,13 +290,7 @@ class _BasePlant(Plant):
         threads.deferToThreadPool(self._reactor,
                                   self._reactor.getThreadPool(),
                                   self._emu_step) \
-            .addCallback(self.send_samples_callback) \
-            .addErrback(self.no_samples_errback) \
-            .addCallback(reschedule_step_callback)
-
-        # threads \
-        #     .deferToThread(self._emu_step) \
-        #     .addCallback(reschedule_step_callback)
+            .addCallback(post_step_callback)
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
@@ -274,7 +316,6 @@ class _BasePlant(Plant):
 
     def execute(self):
         self._logger.info('Initializing plant...')
-        target_dt = 1.0 / self._freq
 
         # callback to wait for network before starting simloop
         def _wait_for_network_and_init():
@@ -285,7 +326,12 @@ class _BasePlant(Plant):
             else:
                 # schedule timestep
                 self._logger.info('Starting simulation...')
-                self._reactor.callLater(0, self._timestep, target_dt)
+                self._reactor.callLater(
+                    _seconds=0,
+                    _f=self._timestep,
+                    enqueued=self._clock.get_sim_time(),
+                    target_enq_dt=0
+                )
 
         self._control.register_with_reactor(self._reactor)
         # callback for shutdown
@@ -465,6 +511,8 @@ class PlantBuilder:
 
         params = dict(
             reactor=self._reactor,
+            # TODO: fix getting update freq twice, one from state and one
+            #  from constructor...
             update_freq=self._plant_state.update_frequency,
             state=self._plant_state,
             sensor_array=SensorArray(

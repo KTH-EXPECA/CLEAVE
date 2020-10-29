@@ -24,15 +24,6 @@ class TimingResult(NamedTuple):
     results: Any
 
 
-class Stopwatch:
-    def __init__(self, clock: SimClock):
-        self._clock = clock
-        self._ti = clock.get_sim_time()
-
-    def split(self) -> float:
-        return self._clock.get_sim_time() - self._ti
-
-
 class SimClock:
     """
     This class provides consistent simulation timing measurements.
@@ -92,7 +83,3 @@ class SimClock:
         tf = self.get_sim_time()
 
         return TimingResult(ti, tf, tf - ti, results)
-
-    def get_stopwatch(self) -> Stopwatch:
-        return Stopwatch(self)
-

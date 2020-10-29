@@ -77,13 +77,14 @@ class State(ABC):
         # self.__actuator_vars: Dict[str, ActuatorVariable] = {}
 
         self._freq = update_freq_hz
-        self._ti = time.monotonic_ns()
+        self._ti = time.monotonic()
 
-    def get_delta_t_ns(self):
+    def get_delta_t(self):
+        # TODO: change to work with simclock?
         try:
-            return time.monotonic_ns() - self._ti
+            return time.monotonic() - self._ti
         finally:
-            self._ti = time.monotonic_ns()
+            self._ti = time.monotonic()
 
     def __setattr__(self, key, value):
         if isinstance(value, _PhysPropVar):

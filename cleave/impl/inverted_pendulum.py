@@ -377,7 +377,7 @@ class InvPendulumStateNoPyglet(State):
 
         # advance the world state
         # delta T is received as nanoseconds, turn into seconds
-        deltaT = nanos2seconds(self.get_delta_t_ns())
+        deltaT = self.get_delta_t()
         self._space.step(deltaT)
 
         angle_deg = np.degrees(self._pend_body.angle)
