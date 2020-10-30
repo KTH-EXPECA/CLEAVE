@@ -20,7 +20,8 @@ from collections import deque
 from threading import RLock
 from typing import NamedTuple
 
-from twisted.internet import task
+import numpy as np
+from twisted.internet import threads
 from twisted.internet.posixbase import PosixReactorBase
 
 from .actuator import Actuator, ActuatorArray
@@ -191,28 +192,24 @@ class _BasePlant(Plant):
     #
     #     self._stats.add_record(record)
 
-    def _execute_emu_timestep(self, count: int) -> _EmuStepResult:
+    def _emu_step(self) -> _EmuStepResult:
         # 1. get raw actuation inputs
         # 2. process actuation inputs
         # 3. advance state
         # 4. process sensor outputs
         # 5. send sensor outputs
-
-        # check that timings are respected!
-        if count > 1:
-            warnings.warn('Emulation step took longer than allotted time slot!',
-                          EmulationWarning)
-        print(count)
-
         act = self._control.get_actuator_values()
         proc_act = self._actuators.process_actuation_inputs(act)
-        sensor_raw = self._state.state_update(proc_act)
-        self._cycles += 1
+
+        with self._lock:
+            # this is always called from a separate thread so add some
+            # thread-safety just in case
+            sensor_raw = self._state.state_update(proc_act)
+            self._cycles += 1
 
         sensor_proc = {}
         try:
             sensor_proc = self._sensors.process_plant_state(sensor_raw)
-            self._control.put_sensor_values(sensor_proc)
         except NoSensorUpdate:
             pass
         finally:
@@ -230,6 +227,70 @@ class _BasePlant(Plant):
                 raw_sens_values=sensor_raw,
                 proc_sens_values=sensor_proc
             )
+
+    def _timestep(self,
+                  enqueued: float,
+                  target_enq_dt: float):
+        """
+        TODO: Document
+
+        Parameters
+        ----------
+        enqueued
+        target_enq_dt
+
+        Returns
+        -------
+
+        """
+        step_start = self._clock.get_sim_time()
+
+        def post_step_callback(step_results: _EmuStepResult) -> None:
+            # handles everything that needs to happen after an emulation step,
+            # such as sending samples out to the controller and re-scheduling
+            # the next step.
+
+            # first, send out any potential samples
+            if len(step_results.proc_sens_values) > 0:
+                self._control.put_sensor_values(step_results.proc_sens_values)
+
+            # now, we calculate timings
+            actual_enq_dt = step_start - enqueued
+            self._enq_time_diff.append(actual_enq_dt - target_enq_dt)
+            mean_enq_diff = np.mean(self._enq_time_diff)
+
+            # dt corresponds to the delta t before a new timestep needs to be
+            # executed, assuming ideal conditions. This value will later be
+            # adjusted using mean_enq_diff
+            enq = self._clock.get_sim_time()
+            dt = self._target_dt - (enq - step_start)
+
+            # and finally, we reschedule based on the calculated timings
+            if dt > 0:
+                self._reactor.callLater(
+                    _seconds=max(dt - mean_enq_diff, 0),
+                    _f=self._timestep,
+                    enqueued=enq,
+                    target_enq_dt=dt
+                )
+            else:
+                warnings.warn(
+                    'Emulation step took longer than allotted time slot!',
+                    EmulationWarning)
+                self._reactor.callLater(
+                    _seconds=0,
+                    _f=self._timestep,
+                    enqueued=enq,
+                    target_enq_dt=dt
+                )
+
+        # instead of using the default deferToThread method
+        # this way we can pass the reactor and don't have to trust the
+        # function to use the default one.
+        threads.deferToThreadPool(self._reactor,
+                                  self._reactor.getThreadPool(),
+                                  self._emu_step) \
+            .addCallback(post_step_callback)
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
@@ -255,7 +316,6 @@ class _BasePlant(Plant):
 
     def execute(self):
         self._logger.info('Initializing plant...')
-        self._logger.warn(f'Target DT: {self._target_dt} s')
 
         # callback to wait for network before starting simloop
         def _wait_for_network_and_init():
@@ -266,10 +326,12 @@ class _BasePlant(Plant):
             else:
                 # schedule timestep
                 self._logger.info('Starting simulation...')
-                loop = task.LoopingCall \
-                    .withCount(self._execute_emu_timestep)
-                loop.clock = self._reactor
-                loop.start(self._target_dt)
+                self._reactor.callLater(
+                    _seconds=0,
+                    _f=self._timestep,
+                    enqueued=self._clock.get_sim_time(),
+                    target_enq_dt=0
+                )
 
         self._control.register_with_reactor(self._reactor)
         # callback for shutdown
