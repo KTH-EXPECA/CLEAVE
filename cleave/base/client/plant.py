@@ -202,7 +202,6 @@ class _BasePlant(Plant):
         if count > 1:
             warnings.warn('Emulation step took longer than allotted time slot!',
                           EmulationWarning)
-        print(count)
 
         act = self._control.get_actuator_values()
         proc_act = self._actuators.process_actuation_inputs(act)
