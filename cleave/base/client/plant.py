@@ -18,7 +18,6 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import deque
 from threading import RLock
-from typing import NamedTuple
 
 from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
@@ -32,17 +31,10 @@ from ..network.client import BaseControllerInterface
 # from ..stats.plotting import plot_plant_metrics
 # from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
 # from ..stats.stats import RollingStatistics
-from ...base.util import PhyPropMapping
+from ..sinks import SinkGroup
 
 # TODO: move somewhere else maybe
 _SCALAR_TYPES = (int, float, bool)
-
-
-class _EmuStepResult(NamedTuple):
-    raw_act_values: PhyPropMapping
-    proc_act_values: PhyPropMapping
-    raw_sens_values: PhyPropMapping
-    proc_sens_values: PhyPropMapping
 
 
 class PlantBuilderWarning(Warning):
@@ -118,6 +110,8 @@ class _BasePlant(Plant):
                  state: State,
                  sensor_array: SensorArray,
                  actuator_array: ActuatorArray,
+                 plant_sinks: SinkGroup,
+                 client_sinks: SinkGroup,
                  control_interface: BaseControllerInterface):
         super(_BasePlant, self).__init__()
         self._reactor = reactor
@@ -128,6 +122,9 @@ class _BasePlant(Plant):
         self._actuators = actuator_array
         self._cycles = 0
         self._control = control_interface
+
+        self._plant_sinks = plant_sinks
+        self._client_sinks = client_sinks
 
         self._lock = RLock()
 
@@ -166,74 +163,60 @@ class _BasePlant(Plant):
     def plant_state(self) -> State:
         return self._state
 
-    # TODO: reimplement
-    # def _record_stats(self,
-    #                   timestamp: float,
-    #                   act: Mapping[str, PhyPropType],
-    #                   act_proc: Mapping[str, PhyPropType],
-    #                   sens: Mapping[str, PhyPropType],
-    #                   sens_proc: Mapping[str, PhyPropType]):
-    #
-    #     # helper function to defer recording of stats after a step
-    #
-    #     record = {'timestamp': timestamp}
-    #     for var, val in act.items():
-    #         record[f'act_{var}_raw'] = val
-    #
-    #     for var, val in act_proc.items():
-    #         record[f'act_{var}_proc'] = val
-    #
-    #     for var, val in sens.items():
-    #         record[f'sens_{var}_raw'] = val
-    #
-    #     for var, val in sens_proc.items():
-    #         record[f'sens_{var}_proc'] = val
-    #
-    #     self._stats.add_record(record)
-
-    def _execute_emu_timestep(self, count: int) -> _EmuStepResult:
+    def _execute_emu_timestep(self, count: int) -> None:
         # 1. get raw actuation inputs
         # 2. process actuation inputs
         # 3. advance state
         # 4. process sensor outputs
         # 5. send sensor outputs
+        step_start = self._clock.get_sim_time()
 
         # check that timings are respected!
         if count > 1:
             warnings.warn('Emulation step took longer than allotted time slot!',
                           EmulationWarning)
 
-        act = self._control.get_actuator_values()
-        proc_act = self._actuators.process_actuation_inputs(act)
-        sensor_raw = self._state.state_update(proc_act)
+        act_raw = self._control.get_actuator_values()
+        act_proc = self._actuators.process_actuation_inputs(act_raw)
+        sensor_raw = self._state.state_update(act_proc)
         self._cycles += 1
 
         sensor_proc = {}
         try:
+            # this only sends if any sensors are triggered during this state
+            # update, otherwise an exception is raised and caught further down.
             sensor_proc = self._sensors.process_plant_state(sensor_raw)
             self._control.put_sensor_values(sensor_proc)
         except NoSensorUpdate:
             pass
         finally:
-            # TODO: reimplement
-            # immediately schedule the function to record the stats
-            # task.deferLater(self._reactor, 0, self._record_stats,
-            #                 timestamp=time.time(),
-            #                 act=act,
-            #                 act_proc=proc_act,
-            #                 sens=sensor_raw,
-            #                 sens_proc=sensor_proc)
-            return _EmuStepResult(
-                raw_act_values=act,
-                proc_act_values=proc_act,
-                raw_sens_values=sensor_raw,
-                proc_sens_values=sensor_proc
-            )
+            # sink plant state
+            # TODO: is there a better way to do this?
+            state_snapshot = {
+                'sensor_values'  : {
+                    'raw'      : sensor_raw,
+                    'processed': sensor_proc
+                },
+                'actuator_values': {
+                    'raw'      : act_raw,
+                    'processed': act_proc
+                },
+                'timestamps'     : {
+                    'start': step_start,
+                    'end'  : self._clock.get_sim_time()
+                }
+            }
+
+            self._reactor.callLater(0, self._plant_sinks.sink, state_snapshot)
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
         self._logger.warn('Shutting down plant, please wait...')
-        self._logger.info('Saving plant metrics to file...')
+
+        # close sinks
+        self._plant_sinks.on_end()
+        self._client_sinks.on_end()
+
         # metrics = self._stats.to_pandas()
         # metrics.to_csv('./plant_metrics.csv', index=False)
 
@@ -274,6 +257,10 @@ class _BasePlant(Plant):
         # callback for shutdown
         self._reactor.addSystemEventTrigger('before', 'shutdown',
                                             self.on_shutdown)
+
+        # start sinks
+        self._plant_sinks.on_start()
+        self._client_sinks.on_start()
 
         self._reactor.callWhenRunning(_wait_for_network_and_init)
         self._reactor.suggestThreadPoolSize(3)  # input, output and processing
@@ -354,6 +341,8 @@ class PlantBuilder:
         """
         self._sensors = []
         self._actuators = []
+        self._plant_sinks = SinkGroup(name='Plant')
+        self._client_sinks = SinkGroup(name='ControllerClient')
         # self._comm_client = None
         self._controller = None
         self._plant_state = None
@@ -456,6 +445,8 @@ class PlantBuilder:
                 plant_freq=self._plant_state.update_frequency,
                 sensors=self._sensors),
             actuator_array=ActuatorArray(actuators=self._actuators),
+            plant_sinks=self._plant_sinks,
+            client_sinks=self._client_sinks,
             control_interface=self._controller
         )
 

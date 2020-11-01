@@ -13,17 +13,9 @@
 #  limitations under the License.
 import abc
 import copy
-from typing import Mapping, NamedTuple
+from typing import Mapping
 
 from .logging import Logger
-from .util import PhyPropMapping
-
-
-class EmuStepResult(NamedTuple):
-    raw_act_values: PhyPropMapping
-    proc_act_values: PhyPropMapping
-    raw_sens_values: PhyPropMapping
-    proc_sens_values: PhyPropMapping
 
 
 class Sink(abc.ABC):
