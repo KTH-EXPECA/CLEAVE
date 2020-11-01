@@ -13,9 +13,22 @@
 #  limitations under the License.
 
 # Example config file for an inverted pendulum plant
+
 from cleave.base.client import SimpleActuator, SimpleSensor
 from cleave.base.network import UDPControllerInterface
+# from cleave.base.sinks import Sink, make_sink
 from cleave.impl import InvPendulumStateNoPyglet
+
+
+# class PrintSink(Sink):
+#     def sink(self, values: Mapping) -> None:
+#         print(values)
+#
+#
+# @make_sink
+# def fn_sink(values: Mapping) -> None:
+#     print(f'Function sink! {values}')
+
 
 host = 'localhost'
 port = 50000
@@ -33,3 +46,8 @@ sensors = [
 actuators = [
     SimpleActuator('force')
 ]
+
+# plant_sinks = [
+#     PrintSink(),
+#     fn_sink
+# ]

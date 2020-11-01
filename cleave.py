@@ -30,7 +30,9 @@ _control_defaults = dict(
 )
 
 _plant_defaults = dict(
-    controller_interface=UDPControllerInterface
+    controller_interface=UDPControllerInterface,
+    plant_sinks=[],
+    client_sinks=[]
 )
 
 
@@ -73,15 +75,13 @@ def run_plant(host_address: Tuple[str, int],
     host_addr = (socket.gethostbyname(config.host), config.port)
     builder.set_controller(config.controller_interface(host_addr))
     builder.set_plant_state(config.state)
-
-    for sensor in config.sensors:
-        builder.attach_sensor(sensor)
-
-    for actuator in config.actuators:
-        builder.attach_actuator(actuator)
+    builder.set_sensors(config.sensors)
+    builder.set_actuators(config.actuators)
+    builder.set_plant_sinks(config.plant_sinks)
+    builder.set_client_sinks(config.client_sinks)
 
     # TODO: extra options to build?
-    plant = builder.build(plotting=True)
+    plant = builder.build()
     plant.execute()
 
 

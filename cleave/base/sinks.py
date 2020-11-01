@@ -13,7 +13,7 @@
 #  limitations under the License.
 import abc
 import copy
-from typing import Mapping
+from typing import Callable, Collection, Mapping
 
 from .logging import Logger
 
@@ -30,12 +30,21 @@ class Sink(abc.ABC):
         pass
 
 
+def make_sink(fn: Callable[[Mapping], None]) -> Sink:
+    class _SinkWrapper(Sink):
+        def sink(self, values: Mapping) -> None:
+            return fn(values)
+
+    return _SinkWrapper()
+
+
 class SinkGroup(Sink):
     def __init__(self,
-                 name: str):
+                 name: str,
+                 sinks: Collection[Sink] = ()):
         self._log = Logger()
         self._name = name
-        self._sinks = set()
+        self._sinks = set(sinks)
 
     def on_start(self) -> None:
         self._log.info(f'Setting up sinks for group {self._name}...')

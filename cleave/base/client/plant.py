@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from collections import deque
+from collections import Collection, deque
 from threading import RLock
 
 from twisted.internet import task
@@ -31,7 +31,7 @@ from ..network.client import BaseControllerInterface
 # from ..stats.plotting import plot_plant_metrics
 # from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
 # from ..stats.stats import RollingStatistics
-from ..sinks import SinkGroup
+from ..sinks import Sink, SinkGroup
 
 # TODO: move somewhere else maybe
 _SCALAR_TYPES = (int, float, bool)
@@ -103,7 +103,7 @@ class Plant(ABC):
         pass
 
 
-class _BasePlant(Plant):
+class BasePlant(Plant):
     def __init__(self,
                  reactor: PosixReactorBase,
                  update_freq: int,
@@ -113,7 +113,7 @@ class _BasePlant(Plant):
                  plant_sinks: SinkGroup,
                  client_sinks: SinkGroup,
                  control_interface: BaseControllerInterface):
-        super(_BasePlant, self).__init__()
+        super(BasePlant, self).__init__()
         self._reactor = reactor
         self._freq = update_freq
         self._target_dt = 1.0 / update_freq
@@ -123,6 +123,7 @@ class _BasePlant(Plant):
         self._cycles = 0
         self._control = control_interface
 
+        # TODO: do something with client sinks
         self._plant_sinks = plant_sinks
         self._client_sinks = client_sinks
 
@@ -341,8 +342,8 @@ class PlantBuilder:
         """
         self._sensors = []
         self._actuators = []
-        self._plant_sinks = SinkGroup(name='Plant')
-        self._client_sinks = SinkGroup(name='ControllerClient')
+        self._plant_sinks = []
+        self._client_sinks = []
         # self._comm_client = None
         self._controller = None
         self._plant_state = None
@@ -350,6 +351,18 @@ class PlantBuilder:
     def __init__(self, reactor: PosixReactorBase):
         self._reactor = reactor
         self.reset()
+
+    def attach_plant_sink(self, sink: Sink) -> None:
+        self._plant_sinks.append(sink)
+
+    def attach_client_sink(self, sink: Sink) -> None:
+        self._plant_sinks.append(sink)
+
+    def set_plant_sinks(self, sinks: Collection[Sink]) -> None:
+        self._plant_sinks = list(sinks)
+
+    def set_client_sinks(self, sinks: Collection[Sink]) -> None:
+        self._client_sinks = list(sinks)
 
     def attach_sensor(self, sensor: Sensor) -> None:
         """
@@ -381,6 +394,12 @@ class PlantBuilder:
 
         """
         self._actuators.append(actuator)
+
+    def set_sensors(self, sensors: Collection[Sensor]) -> None:
+        self._sensors = list(sensors)
+
+    def set_actuators(self, actuators: Collection[Actuator]) -> None:
+        self._actuators = list(actuators)
 
     def set_controller(self, controller: BaseControllerInterface) -> None:
         if self._controller is not None:
@@ -415,16 +434,13 @@ class PlantBuilder:
 
         self._plant_state = plant_state
 
-    def build(self, plotting: bool = False) -> Plant:
+    def build(self) -> Plant:
         """
         Builds a Plant instance and returns it. The actual subtype of this
         plant will depend on the previously provided parameters.
 
         Parameters
         ----------
-        plotting:
-            Whether to initialize a plant with realtime plotting capabilities.
-
         Returns
         -------
         Plant
@@ -445,14 +461,16 @@ class PlantBuilder:
                 plant_freq=self._plant_state.update_frequency,
                 sensors=self._sensors),
             actuator_array=ActuatorArray(actuators=self._actuators),
-            plant_sinks=self._plant_sinks,
-            client_sinks=self._client_sinks,
+            plant_sinks=SinkGroup(name='PhysicalPlant',
+                                  sinks=self._plant_sinks),
+            client_sinks=SinkGroup(name='ControllerClient',
+                                   sinks=self._plant_sinks),
             control_interface=self._controller
         )
 
         try:
             # return _RealtimePlottingPlant(**params) \
             #     if plotting else _BasePlant(**params)
-            return _BasePlant(**params)
+            return BasePlant(**params)
         finally:
             self.reset()
