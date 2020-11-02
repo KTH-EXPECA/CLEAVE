@@ -166,8 +166,8 @@ class BasePlant(Plant):
 
         # check that timings are respected!
         if count > 1:
-            self._logger.warn(
-                'Emulation step took longer than allotted time slot!', )
+            self._logger.warn('Emulation step took longer '
+                              'than allotted time slot!', )
 
         act_cmd = self._control.get_actuator_values()
 

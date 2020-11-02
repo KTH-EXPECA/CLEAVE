@@ -14,6 +14,7 @@
 import time
 import warnings
 from abc import ABC, abstractmethod
+from copy import copy
 from typing import Generic, Mapping, Type, TypeVar
 
 from ..util import PhyPropMapping
@@ -67,15 +68,12 @@ class State(ABC):
 
     def __new__(cls, *args, **kwargs):
         inst = ABC.__new__(cls)
-        ABC.__setattr__(inst, '_sensor_vars', {})
-        ABC.__setattr__(inst, '_actuator_vars', {})
+        ABC.__setattr__(inst, '_sensor_vars', set())
+        ABC.__setattr__(inst, '_actuator_vars', set())
         return inst
 
     def __init__(self, update_freq_hz: int):
         super(State, self).__init__()
-        # self.__sensor_vars: Dict[str, SensorVariable] = {}
-        # self.__actuator_vars: Dict[str, ActuatorVariable] = {}
-
         self._freq = update_freq_hz
         self._ti = time.monotonic()
 
@@ -90,38 +88,31 @@ class State(ABC):
         if isinstance(value, _PhysPropVar):
             # registering a new physical property
             if isinstance(value, SensorVariable):
-                self._sensor_vars[key] = value
+                self._sensor_vars.add(key)
             elif isinstance(value, ActuatorVariable):
-                self._actuator_vars[key] = value
+                self._actuator_vars.add(key)
             else:
                 raise StateError('Physical properties need to be either '
                                  'Actuator or Sensor properties.')
-        elif key in self._sensor_vars:
-            # updating the value of a sensor variable
-            self._sensor_vars[key].set_value(value)
-        elif key in self._actuator_vars:
-            self._actuator_vars[key].set_value(value)
 
+            # unpack value to discard wrapper object
+            value = value.get_value()
         super(State, self).__setattr__(key, value)
 
-    def __getattribute__(self, item):
-        attr = super(State, self).__getattribute__(item)
-        if isinstance(attr, _PhysPropVar):
-            return attr.get_value()
-        else:
-            return attr
-
     def get_sensor_values(self) -> PhyPropMapping:
-        return {name: p.get_value() for name, p in self._sensor_vars.items()}
+        return {name: getattr(self, name) for name in self._sensor_vars}
 
     def get_actuator_values(self) -> PhyPropMapping:
-        return {name: p.get_value() for name, p in self._actuator_vars.items()}
+        return {name: getattr(self, name) for name in self._actuator_vars}
 
     def _actuate(self, act: PhyPropMapping) -> None:
         for name, val in act.items():
             try:
-                self._actuator_vars[name].set_value(val)
-            except KeyError:
+                assert name in self._actuator_vars
+                setattr(self, name, val)
+                # self._actuator_vars[name].set_value(val)
+            except AssertionError:
+                # TODO: use logger
                 warnings.warn('Received update for unregistered actuated '
                               f'property "{name}!"',
                               StateWarning)
@@ -147,19 +138,17 @@ class State(ABC):
         """
         Returns
         -------
-            Mapping containing the identifiers of the sensed variables and
-            their associated types.
+            Mapping containing the identifiers of the sensed variables.
         """
-        return {k: v.get_type() for k, v in self._sensor_vars.items()}
+        return copy(self._sensor_vars)
 
     def get_actuated_props(self) -> Mapping[str, Type]:
         """
         Returns
         -------
-            Mapping containing the identifiers of the actuated variables and
-            their associated types.
+            Mapping containing the identifiers of the actuated variables.
         """
-        return {k: v.get_type() for k, v in self._actuator_vars.items()}
+        return copy(self._actuator_vars)
 
     def state_update(self, act_values: PhyPropMapping) -> PhyPropMapping:
         self._actuate(act_values)
