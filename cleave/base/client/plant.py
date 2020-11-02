@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from collections import Collection, deque
-from threading import RLock
+from collections import Collection
+from typing import Optional
 
 from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
@@ -31,9 +31,9 @@ from ..network.client import BaseControllerInterface
 # from ..stats.plotting import plot_plant_metrics
 # from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
 # from ..stats.stats import RollingStatistics
-from ..sinks import Sink, SinkGroup
-
+from ..sinks import PlantCSVStatCollector, Sink, SinkGroup
 # TODO: move somewhere else maybe
+
 _SCALAR_TYPES = (int, float, bool)
 
 
@@ -106,7 +106,6 @@ class Plant(ABC):
 class BasePlant(Plant):
     def __init__(self,
                  reactor: PosixReactorBase,
-                 update_freq: int,
                  state: State,
                  sensor_array: SensorArray,
                  actuator_array: ActuatorArray,
@@ -115,8 +114,8 @@ class BasePlant(Plant):
                  control_interface: BaseControllerInterface):
         super(BasePlant, self).__init__()
         self._reactor = reactor
-        self._freq = update_freq
-        self._target_dt = 1.0 / update_freq
+        self._freq = state.update_frequency
+        self._target_dt = 1.0 / self._freq
         self._state = state
         self._sensors = sensor_array
         self._actuators = actuator_array
@@ -126,14 +125,6 @@ class BasePlant(Plant):
         # TODO: do something with client sinks
         self._plant_sinks = plant_sinks
         self._client_sinks = client_sinks
-
-        self._lock = RLock()
-
-        # enq_time_diff stores a sliding window of the differences in
-        # expected and actual enqueuing times for the emulation steps. This
-        # way, when enqueuing the next emulation step, we can take into
-        # consideration the average additional delay and compensate for it.
-        self._enq_time_diff = deque(maxlen=3)
 
         # save state stats, i.e., every actuator and sensor variable both
         # before and after processing
@@ -193,6 +184,8 @@ class BasePlant(Plant):
         finally:
             # sink plant state
             # TODO: is there a better way to do this?
+            # TODO: create a namedtuple? or a function to modularize this
+            # this should be a state snapshot, refactor!!
             state_snapshot = {
                 'sensor_values'  : {
                     'raw'      : sensor_raw,
@@ -434,7 +427,8 @@ class PlantBuilder:
 
         self._plant_state = plant_state
 
-    def build(self) -> Plant:
+    def build(self,
+              plant_csv_output_path: Optional[str]) -> Plant:
         """
         Builds a Plant instance and returns it. The actual subtype of this
         plant will depend on the previously provided parameters.
@@ -451,11 +445,18 @@ class PlantBuilder:
         # TODO: raise error if missing parameters OR instantiate different
         #  types of plants?
 
+        # TODO: put in default config? no?
+        if plant_csv_output_path is not None:
+            self._plant_sinks.append(
+                PlantCSVStatCollector(
+                    self._plant_state.get_sensed_props(),
+                    self._plant_state.get_actuated_props(),
+                    plant_csv_output_path
+                )
+            )
+
         params = dict(
             reactor=self._reactor,
-            # TODO: fix getting update freq twice, one from state and one
-            #  from constructor...
-            update_freq=self._plant_state.update_frequency,
             state=self._plant_state,
             sensor_array=SensorArray(
                 plant_freq=self._plant_state.update_frequency,

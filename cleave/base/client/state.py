@@ -111,8 +111,11 @@ class State(ABC):
         else:
             return attr
 
-    def _get_sensor_values(self) -> PhyPropMapping:
+    def get_sensor_values(self) -> PhyPropMapping:
         return {name: p.get_value() for name, p in self._sensor_vars.items()}
+
+    def get_actuator_values(self) -> PhyPropMapping:
+        return {name: p.get_value() for name, p in self._actuator_vars.items()}
 
     def _actuate(self, act: PhyPropMapping) -> None:
         for name, val in act.items():
@@ -161,4 +164,4 @@ class State(ABC):
     def state_update(self, act_values: PhyPropMapping) -> PhyPropMapping:
         self._actuate(act_values)
         self.advance()
-        return self._get_sensor_values()
+        return self.get_sensor_values()

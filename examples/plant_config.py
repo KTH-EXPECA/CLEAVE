@@ -19,7 +19,6 @@ from cleave.base.network import UDPControllerInterface
 # from cleave.base.sinks import Sink, make_sink
 from cleave.impl import InvPendulumStateNoPyglet
 
-
 # class PrintSink(Sink):
 #     def sink(self, values: Mapping) -> None:
 #         print(values)
@@ -46,6 +45,8 @@ sensors = [
 actuators = [
     SimpleActuator('force')
 ]
+
+csv_output_path = './plant.csv'
 
 # plant_sinks = [
 #     PrintSink(),
