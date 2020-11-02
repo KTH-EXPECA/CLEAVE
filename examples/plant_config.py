@@ -14,7 +14,7 @@
 
 # Example config file for an inverted pendulum plant
 
-from cleave.base.client import SimpleActuator, SimpleSensor
+from cleave.base.client import SimpleConstantActuator, SimpleSensor
 from cleave.base.network import UDPControllerInterface
 # from cleave.base.sinks import Sink, make_sink
 from cleave.impl import InvPendulumStateNoPyglet
@@ -43,7 +43,7 @@ sensors = [
 ]
 
 actuators = [
-    SimpleActuator('force')
+    SimpleConstantActuator('force', start_value=0)
 ]
 
 csv_output_path = './plant.csv'

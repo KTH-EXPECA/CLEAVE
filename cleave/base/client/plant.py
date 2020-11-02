@@ -32,6 +32,7 @@ from ..network.client import BaseControllerInterface
 # from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
 # from ..stats.stats import RollingStatistics
 from ..sinks import PlantCSVStatCollector, Sink, SinkGroup
+
 # TODO: move somewhere else maybe
 
 _SCALAR_TYPES = (int, float, bool)
@@ -165,12 +166,14 @@ class BasePlant(Plant):
 
         # check that timings are respected!
         if count > 1:
-            warnings.warn('Emulation step took longer than allotted time slot!',
-                          EmulationWarning)
+            self._logger.warn(
+                'Emulation step took longer than allotted time slot!', )
 
-        act_raw = self._control.get_actuator_values()
-        act_proc = self._actuators.process_actuation_inputs(act_raw)
-        sensor_raw = self._state.state_update(act_proc)
+        act_cmd = self._control.get_actuator_values()
+
+        self._actuators.apply_actuation_inputs(act_cmd)
+        act_val = self._actuators.get_actuation_values()
+        sensor_raw = self._state.state_update(act_val)
         self._cycles += 1
 
         sensor_proc = {}
@@ -182,26 +185,27 @@ class BasePlant(Plant):
         except NoSensorUpdate:
             pass
         finally:
+            pass
             # sink plant state
             # TODO: is there a better way to do this?
             # TODO: create a namedtuple? or a function to modularize this
             # this should be a state snapshot, refactor!!
-            state_snapshot = {
-                'sensor_values'  : {
-                    'raw'      : sensor_raw,
-                    'processed': sensor_proc
-                },
-                'actuator_values': {
-                    'raw'      : act_raw,
-                    'processed': act_proc
-                },
-                'timestamps'     : {
-                    'start': step_start,
-                    'end'  : self._clock.get_sim_time()
-                }
-            }
-
-            self._reactor.callLater(0, self._plant_sinks.sink, state_snapshot)
+            # state_snapshot = {
+            #     'sensor_values'  : {
+            #         'raw'      : sensor_raw,
+            #         'processed': sensor_proc
+            #     },
+            #     'actuator_values': {
+            #         'raw'      : act_raw,
+            #         'processed': act_proc
+            #     },
+            #     'timestamps'     : {
+            #         'start': step_start,
+            #         'end'  : self._clock.get_sim_time()
+            #     }
+            # }
+            #
+            # self._reactor.callLater(0, self._plant_sinks.sink, state_snapshot)
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
