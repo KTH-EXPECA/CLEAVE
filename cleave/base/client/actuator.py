@@ -85,10 +85,10 @@ class SimpleImpulseActuator(Actuator):
 
     def __init__(self,
                  prop_name: str,
-                 start_value: PhyPropType):
+                 default_value: PhyPropType):
         super(SimpleImpulseActuator, self).__init__(prop_name=prop_name,
-                                                    start_value=start_value)
-        self._default_value = start_value
+                                                    start_value=default_value)
+        self._default_value = default_value
 
     def set_value(self, desired_value: PhyPropType) -> None:
         self._value = desired_value
