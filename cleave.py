@@ -31,7 +31,6 @@ _control_defaults = dict(
 
 _plant_defaults = dict(
     controller_interface=UDPControllerInterface,
-    csv_output_path=None,
     plant_sinks=[],
     client_sinks=[]
 )
@@ -82,9 +81,7 @@ def run_plant(host_address: Tuple[str, int],
     builder.set_client_sinks(config.client_sinks)
 
     # TODO: extra options to build?
-    plant = builder.build(
-        plant_csv_output_path=config.csv_output_path
-    )
+    plant = builder.build()
     plant.execute()
 
 

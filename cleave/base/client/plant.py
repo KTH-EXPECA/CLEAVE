@@ -17,7 +17,6 @@ from __future__ import annotations
 import warnings
 from abc import ABC, abstractmethod
 from collections import Collection
-from typing import Optional
 
 from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
@@ -31,7 +30,7 @@ from ..network.client import BaseControllerInterface
 # from ..stats.plotting import plot_plant_metrics
 # from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
 # from ..stats.stats import RollingStatistics
-from ..sinks import PlantCSVStatCollector, Sink, SinkGroup
+from ..sinks import Sink, SinkGroup
 
 # TODO: move somewhere else maybe
 
@@ -169,43 +168,44 @@ class BasePlant(Plant):
             self._logger.warn('Emulation step took longer '
                               'than allotted time slot!', )
 
-        act_cmd = self._control.get_actuator_values()
+        act_inputs = self._control.get_actuator_values()
 
-        self._actuators.apply_actuation_inputs(act_cmd)
-        act_val = self._actuators.get_actuation_values()
-        sensor_raw = self._state.state_update(act_val)
+        self._actuators.apply_actuation_inputs(act_inputs)
+        state_inputs = self._actuators.get_actuation_values()
+
+        state_outputs = self._state.state_update(state_inputs)
         self._cycles += 1
 
-        sensor_proc = {}
+        sensor_outputs = {}
         try:
             # this only sends if any sensors are triggered during this state
             # update, otherwise an exception is raised and caught further down.
-            sensor_proc = self._sensors.process_plant_state(sensor_raw)
-            self._control.put_sensor_values(sensor_proc)
+            sensor_outputs = self._sensors.process_plant_state(state_outputs)
+            self._control.put_sensor_values(sensor_outputs)
         except NoSensorUpdate:
             pass
         finally:
-            pass
             # sink plant state
             # TODO: is there a better way to do this?
             # TODO: create a namedtuple? or a function to modularize this
             # this should be a state snapshot, refactor!!
-            # state_snapshot = {
-            #     'sensor_values'  : {
-            #         'raw'      : sensor_raw,
-            #         'processed': sensor_proc
-            #     },
-            #     'actuator_values': {
-            #         'raw'      : act_raw,
-            #         'processed': act_proc
-            #     },
-            #     'timestamps'     : {
-            #         'start': step_start,
-            #         'end'  : self._clock.get_sim_time()
-            #     }
-            # }
-            #
-            # self._reactor.callLater(0, self._plant_sinks.sink, state_snapshot)
+
+            state_snapshot = {
+                'state'          : {
+                    'inputs' : state_inputs,
+                    'outputs': state_outputs
+                },
+                'actuator_inputs': {n: act_inputs.get(n, None)
+                                    for n in self._state.get_actuated_props()},
+                'sensor_outputs' : {n: sensor_outputs.get(n, None)
+                                    for n in self._state.get_sensed_props()},
+                'timestamps'     : {
+                    'start': step_start,
+                    'end'  : self._clock.get_sim_time()
+                }
+            }
+
+            self._reactor.callLater(0, self._plant_sinks.sink, state_snapshot)
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
@@ -432,8 +432,7 @@ class PlantBuilder:
 
         self._plant_state = plant_state
 
-    def build(self,
-              plant_csv_output_path: Optional[str]) -> Plant:
+    def build(self) -> Plant:
         """
         Builds a Plant instance and returns it. The actual subtype of this
         plant will depend on the previously provided parameters.
@@ -449,17 +448,6 @@ class PlantBuilder:
 
         # TODO: raise error if missing parameters OR instantiate different
         #  types of plants?
-
-        # TODO: put in default config? no?
-        if plant_csv_output_path is not None:
-            self._plant_sinks.append(
-                PlantCSVStatCollector(
-                    self._plant_state.get_sensed_props(),
-                    self._plant_state.get_actuated_props(),
-                    plant_csv_output_path
-                )
-            )
-
         params = dict(
             reactor=self._reactor,
             state=self._plant_state,
@@ -470,7 +458,7 @@ class PlantBuilder:
             plant_sinks=SinkGroup(name='PhysicalPlant',
                                   sinks=self._plant_sinks),
             client_sinks=SinkGroup(name='ControllerClient',
-                                   sinks=self._plant_sinks),
+                                   sinks=self._client_sinks),
             control_interface=self._controller
         )
 

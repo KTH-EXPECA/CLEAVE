@@ -46,8 +46,6 @@ actuators = [
     SimpleConstantActuator('force', start_value=0)
 ]
 
-csv_output_path = './plant.csv'
-
 # plant_sinks = [
 #     PrintSink(),
 #     fn_sink
