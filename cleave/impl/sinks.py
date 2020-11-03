@@ -39,6 +39,7 @@ class CSVStatCollector(Sink, abc.ABC):
 
         self._chunk = pd.DataFrame(data=np.empty((chunksize, len(columns))),
                                    columns=columns, dtype=np.float64)
+
         self._chunk_idx = 0
         self._chunk_count = 0
 
@@ -58,11 +59,11 @@ class CSVStatCollector(Sink, abc.ABC):
 
     def flush_chunk_to_disk(self) -> threading.Thread:
         chunk = self._chunk.iloc[:self._chunk_idx].copy()
-        chunk_count = self._chunk_count
+        count = self._chunk_count
 
         def _flush():
             with self._lock, self._path.open('a', newline='') as fp:
-                chunk.to_csv(fp, header=False, index=False)
+                chunk.to_csv(fp, header=(count == 0), index=False)
 
         # flush in separate thread to avoid locking up the GIL
         t = threading.Thread(target=_flush)
@@ -74,8 +75,8 @@ class CSVStatCollector(Sink, abc.ABC):
         return t
 
     def sink(self, values: Mapping) -> None:
-        self._chunk.iloc[self._chunk_idx] = \
-            self._process_sample_into_columns(values)
+        self._chunk.iloc[self._chunk_idx] = pd.Series(
+            self._process_sample_into_columns(values))
         self._chunk_idx += 1
 
         if self._chunk_idx >= self._chunk.shape[0]:
@@ -118,16 +119,19 @@ class PlantCSVStatCollector(CSVStatCollector):
             'time_start': values['timestamps']['start'],
             'time_end'  : values['timestamps']['end'],
         }
-        state_inputs = {f'state_input_{name}': v
-                        for name, v in values['state']['inputs'].items()}
-        state_outputs = {f'state_output_{name}': v
-                         for name, v in values['state']['outputs'].items()}
+        state_inputs = {f'state_input_{name}': values['state']['inputs'][name]
+                        for name in self._actuator_vars}
+        state_outputs = {f'state_output_{name}':
+                             values['state']['outputs'][name]
+                         for name in self._sensor_vars}
 
-        actuator_inputs = {f'actuator_input_{name}': v
-                           for name, v in values['actuator_inputs'].items()}
+        actuator_inputs = {f'actuator_input_{name}':
+                               values['actuator_inputs'][name]
+                           for name in self._actuator_vars}
 
-        sensor_outputs = {f'sensor_output_{name}': v
-                          for name, v in values['sensor_outputs'].items()}
+        sensor_outputs = {f'sensor_output_{name}':
+                              values['sensor_outputs'][name]
+                          for name in self._sensor_vars}
 
         return {**time_dict, **state_inputs, **state_outputs,
                 **actuator_inputs, **sensor_outputs}
