@@ -12,6 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .inverted_pendulum import InvPendulumController, InvPendulumStateNoPyglet
+from .inverted_pendulum import \
+    InvPendulumController, \
+    InvPendulumStateNoPyglet
+from .sinks import PlantCSVStatCollector
 
-__all__ = ['InvPendulumStateNoPyglet', 'InvPendulumController']
+__all__ = ['InvPendulumStateNoPyglet', 'InvPendulumController',
+           'PlantCSVStatCollector']
