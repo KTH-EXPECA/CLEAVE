@@ -235,7 +235,8 @@ class BasePlant(Plant):
 
     def execute(self):
         self._logger.info('Initializing plant...')
-        self._logger.warn(f'Target DT: {self._target_dt} s')
+        self._logger.warn(f'Target frequency: {self._freq} Hz')
+        self._logger.warn(f'Target time step: {self._target_dt * 1e3:0.1f} ms')
 
         # callback to wait for network before starting simloop
         def _wait_for_network_and_init():

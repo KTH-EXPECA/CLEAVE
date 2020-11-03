@@ -32,7 +32,7 @@ from pymunk.vec2d import Vec2d
 
 from ..base.backend.controller import Controller
 from ..base.client import ActuatorVariable, SensorVariable, State
-from ..base.util import PhyPropType, nanos2seconds
+from ..base.util import PhyPropType
 
 # from terminedia import Screen
 
