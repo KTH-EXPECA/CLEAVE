@@ -17,6 +17,7 @@ from abc import ABC, abstractmethod
 from copy import copy
 from typing import Generic, Mapping, Type, TypeVar
 
+from ..logging import Logger
 from ..util import PhyPropMapping
 
 T = TypeVar('T', int, float, bool, bytes)
@@ -24,22 +25,20 @@ T = TypeVar('T', int, float, bool, bytes)
 
 class _PhysPropVar(Generic[T]):
     def __init__(self, value: T):
-        # self._persistent = persistent
-        # self._default = default
         self._value = value
 
     def get_value(self) -> T:
-        # try:
         return self._value
-        # finally:
-        #     if not self._persistent:
-        #         self._value = self._default
 
     def set_value(self, value: T):
         self._value = value
 
     def get_type(self) -> Type:
         return type(self._value)
+
+
+class ControllerParameter(_PhysPropVar):
+    pass
 
 
 class SensorVariable(_PhysPropVar):
@@ -70,12 +69,14 @@ class State(ABC):
         inst = ABC.__new__(cls)
         ABC.__setattr__(inst, '_sensor_vars', set())
         ABC.__setattr__(inst, '_actuator_vars', set())
+        ABC.__setattr__(inst, '_controller_params', set())
         return inst
 
     def __init__(self, update_freq_hz: int):
         super(State, self).__init__()
         self._freq = update_freq_hz
         self._ti = time.monotonic()
+        self._log = Logger()
 
     def get_delta_t(self):
         # TODO: change to work with simclock?
@@ -91,10 +92,11 @@ class State(ABC):
                 self._sensor_vars.add(key)
             elif isinstance(value, ActuatorVariable):
                 self._actuator_vars.add(key)
+            elif isinstance(value, ControllerParameter):
+                self._controller_params.add(key)
             else:
-                raise StateError('Physical properties need to be either '
-                                 'Actuator or Sensor properties.')
-
+                self._log.warn('Received a physical property variable with '
+                               f'unknown type {type(value)}.')
             # unpack value to discard wrapper object
             value = value.get_value()
         super(State, self).__setattr__(key, value)
@@ -104,6 +106,9 @@ class State(ABC):
 
     def get_actuator_values(self) -> PhyPropMapping:
         return {name: getattr(self, name) for name in self._actuator_vars}
+
+    def get_controller_params(self) -> PhyPropMapping:
+        return {name: getattr(self, name) for name in self._controller_params}
 
     def _actuate(self, act: PhyPropMapping) -> None:
         for name, val in act.items():
