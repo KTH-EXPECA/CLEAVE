@@ -12,7 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import time
-import warnings
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import Generic, Mapping, Type, TypeVar
@@ -23,9 +22,10 @@ from ..util import PhyPropMapping
 T = TypeVar('T', int, float, bool, bytes)
 
 
-class _PhysPropVar(Generic[T]):
-    def __init__(self, value: T):
+class StateVariable(Generic[T]):
+    def __init__(self, value: T, record: bool = True):
         self._value = value
+        self._record = record
 
     def get_value(self) -> T:
         return self._value
@@ -36,16 +36,22 @@ class _PhysPropVar(Generic[T]):
     def get_type(self) -> Type:
         return type(self._value)
 
+    @property
+    def record(self) -> bool:
+        return self._record
 
-class ControllerParameter(_PhysPropVar):
+
+class ControllerParameter(StateVariable):
+    def __init__(self, value: T, record: bool = False):
+        # by default, controller parameters are not recorded
+        super(ControllerParameter, self).__init__(value, record)
+
+
+class SensorVariable(StateVariable):
     pass
 
 
-class SensorVariable(_PhysPropVar):
-    pass
-
-
-class ActuatorVariable(_PhysPropVar):
+class ActuatorVariable(StateVariable):
     pass
 
 
@@ -67,9 +73,12 @@ class State(ABC):
 
     def __new__(cls, *args, **kwargs):
         inst = ABC.__new__(cls)
+        # call setattr on ABC since we are overriding it in this class and we
+        # want to use the base implementation for these special variables
         ABC.__setattr__(inst, '_sensor_vars', set())
         ABC.__setattr__(inst, '_actuator_vars', set())
         ABC.__setattr__(inst, '_controller_params', set())
+        ABC.__setattr__(inst, '_record_vars', set())
         return inst
 
     def __init__(self, update_freq_hz: int):
@@ -86,7 +95,7 @@ class State(ABC):
             self._ti = time.monotonic()
 
     def __setattr__(self, key, value):
-        if isinstance(value, _PhysPropVar):
+        if isinstance(value, StateVariable):
             # registering a new physical property
             if isinstance(value, SensorVariable):
                 self._sensor_vars.add(key)
@@ -94,33 +103,14 @@ class State(ABC):
                 self._actuator_vars.add(key)
             elif isinstance(value, ControllerParameter):
                 self._controller_params.add(key)
-            else:
-                self._log.warn('Received a physical property variable with '
-                               f'unknown type {type(value)}.')
+
+            # mark it as recordable or not
+            if value.record:
+                self._record_vars.add(key)
+
             # unpack value to discard wrapper object
             value = value.get_value()
         super(State, self).__setattr__(key, value)
-
-    def get_sensor_values(self) -> PhyPropMapping:
-        return {name: getattr(self, name) for name in self._sensor_vars}
-
-    def get_actuator_values(self) -> PhyPropMapping:
-        return {name: getattr(self, name) for name in self._actuator_vars}
-
-    def get_controller_params(self) -> PhyPropMapping:
-        return {name: getattr(self, name) for name in self._controller_params}
-
-    def _actuate(self, act: PhyPropMapping) -> None:
-        for name, val in act.items():
-            try:
-                assert name in self._actuator_vars
-                setattr(self, name, val)
-                # self._actuator_vars[name].set_value(val)
-            except AssertionError:
-                # TODO: use logger
-                warnings.warn('Received update for unregistered actuated '
-                              f'property "{name}!"',
-                              StateWarning)
 
     @property
     def update_frequency(self) -> int:
@@ -139,23 +129,50 @@ class State(ABC):
         """
         pass
 
-    def get_sensed_props(self) -> Mapping[str, Type]:
+    def get_sensed_prop_names(self) -> Mapping[str, Type]:
         """
         Returns
         -------
-            Mapping containing the identifiers of the sensed variables.
+            Set containing the identifiers of the sensed variables.
         """
         return copy(self._sensor_vars)
 
-    def get_actuated_props(self) -> Mapping[str, Type]:
+    def get_actuated_prop_names(self) -> Mapping[str, Type]:
         """
         Returns
         -------
-            Mapping containing the identifiers of the actuated variables.
+            Set containing the identifiers of the actuated variables.
         """
         return copy(self._actuator_vars)
 
-    def state_update(self, act_values: PhyPropMapping) -> PhyPropMapping:
-        self._actuate(act_values)
+    def state_update(self, control_cmds: PhyPropMapping) -> PhyPropMapping:
+        for name, val in control_cmds.items():
+            try:
+                assert name in self._actuator_vars
+                setattr(self, name, val)
+            except AssertionError:
+                self._log.warn('Received update for unregistered actuated '
+                               f'property "{name}", skipping...')
+
         self.advance()
-        return self.get_sensor_values()
+        return {var: getattr(self, var) for var in self._sensor_vars}
+
+    def get_variable_record(self) -> PhyPropMapping:
+        """
+        Returns
+        -------
+            A mapping containing the values of the recorded variables in
+            this state.
+        """
+        return {var: getattr(self, var, None) for var in self._record_vars}
+
+    def get_controller_parameters(self) -> PhyPropMapping:
+        """
+        Returns
+        -------
+            A mapping from strings to values containing the initialization
+            parameters for the controller associated with this physical
+            simulation.
+        """
+
+        return {var: getattr(self, var) for var in self._controller_params}

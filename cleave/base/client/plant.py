@@ -27,10 +27,10 @@ from .state import State
 from .time import SimClock
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
+
 # from ..stats.plotting import plot_plant_metrics
 # from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
 # from ..stats.stats import RollingStatistics
-from ..sinks import Sink, SinkGroup
 
 # TODO: move somewhere else maybe
 
@@ -109,8 +109,6 @@ class BasePlant(Plant):
                  state: State,
                  sensor_array: SensorArray,
                  actuator_array: ActuatorArray,
-                 plant_sinks: SinkGroup,
-                 client_sinks: SinkGroup,
                  control_interface: BaseControllerInterface):
         super(BasePlant, self).__init__()
         self._reactor = reactor
@@ -121,27 +119,6 @@ class BasePlant(Plant):
         self._actuators = actuator_array
         self._cycles = 0
         self._control = control_interface
-
-        # TODO: do something with client sinks
-        self._plant_sinks = plant_sinks
-        self._client_sinks = client_sinks
-
-        # save state stats, i.e., every actuator and sensor variable both
-        # before and after processing
-        # TODO: reimplement stats
-
-        # stat_cols = ['timestamp']
-        # for var, t in state.get_sensed_props().items():
-        #     if t in _SCALAR_TYPES:
-        #         stat_cols.append(f'sens_{var}_raw')
-        #         stat_cols.append(f'sens_{var}_proc')
-        #
-        # for var, t in state.get_actuated_props().items():
-        #     if t in _SCALAR_TYPES:
-        #         stat_cols.append(f'act_{var}_raw')
-        #         stat_cols.append(f'act_{var}_proc')
-        #
-        # self._stats = RollingStatistics(columns=stat_cols)
 
     @property
     def update_freq_hz(self) -> int:
@@ -161,22 +138,20 @@ class BasePlant(Plant):
         # 3. advance state
         # 4. process sensor outputs
         # 5. send sensor outputs
-        step_start = self._clock.get_sim_time()
+        # step_start = self._clock.get_sim_time()
 
         # check that timings are respected!
         if count > 1:
             self._logger.warn('Emulation step took longer '
                               'than allotted time slot!', )
 
-        act_inputs = self._control.get_actuator_values()
+        control_cmds = self._control.get_actuator_values()
 
-        self._actuators.apply_actuation_inputs(act_inputs)
-        state_inputs = self._actuators.get_actuation_values()
+        self._actuators.apply_actuation_inputs(control_cmds)
+        actuator_outputs = self._actuators.get_actuation_values()
 
-        state_outputs = self._state.state_update(state_inputs)
-        self._cycles += 1
-
-        sensor_outputs = {}
+        state_outputs = self._state.state_update(actuator_outputs)
+        # sensor_outputs = {}
         try:
             # this only sends if any sensors are triggered during this state
             # update, otherwise an exception is raised and caught further down.
@@ -185,49 +160,24 @@ class BasePlant(Plant):
         except NoSensorUpdate:
             pass
         finally:
-            # sink plant state
-            # TODO: is there a better way to do this?
-            # TODO: create a namedtuple? or a function to modularize this
-            # this should be a state snapshot, refactor!!
-
-            state_snapshot = {
-                'state'          : {
-                    'inputs' : state_inputs,
-                    'outputs': state_outputs
-                },
-                'actuator_inputs': {n: act_inputs.get(n, None)
-                                    for n in self._state.get_actuated_props()},
-                'sensor_outputs' : {n: sensor_outputs.get(n, None)
-                                    for n in self._state.get_sensed_props()},
-                'timestamps'     : {
-                    'start': step_start,
-                    'end'  : self._clock.get_sim_time()
-                }
-            }
-
-            self._reactor.callLater(0, self._plant_sinks.sink, state_snapshot)
+            self._cycles += 1
+            # step_record = {
+            #     'step_count'      : self._cycles,
+            #     'time_start'      : step_start,
+            #     'time_end'        : self._clock.get_sim_time(),
+            #     'control_cmds'    : control_cmds,
+            #     'actuator_outputs': actuator_outputs,
+            #     'sensor_outputs'  : sensor_outputs,
+            #     'state_variables' : self._state.get_variable_record()
+            # }
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
         self._logger.warn('Shutting down plant, please wait...')
 
         # close sinks
-        self._plant_sinks.on_end()
-        self._client_sinks.on_end()
-
-        # metrics = self._stats.to_pandas()
-        # metrics.to_csv('./plant_metrics.csv', index=False)
-
-        # TODO: parameterize!
-        # TODO: put in a folder?
-        # TODO: redesign and reimplement
-        # plot_plant_metrics(
-        #     metrics=metrics,
-        #     sens_vars=self._state.get_sensed_props(),
-        #     act_vars=self._state.get_actuated_props(),
-        #     out_path='./',
-        #     fname_prefix='plant'
-        # )
+        # self._plant_sinks.on_end()
+        # self._client_sinks.on_end()
 
         # call state shutdown
         self._state.on_shutdown()
@@ -258,8 +208,8 @@ class BasePlant(Plant):
                                             self.on_shutdown)
 
         # start sinks
-        self._plant_sinks.on_start()
-        self._client_sinks.on_start()
+        # self._plant_sinks.on_start()
+        # self._client_sinks.on_start()
 
         self._reactor.callWhenRunning(_wait_for_network_and_init)
         self._reactor.suggestThreadPoolSize(3)  # input, output and processing
@@ -340,9 +290,6 @@ class PlantBuilder:
         """
         self._sensors = []
         self._actuators = []
-        self._plant_sinks = []
-        self._client_sinks = []
-        # self._comm_client = None
         self._controller = None
         self._plant_state = None
 
@@ -350,17 +297,17 @@ class PlantBuilder:
         self._reactor = reactor
         self.reset()
 
-    def attach_plant_sink(self, sink: Sink) -> None:
-        self._plant_sinks.append(sink)
+    # def attach_plant_sink(self, sink: Sink) -> None:
+    #     self._plant_sinks.append(sink)
+    #
+    # def attach_client_sink(self, sink: Sink) -> None:
+    #     self._plant_sinks.append(sink)
 
-    def attach_client_sink(self, sink: Sink) -> None:
-        self._plant_sinks.append(sink)
-
-    def set_plant_sinks(self, sinks: Collection[Sink]) -> None:
-        self._plant_sinks = list(sinks)
-
-    def set_client_sinks(self, sinks: Collection[Sink]) -> None:
-        self._client_sinks = list(sinks)
+    # def set_plant_sinks(self, sinks: Collection[Sink]) -> None:
+    #     self._plant_sinks = list(sinks)
+    #
+    # def set_client_sinks(self, sinks: Collection[Sink]) -> None:
+    #     self._client_sinks = list(sinks)
 
     def attach_sensor(self, sensor: Sensor) -> None:
         """
@@ -455,10 +402,6 @@ class PlantBuilder:
                 plant_freq=self._plant_state.update_frequency,
                 sensors=self._sensors),
             actuator_array=ActuatorArray(actuators=self._actuators),
-            plant_sinks=SinkGroup(name='PhysicalPlant',
-                                  sinks=self._plant_sinks),
-            client_sinks=SinkGroup(name='ControllerClient',
-                                   sinks=self._client_sinks),
             control_interface=self._controller
         )
 
