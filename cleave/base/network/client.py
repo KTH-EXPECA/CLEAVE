@@ -15,7 +15,6 @@
 from __future__ import annotations
 
 import time
-import warnings
 from abc import ABC, abstractmethod
 from queue import Empty
 from threading import Event
@@ -25,8 +24,8 @@ import msgpack
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
-from .exceptions import ProtocolWarning
 from .protocol import ControlMessageFactory, NoMessage
+from ..logging import Logger
 from ...base.util import PhyPropType, SingleElementQ
 
 
@@ -38,6 +37,7 @@ class BaseControllerInterface(ABC):
     def __init__(self):
         self._ready = Event()
         self._ready.clear()
+        self._log = Logger()
 
     @abstractmethod
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
@@ -84,49 +84,22 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self._recv_q = SingleElementQ()
         self._caddr = controller_addr
         self._msg_fact = ControlMessageFactory()
-        # self._send_stats = RollingStatistics(
-        #     columns=['seq', 'send_timestamp', 'out_size_b']
-        # )
-        # self._recv_stats = RollingStatistics(
-        #     columns=['seq', 'recv_timestamp', 'in_size_b']
-        # )
+        self._waiting_for_reply = {}
 
     def startProtocol(self):
         self._ready.set()
 
     def stopProtocol(self):
         pass
-        # write stats to disk on shutdown
-        # TODO: parameterize
-        # total_stats = pd.merge(
-        #     self._send_stats.to_pandas(),
-        #     self._recv_stats.to_pandas(),
-        #     how='outer',  # use sequence number for both
-        #     on='seq',
-        #     suffixes=('_send', '_recv'),
-        #     validate='one_to_one'
-        # )
-        # total_stats.to_csv('./udp_client_stats.csv', index=False)
-        #
-        # # plot some stats
-        # # TODO: folder, maybe?
-        # plot_client_network_metrics(total_stats, './',
-        #                             fname_prefix='udp_')
 
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
             -> None:
         # TODO: log!
         msg = self._msg_fact.create_sensor_message(prop_values)
+        self._waiting_for_reply[msg.seq] = msg
         payload = msg.serialize()
         # this should always be called from the reactor thread
         self.transport.write(payload, self._caddr)
-
-        # log
-        # self._send_stats.add_record({
-        #     'seq'           : msg.seq,
-        #     'send_timestamp': msg.timestamp,
-        #     'out_size_b'    : len(payload)
-        # })
 
     def get_actuator_values(self) -> Mapping[str, PhyPropType]:
         try:
@@ -139,18 +112,14 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         recv_time = time.time()
         try:
             msg = self._msg_fact.parse_message_from_bytes(datagram)
+            self._waiting_for_reply.pop(msg.seq)
             self._recv_q.put(msg.payload)
-            # log
-            # self._recv_stats.add_record({
-            #     'seq'           : msg.seq,
-            #     'recv_timestamp': recv_time,
-            #     'in_size_b'     : len(datagram)
-            # })
         except NoMessage:
             pass
+        except KeyError:
+            self._log.warn('Ignoring unprompted controller command.')
         except (ValueError, msgpack.FormatError, msgpack.StackError):
-            warnings.warn('Could not unpack data from {}:{}.'.format(*addr),
-                          ProtocolWarning)
+            self._log.warn('Could not unpack data from {}:{}.'.format(*addr))
 
     def register_with_reactor(self, reactor: PosixReactorBase):
         reactor.listenUDP(0, self)
