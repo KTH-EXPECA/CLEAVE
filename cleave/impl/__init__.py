@@ -15,7 +15,5 @@
 from .inverted_pendulum import \
     InvPendulumController, \
     InvPendulumStateNoPyglet
-from .sinks import PlantCSVStatCollector
 
-__all__ = ['InvPendulumStateNoPyglet', 'InvPendulumController',
-           'PlantCSVStatCollector']
+__all__ = ['InvPendulumStateNoPyglet', 'InvPendulumController']
