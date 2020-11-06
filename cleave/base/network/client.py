@@ -18,18 +18,20 @@ import time
 from abc import ABC, abstractmethod
 from queue import Empty
 from threading import Event
-from typing import Mapping, Tuple
+from typing import Any, Collection, Mapping, Sequence, Tuple
 
 import msgpack
+import numpy as np
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
 from .protocol import ControlMessageFactory, NoMessage
 from ..logging import Logger
+from ..stats.base import IRecordBuffer, RecordBuffer
 from ...base.util import PhyPropType, SingleElementQ
 
 
-class BaseControllerInterface(ABC):
+class BaseControllerInterface(IRecordBuffer, ABC):
     """
     Defines the base interface for interacting with controllers.
     """
@@ -86,6 +88,23 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self._msg_fact = ControlMessageFactory()
         self._waiting_for_reply = {}
 
+        self._records = RecordBuffer(
+            record_fields=['seq', 'send_timestamp', 'send_size'],
+            opt_record_fields={'recv_timestamp': np.nan,
+                               'recv_size'     : np.nan,
+                               'rtt'           : np.inf}
+        )
+
+    @property
+    def buffer_name(self) -> str:
+        return self._records.buffer_name
+
+    def get_record_fields(self) -> Collection[str]:
+        return self._records.get_record_fields()
+
+    def pop_latest_records(self) -> Sequence[Mapping[str, Any]]:
+        return self._records.pop_latest_records()
+
     def startProtocol(self):
         self._ready.set()
 
@@ -96,10 +115,11 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
             -> None:
         # TODO: log!
         msg = self._msg_fact.create_sensor_message(prop_values)
-        self._waiting_for_reply[msg.seq] = msg
         payload = msg.serialize()
         # this should always be called from the reactor thread
         self.transport.write(payload, self._caddr)
+        self._waiting_for_reply[msg.seq] = {'msg' : msg,
+                                            'size': len(payload)}
 
     def get_actuator_values(self) -> Mapping[str, PhyPropType]:
         try:
@@ -112,7 +132,17 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         recv_time = time.time()
         try:
             msg = self._msg_fact.parse_message_from_bytes(datagram)
-            self._waiting_for_reply.pop(msg.seq)
+            out = self._waiting_for_reply.pop(msg.seq)
+
+            self._records.push_record(
+                seq=out['msg'].seq,
+                send_timestamp=out['msg'].timestamp,
+                send_size=out['size'],
+                recv_timestamp=recv_time,
+                recv_size=len(datagram),
+                rtt=recv_time - out['msg'].timestamp
+            )
+
             self._recv_q.put(msg.payload)
         except NoMessage:
             pass
