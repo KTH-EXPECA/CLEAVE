@@ -15,10 +15,10 @@ from __future__ import annotations
 
 import abc
 import threading
-from collections import Collection, deque, namedtuple
+from collections import namedtuple
 from pathlib import Path
 from threading import RLock
-from typing import Any, Mapping, NamedTuple, Optional, Sequence, Set
+from typing import Any, Mapping, NamedTuple, Sequence, Set
 
 import numpy as np
 import pandas as pd
@@ -27,11 +27,20 @@ from ..logging import Logger
 
 
 class Recorder(abc.ABC):
-    def record(self, recordable: Recordable):
+    def __init__(self, recordable: Recordable):
         recordable.recorders.add(self)
 
     @abc.abstractmethod
     def notify(self, latest_record: NamedTuple):
+        pass
+
+    def initialize(self):
+        pass
+
+    def shutdown(self):
+        pass
+
+    def flush(self):
         pass
 
 
@@ -41,18 +50,27 @@ class Recordable(abc.ABC):
     def recorders(self) -> Set[Recorder]:
         pass
 
+    @property
+    @abc.abstractmethod
+    def record_fields(self) -> Sequence[str]:
+        pass
+
 
 class BaseRecordable(Recordable):
     def __init__(self,
                  name: str,
-                 record_fields: Collection[str],
+                 record_fields: Sequence[str],
                  opt_record_fields: Mapping[str, Any] = {}):
         self._name = name
-        self._recorders: Set[Recorder] = set()
         all_record_fields = list(record_fields) + list(opt_record_fields.keys())
         self._record_cls = namedtuple('_Record', all_record_fields,
                                       defaults=opt_record_fields.values())
-        self._record_fields = record_fields
+        self._record_fields = self._record_cls._fields
+        self._recorders: Set[Recorder] = set()
+
+    @property
+    def record_fields(self) -> Sequence[str]:
+        return self._record_fields
 
     def push_record(self, **kwargs) -> None:
         record = self._record_cls(**kwargs)
@@ -64,80 +82,16 @@ class BaseRecordable(Recordable):
         return self._recorders
 
 
-class IRecordBuffer(abc.ABC):
-    @property
-    @abc.abstractmethod
-    def buffer_name(self) -> str:
-        pass
-
-    @abc.abstractmethod
-    def get_record_fields(self) -> Collection[str]:
-        pass
-
-    @abc.abstractmethod
-    def pop_latest_records(self) -> Sequence[Mapping[str, Any]]:
-        pass
-
-
-class RecordBuffer(IRecordBuffer):
+class CSVRecorder(Recorder):
     def __init__(self,
-                 buffer_name: str,
-                 record_fields: Collection[str],
-                 opt_record_fields: Mapping[str, Any] = {},
-                 max_records_in_memory: Optional[int] = None):
-        self._name = buffer_name
-
-        all_record_fields = list(record_fields) + list(opt_record_fields.keys())
-        self._record_cls = namedtuple('_Record', all_record_fields,
-                                      defaults=opt_record_fields.values())
-        self._record_fields = record_fields
-        self._records = deque(maxlen=max_records_in_memory)
-        self._lock = RLock()
-
-    @property
-    def buffer_name(self) -> str:
-        return self._name
-
-    def get_record_fields(self) -> Collection[str]:
-        return self._record_cls._fields
-
-    def push_record(self, **kwargs) -> None:
-        with self._lock:
-            self._records.append(self._record_cls(**kwargs))
-
-    def pop_latest_records(self) -> Sequence[Mapping[str, Any]]:
-        with self._lock:
-            try:
-                return [r._asdict() for r in self._records]
-            finally:
-                self._records.clear()
-
-
-class RecordOutputStream(abc.ABC):
-    def initialize(self) -> None:
-        pass
-
-    def shutdown(self) -> None:
-        pass
-
-    @abc.abstractmethod
-    def push_record(self, record: Mapping[str, Any]) -> None:
-        pass
-
-    @abc.abstractmethod
-    def push_records(self, records: Sequence[Mapping[str, Any]]) -> None:
-        pass
-
-    def flush(self) -> None:
-        pass
-
-
-class CSVRecordOutputStream(RecordOutputStream):
-    def __init__(self,
+                 recordable: Recordable,
                  output_path: str,
-                 record_fields: Sequence[str],
                  chunk_size: int = 1000):
+        super(CSVRecorder, self).__init__(recordable)
+
+        self._recordable = recordable
         self._log = Logger()
+
         self._path = Path(output_path).resolve()
         if self._path.exists():
             if self._path.is_dir():
@@ -145,8 +99,9 @@ class CSVRecordOutputStream(RecordOutputStream):
                                       f'directory!')
             self._log.warn(f'{self._path} will be overwritten with new data.')
 
-        dummy_data = np.empty((chunk_size, len(record_fields)))
-        self._table_chunk = pd.DataFrame(data=dummy_data, columns=record_fields)
+        dummy_data = np.empty((chunk_size, len(recordable.record_fields)))
+        self._table_chunk = pd.DataFrame(data=dummy_data,
+                                         columns=recordable.record_fields)
         self._chunk_count = 0
         self._chunk_row_idx = 0
 
@@ -177,18 +132,14 @@ class CSVRecordOutputStream(RecordOutputStream):
     def flush(self) -> None:
         self._flush_chunk_to_disk()
 
-    def push_record(self, record: Mapping[str, Any]) -> None:
-        self._table_chunk.iloc[self._chunk_row_idx] = pd.Series(record)
+    def notify(self, latest_record: NamedTuple) -> None:
+        self._table_chunk.iloc[self._chunk_row_idx] = \
+            pd.Series(latest_record._asdict())
         self._chunk_row_idx += 1
 
         if self._chunk_row_idx == self._table_chunk.shape[0]:
             # flush to disk
             self._flush_chunk_to_disk()
-
-    def push_records(self, records: Sequence[Mapping[str, Any]]) -> None:
-        # TODO: optimize, maybe?
-        for record in records:
-            self.push_record(record)
 
     def shutdown(self) -> None:
         self._log.info(f'Flushing and closing CSV table writer on path '
