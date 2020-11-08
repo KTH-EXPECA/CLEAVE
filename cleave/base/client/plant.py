@@ -27,12 +27,12 @@ from .state import State
 from .time import SimClock
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
+# TODO: move somewhere else maybe
+from ..stats.recordable import CSVRecorder
 
 # from ..stats.plotting import plot_plant_metrics
 # from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
 # from ..stats.stats import RollingStatistics
-
-# TODO: move somewhere else maybe
 
 _SCALAR_TYPES = (int, float, bool)
 
@@ -120,6 +120,11 @@ class BasePlant(Plant):
         self._cycles = 0
         self._control = control_interface
 
+        # TODO: parameterize!!
+        self._recorders = [
+            CSVRecorder(self._control, './client.csv')
+        ]
+
     @property
     def update_freq_hz(self) -> int:
         return self._freq
@@ -161,23 +166,13 @@ class BasePlant(Plant):
             pass
         finally:
             self._cycles += 1
-            # step_record = {
-            #     'step_count'      : self._cycles,
-            #     'time_start'      : step_start,
-            #     'time_end'        : self._clock.get_sim_time(),
-            #     'control_cmds'    : control_cmds,
-            #     'actuator_outputs': actuator_outputs,
-            #     'sensor_outputs'  : sensor_outputs,
-            #     'state_variables' : self._state.get_variable_record()
-            # }
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
         self._logger.warn('Shutting down plant, please wait...')
 
-        # close sinks
-        # self._plant_sinks.on_end()
-        # self._client_sinks.on_end()
+        for recorder in self._recorders:
+            recorder.shutdown()
 
         # call state shutdown
         self._state.on_shutdown()
@@ -187,6 +182,9 @@ class BasePlant(Plant):
         self._logger.info('Initializing plant...')
         self._logger.warn(f'Target frequency: {self._freq} Hz')
         self._logger.warn(f'Target time step: {self._target_dt * 1e3:0.1f} ms')
+
+        for recorder in self._recorders:
+            recorder.initialize()
 
         # callback to wait for network before starting simloop
         def _wait_for_network_and_init():
@@ -204,12 +202,8 @@ class BasePlant(Plant):
 
         self._control.register_with_reactor(self._reactor)
         # callback for shutdown
-        self._reactor.addSystemEventTrigger('before', 'shutdown',
+        self._reactor.addSystemEventTrigger('after', 'shutdown',
                                             self.on_shutdown)
-
-        # start sinks
-        # self._plant_sinks.on_start()
-        # self._client_sinks.on_start()
 
         self._reactor.callWhenRunning(_wait_for_network_and_init)
         self._reactor.suggestThreadPoolSize(3)  # input, output and processing
@@ -296,18 +290,6 @@ class PlantBuilder:
     def __init__(self, reactor: PosixReactorBase):
         self._reactor = reactor
         self.reset()
-
-    # def attach_plant_sink(self, sink: Sink) -> None:
-    #     self._plant_sinks.append(sink)
-    #
-    # def attach_client_sink(self, sink: Sink) -> None:
-    #     self._plant_sinks.append(sink)
-
-    # def set_plant_sinks(self, sinks: Collection[Sink]) -> None:
-    #     self._plant_sinks = list(sinks)
-    #
-    # def set_client_sinks(self, sinks: Collection[Sink]) -> None:
-    #     self._client_sinks = list(sinks)
 
     def attach_sensor(self, sensor: Sensor) -> None:
         """

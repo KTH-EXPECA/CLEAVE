@@ -108,7 +108,13 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self._ready.set()
 
     def stopProtocol(self):
-        pass
+        self._log.info('Recording messages which never got a reply...')
+        for _, out in self._waiting_for_reply.items():
+            self._records.push_record(
+                seq=out['msg'].seq,
+                send_timestamp=out['msg'].timestamp,
+                send_size=out['size']
+            )
 
     def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
             -> None:
