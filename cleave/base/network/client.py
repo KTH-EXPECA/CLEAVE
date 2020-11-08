@@ -18,7 +18,7 @@ import time
 from abc import ABC, abstractmethod
 from queue import Empty
 from threading import Event
-from typing import Any, Collection, Mapping, Sequence, Tuple
+from typing import Mapping, Sequence, Set, Tuple
 
 import msgpack
 import numpy as np
@@ -27,11 +27,11 @@ from twisted.internet.protocol import DatagramProtocol
 
 from .protocol import ControlMessageFactory, NoMessage
 from ..logging import Logger
-from ..stats.base import IRecordBuffer, RecordBuffer
+from ..stats.recordable import NamedRecordable, Recordable, Recorder
 from ...base.util import PhyPropType, SingleElementQ
 
 
-class BaseControllerInterface(IRecordBuffer, ABC):
+class BaseControllerInterface(Recordable, ABC):
     """
     Defines the base interface for interacting with controllers.
     """
@@ -88,7 +88,8 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self._msg_fact = ControlMessageFactory()
         self._waiting_for_reply = {}
 
-        self._records = RecordBuffer(
+        self._records = NamedRecordable(
+            name=self.__class__.__name__,
             record_fields=['seq', 'send_timestamp', 'send_size'],
             opt_record_fields={'recv_timestamp': np.nan,
                                'recv_size'     : np.nan,
@@ -96,14 +97,12 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         )
 
     @property
-    def buffer_name(self) -> str:
-        return self._records.buffer_name
+    def recorders(self) -> Set[Recorder]:
+        return self._records.recorders
 
-    def get_record_fields(self) -> Collection[str]:
-        return self._records.get_record_fields()
-
-    def pop_latest_records(self) -> Sequence[Mapping[str, Any]]:
-        return self._records.pop_latest_records()
+    @property
+    def record_fields(self) -> Sequence[str]:
+        return self._records.record_fields
 
     def startProtocol(self):
         self._ready.set()

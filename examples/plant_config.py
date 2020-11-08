@@ -16,8 +16,7 @@
 
 from cleave.base.client import SimpleConstantActuator, SimpleSensor
 from cleave.base.network import UDPControllerInterface
-# from cleave.base.sinks import Sink, make_sink
-from cleave.impl import InvPendulumStateNoPyglet, PlantCSVStatCollector
+from cleave.impl import InvPendulumStateNoPyglet
 
 # class PrintSink(Sink):
 #     def sink(self, values: Mapping) -> None:
@@ -44,12 +43,4 @@ sensors = [
 
 actuators = [
     SimpleConstantActuator('force', start_value=0)
-]
-
-plant_sinks = [
-    PlantCSVStatCollector(
-        sensor_variables=['position', 'speed', 'angle', 'ang_vel'],
-        actuator_variables=['force'],
-        output_path='./plant.csv'
-    )
 ]

@@ -56,7 +56,7 @@ class Recordable(abc.ABC):
         pass
 
 
-class BaseRecordable(Recordable):
+class NamedRecordable(Recordable):
     def __init__(self,
                  name: str,
                  record_fields: Sequence[str],
