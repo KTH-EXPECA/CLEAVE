@@ -12,9 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from abc import ABC, abstractmethod
-from typing import Mapping
+from queue import Empty
+from typing import Callable
 
-from ..util import PhyPropType
+from ..util import PhyPropMapping, SingleElementQ
 
 
 class Controller(ABC):
@@ -25,10 +26,24 @@ class Controller(ABC):
 
     def __init__(self):
         super(Controller, self).__init__()
+        self._input_q = SingleElementQ()
+
+    def submit_request(self,
+                       control_input: PhyPropMapping,
+                       callback: Callable[[PhyPropMapping], None], ) -> None:
+        self._input_q.put({'input': control_input, 'callback': callback})
+
+    def process_loop(self):
+        try:
+            control_req = self._input_q.pop_nowait()
+        except Empty:
+            return
+
+        control_output = self.process(control_req['input'])
+        control_req['callback'](control_output)
 
     @abstractmethod
-    def process(self, sensor_values: Mapping[str, PhyPropType]) \
-            -> Mapping[str, PhyPropType]:
+    def process(self, sensor_values: PhyPropMapping) -> PhyPropMapping:
         """
         Processes samples and produces a control command.
 

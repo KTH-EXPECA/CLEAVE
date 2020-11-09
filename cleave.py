@@ -24,6 +24,7 @@ from cleave.base.eventloop import reactor
 from cleave.base.logging import loguru
 from cleave.base.network.backend import UDPControllerService
 from cleave.base.network.client import UDPControllerInterface
+from cleave.base.stats.recordable import CSVRecorder
 
 _control_defaults = dict(
     controller_service=UDPControllerService
@@ -105,6 +106,12 @@ def run_controller(bind_port: int,
 
     # TODO: modularize obtaining the reactor?
     service = config.controller_service(config.port, config.controller, reactor)
+
+    # TODO: refactor this using composition
+    # TODO: parameterize
+    recorder = CSVRecorder(service, './controller.csv')
+    reactor.addSystemEventTrigger('before', 'startup', recorder.initialize)
+    reactor.addSystemEventTrigger('after', 'shutdown', recorder.shutdown)
     service.serve()
 
 

@@ -24,110 +24,104 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import time
-from typing import Mapping, Tuple
+from typing import Sequence, Set, Tuple
 
 import msgpack
+from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
-from twisted.internet.threads import deferToThread
 
 from .protocol import *
-from ..backend.controller import Controller
+from ..backend import Controller
 from ..logging import Logger
-# from ..stats.plotting import plot_controller_network_metrics
-# from ..stats.stats import RollingStatistics
-from ..util import PhyPropType
+from ..stats.recordable import NamedRecordable, Recordable, Recorder
+from ..util import PhyPropMapping
 
 
-class UDPControllerService(DatagramProtocol):
+class UDPControllerService(Recordable, DatagramProtocol):
     def __init__(self,
                  port: int,
                  controller: Controller,
                  reactor: PosixReactorBase):
         super(UDPControllerService, self).__init__()
         self._port = port
-        self._controller = controller
+        self._control = controller
         self._reactor = reactor
         self._msg_fact = ControlMessageFactory()
-        # self._stats = RollingStatistics(
-        #     columns=['seq', 'in_size_b', 'out_size_b',
-        #              'recv_timestamp', 'process_time',
-        #              'send_timestamp'])
         self._logger = Logger()
+
+        self._records = NamedRecordable(
+            name=self.__class__.__name__,
+            record_fields=['seq', 'recv_timestamp', 'recv_size',
+                           'process_time', 'send_timestamp', 'send_size']
+
+        )
+
+    @property
+    def recorders(self) -> Set[Recorder]:
+        return self._records.recorders
+
+    @property
+    def record_fields(self) -> Sequence[str]:
+        return self._records.record_fields
 
     def serve(self):
         # start listening
         self._logger.info('Starting controller service...')
+
+        # start controller loop
+        loop = task.LoopingCall(self._control.process_loop)
+        loop.clock = self._reactor
+        loop.start(0)  # runs on every iteration of the event loop
+
         self._reactor.listenUDP(self._port, self)
         self._reactor.run()
 
     def stopProtocol(self):
         self._logger.warn('Shutting down controller service, please wait...')
-        # TODO: reimplement stats and plotting
-        # stats = self._stats.to_pandas()
-        # # TODO: parameterize
-        # self._logger.info('Writing metrics to file...')
-        # stats.to_csv('udp_control_stats.csv', index=False)
-        # plot_controller_network_metrics(stats, out_path='.',
-        #                                 fname_prefix='udp_')
         self._logger.info('Controller service shutdown complete.')
-
-    # def _log_input_output(self,
-    #                       in_msg: ControlMessage,
-    #                       in_dgram: bytes,
-    #                       out_msg: ControlMessage,
-    #                       out_dgram: bytes,
-    #                       recv_time: float):
-    #     record = {
-    #         'seq'           : in_msg.seq,
-    #         'in_size_b'     : len(in_dgram),
-    #         'out_size_b'    : len(out_dgram),
-    #         'recv_timestamp': recv_time,
-    #         'process_time'  : out_msg.timestamp - recv_time,
-    #         'send_timestamp': out_msg.timestamp
-    #     }
-    #     self._stats.add_record(record)
-    # print(self._stats.rolling_window_stats(5))
 
     def datagramReceived(self, in_dgram: bytes, addr: Tuple[str, int]):
         # Todo: add timestamping
         # Todo: real logging
+        # TODO: use object oriented interface
         recv_time = time.time()
+        in_size = len(in_dgram)
+        self._logger.debug('Received {b} bytes from {addr[0]}:{addr[1]}...',
+                           b=in_size, addr=addr)
 
         try:
             in_msg = self._msg_fact.parse_message_from_bytes(in_dgram)
             if in_msg.msg_type == ControlMsgType.SENSOR_SAMPLE:
-                # TODO: use object oriented interface
-                self._logger.debug(
-                    'Received samples from {addr[0]}:{addr[1]}...',
-                    addr=addr)
+                self._logger.info('Got control request.')
 
-                def result_callback(act_cmds: Mapping[str, PhyPropType]) \
-                        -> None:
-                    # TODO: log
+                def result_callback(act_cmds: PhyPropMapping) -> None:
                     out_msg = in_msg.make_control_reply(act_cmds)
                     out_dgram = out_msg.serialize()
+                    out_size = len(out_dgram)
                     self.transport.write(out_dgram, addr)
-                    self._logger.debug('Sent command to {addr[0]}:{addr[1]}.',
-                                       addr=addr)
+                    self._logger.debug(
+                        'Sent command to {addr[0]}:{addr[1]} ({b} bytes).',
+                        addr=addr, b=out_size)
 
-                    # TODO: reimplement
-                    # log after sending
-                    # deferToThread(self._log_input_output, in_msg, in_dgram,
-                    #               out_msg, out_dgram, recv_time)
+                    self._records.push_record(
+                        seq=in_msg.seq,
+                        recv_timestamp=recv_time,
+                        recv_size=in_size,
+                        process_time=out_msg.timestamp - recv_time,
+                        send_timestamp=out_msg.timestamp,
+                        send_size=out_size
+                    )
 
-                d = deferToThread(self._controller.process, in_msg.payload)
-                d.addCallback(result_callback)
+                self._control.submit_request(
+                    control_input=in_msg.payload,
+                    callback=result_callback
+                )
             else:
-                pass
+                self._logger.warn(f'Ignoring message of unrecognized type '
+                                  f'{in_msg.msg_type.name}.')
         except NoMessage:
             pass
-        except AssertionError:
-            self._logger.warn(
-                'Expected message with type {e_type}, instead got {act_type}!',
-                e_type=ControlMsgType.SENSOR_SAMPLE.name,
-                act_type=in_msg.msg_type.name
-            )
         except (ValueError, msgpack.FormatError, msgpack.StackError):
             self._logger.warn(
                 'Could not unpack data from {addr[0]}:{addr[1]}',
