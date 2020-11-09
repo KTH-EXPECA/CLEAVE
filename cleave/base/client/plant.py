@@ -210,60 +210,6 @@ class BasePlant(Plant):
         self._reactor.run()
 
 
-# TODO: reimplement plotting
-# class _RealtimePlottingPlant(_BasePlant):
-#     def __init__(self,
-#                  reactor: PosixReactorBase,
-#                  update_freq: int,
-#                  state: State,
-#                  sensor_array: SensorArray,
-#                  actuator_array: ActuatorArray,
-#                  control_interface: BaseControllerInterface):
-#         super(_RealtimePlottingPlant, self).__init__(
-#             reactor=reactor, update_freq=update_freq, state=state,
-#             sensor_array=sensor_array, actuator_array=actuator_array,
-#             control_interface=control_interface
-#         )
-#
-#         props = dict(**state.get_sensed_props(), **state.get_actuated_props())
-#         scalar_vars = set([var for var, t in props.items()
-#                            if t in _SCALAR_TYPES])
-#
-#         # realtime plotter
-#         # TODO: parameterize or move out of here
-#         # TODO: default rate handles the rate for actuator values,
-#         #  but there's gotta be a better way...
-#         self._plotter = RealtimeTimeseriesPlotter(variables=scalar_vars)
-#
-#     def _record_stats(self,
-#                       timestamp: float,
-#                       act: Mapping[str, PhyPropType],
-#                       act_proc: Mapping[str, PhyPropType],
-#                       sens: Mapping[str, PhyPropType],
-#                       sens_proc: Mapping[str, PhyPropType]):
-#         super(_RealtimePlottingPlant, self)._record_stats(
-#             timestamp=timestamp,
-#             act=act, act_proc=act_proc,
-#             sens=sens, sens_proc=sens_proc
-#         )
-#
-#         # plot
-#         self._plotter.put_sample(dict(**act_proc, **sens_proc))
-#
-#     def on_shutdown(self) -> None:
-#         # plotter shutdown
-#         self._logger.info('Please close plot window manually...')
-#         self._plotter.shutdown()
-#         self._plotter.join()
-#         super(_RealtimePlottingPlant, self).on_shutdown()
-#
-#     def execute(self):
-#         self._logger.info('Starting realtime plotting interface...')
-#         # start plotter
-#         self._plotter.start()
-#         super(_RealtimePlottingPlant, self).execute()
-
-
 # noinspection PyAttributeOutsideInit
 class PlantBuilder:
     """

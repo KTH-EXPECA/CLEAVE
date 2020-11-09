@@ -84,7 +84,8 @@ class UDPControllerService(Recordable, DatagramProtocol):
     def datagramReceived(self, in_dgram: bytes, addr: Tuple[str, int]):
         # Todo: add timestamping
         # Todo: real logging
-        # TODO: use object oriented interface
+        # TODO: figure out way of measuring number of discarded inputs (ie
+        #  that come in while the controller is busy)
         recv_time = time.time()
         in_size = len(in_dgram)
         self._logger.debug('Received {b} bytes from {addr[0]}:{addr[1]}...',
