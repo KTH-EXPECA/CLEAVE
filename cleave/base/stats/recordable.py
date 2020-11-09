@@ -117,6 +117,8 @@ class CSVRecorder(Recorder):
         count = self._chunk_count
 
         def _flush():
+            # TODO: make sure there's not a bottleneck in the flush
+            #  operation, enqueue them somehow using a worker thread maybe.
             with self._lock, self._path.open('a', newline='') as fp:
                 chunk.to_csv(fp, header=(count == 0), index=False)
 

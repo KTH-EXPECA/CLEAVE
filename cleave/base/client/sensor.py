@@ -16,9 +16,12 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Collection, Dict, Mapping
+from typing import Collection, Dict, Mapping, Sequence, Set
 
-from ...base.util import PhyPropType
+import numpy as np
+
+from ..stats.recordable import NamedRecordable, Recordable, Recorder
+from ...base.util import PhyPropMapping, PhyPropType
 
 __all__ = ['Sensor', 'SimpleSensor', 'SensorArray',
            'NoSensorUpdate', 'RegisteredSensorWarning',
@@ -107,19 +110,21 @@ class SimpleSensor(Sensor):
         return value
 
 
-class SensorArray:
+class SensorArray(Recordable):
     """
     Internal utility class to manage a collection of Sensors attached to a
     Plant.
     """
 
-    def __init__(self, plant_freq: int,
+    def __init__(self,
+                 plant_freq: int,
                  sensors: Collection[Sensor]):
         super(SensorArray, self).__init__()
         self._plant_freq = plant_freq
         self._prop_sensors = dict()
         self._cycle_triggers = dict()
-        self._cycle_count = 0
+
+        # TODO: add clock?
 
         # assign sensors to properties
         for sensor in sensors:
@@ -146,20 +151,34 @@ class SensorArray:
             # 3 plant cycles need to have passed. So, using the plant cycle
             # count as reference, the sensor needs to sample at cycles:
             # [0, 3, 6, 8, 12, ..., 600]
-            pcycles_per_scycle = \
+            p_cycles_per_s_cycle = \
                 self._plant_freq // sensor.sampling_frequency
-            for trigger in range(0, self._plant_freq, pcycles_per_scycle):
+            for trigger in range(0, self._plant_freq, p_cycles_per_s_cycle):
                 if trigger not in self._cycle_triggers:
                     self._cycle_triggers[trigger] = []
 
                 self._cycle_triggers[trigger].append(sensor)
+
+            # set up underlying recorder
+            record_fields = ['plant_seq']
+            opt_record_fields = {}
+            for prop in self._prop_sensors.keys():
+                record_fields.append(f'{prop}_value')
+                opt_record_fields[f'{prop}_sample'] = np.nan
+
+            self._records = NamedRecordable(
+                name=self.__class__.__name__,
+                record_fields=record_fields,
+                opt_record_fields=opt_record_fields
+            )
 
     def get_sensor_rates(self) -> Mapping[str, int]:
         return {prop: sensor.sampling_frequency
                 for prop, sensor in self._prop_sensors.items()}
 
     def process_plant_state(self,
-                            prop_values: Mapping[str, PhyPropType]) \
+                            plant_cycle: int,
+                            prop_values: PhyPropMapping) \
             -> Dict[str, PhyPropType]:
         """
         Processes measured properties by passing them to the internal
@@ -167,6 +186,9 @@ class SensorArray:
 
         Parameters
         ----------
+        plant_cycle
+            The cycle number of the plant, used for determining which sensors
+            should fire.
         prop_values
             Dictionary containing mappings from property names to measured
             values.
@@ -178,23 +200,39 @@ class SensorArray:
             sensor values.
 
         """
+        cycle = plant_cycle % self._plant_freq
+        sensor_samples = dict()
         try:
-            processed_values = dict()
             # check which sensors need to be updated this cycle
-            for sensor in self._cycle_triggers[self._cycle_count]:
+            for sensor in self._cycle_triggers[cycle]:
                 try:
                     prop_name = sensor.measured_property_name
                     value = prop_values[prop_name]
-                    processed_value = sensor.process_sample(value)
-                    processed_values[prop_name] = processed_value
+                    sensor_samples[prop_name] = sensor.process_sample(value)
                 except KeyError:
                     raise MissingPropertyError(
                         'Missing expected update for property '
                         f'{sensor.measured_property_name}!')
-            return processed_values
+            return sensor_samples
         except KeyError:
             # no sensors on this cycle
             raise NoSensorUpdate()
         finally:
-            # always increase the cycle counter
-            self._cycle_count = (self._cycle_count + 1) % self._plant_freq
+            # record stuff
+            record = {
+                'plant_seq': plant_cycle,
+            }
+
+            for prop in self._prop_sensors.keys():
+                record[f'{prop}_value'] = prop_values.get(prop, np.nan)
+                record[f'{prop}_sample'] = sensor_samples.get(prop, np.nan)
+
+            self._records.push_record(**record)
+
+    @property
+    def recorders(self) -> Set[Recorder]:
+        return self._records.recorders
+
+    @property
+    def record_fields(self) -> Sequence[str]:
+        return self._records.record_fields

@@ -122,7 +122,8 @@ class BasePlant(Plant):
 
         # TODO: parameterize!!
         self._recorders = [
-            CSVRecorder(self._control, './client.csv')
+            CSVRecorder(self._control, './client.csv'),
+            CSVRecorder(self._sensors, './sensors.csv')
         ]
 
     @property
@@ -150,6 +151,7 @@ class BasePlant(Plant):
             self._logger.warn('Emulation step took longer '
                               'than allotted time slot!', )
 
+        self._cycles += 1
         control_cmds = self._control.get_actuator_values()
 
         self._actuators.apply_actuation_inputs(control_cmds)
@@ -160,12 +162,12 @@ class BasePlant(Plant):
         try:
             # this only sends if any sensors are triggered during this state
             # update, otherwise an exception is raised and caught further down.
-            sensor_outputs = self._sensors.process_plant_state(state_outputs)
+            sensor_outputs = self._sensors.process_plant_state(
+                plant_cycle=self._cycles,
+                prop_values=state_outputs)
             self._control.put_sensor_values(sensor_outputs)
         except NoSensorUpdate:
             pass
-        finally:
-            self._cycles += 1
 
     def on_shutdown(self) -> None:
         # output stats on shutdown
