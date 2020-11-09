@@ -14,6 +14,7 @@
 
 import socket
 import sys
+from pathlib import Path
 from typing import Tuple
 
 import click
@@ -27,11 +28,13 @@ from cleave.base.network.client import UDPControllerInterface
 from cleave.base.stats.recordable import CSVRecorder
 
 _control_defaults = dict(
+    output_dir='./controller_metrics/',
     controller_service=UDPControllerService
 )
 
 _plant_defaults = dict(
     controller_interface=UDPControllerInterface,
+    output_dir='./plant_metrics/',
     plant_sinks=[],
     client_sinks=[]
 )
@@ -82,7 +85,7 @@ def run_plant(host_address: Tuple[str, int],
     # builder.set_client_sinks(config.client_sinks)
 
     # TODO: extra options to build?
-    plant = builder.build()
+    plant = builder.build(csv_output_dir=config.output_dir)
     plant.execute()
 
 
@@ -109,9 +112,20 @@ def run_controller(bind_port: int,
 
     # TODO: refactor this using composition
     # TODO: parameterize
-    recorder = CSVRecorder(service, './controller.csv')
-    reactor.addSystemEventTrigger('before', 'startup', recorder.initialize)
-    reactor.addSystemEventTrigger('after', 'shutdown', recorder.shutdown)
+
+    if config.output_dir:
+        out_dir = Path(config.output_dir).resolve()
+
+        if not out_dir.exists():
+            out_dir.mkdir(parents=True, exist_ok=False)
+        elif not out_dir.is_dir():
+            raise FileExistsError(f'{out_dir} exists and is not a '
+                                  f'directory, aborting.')
+
+        recorder = CSVRecorder(service, out_dir / 'service.csv')
+        reactor.addSystemEventTrigger('before', 'startup', recorder.initialize)
+        reactor.addSystemEventTrigger('after', 'shutdown', recorder.shutdown)
+
     service.serve()
 
 

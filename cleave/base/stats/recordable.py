@@ -18,7 +18,7 @@ import threading
 from collections import namedtuple
 from pathlib import Path
 from threading import RLock
-from typing import Any, Mapping, NamedTuple, Sequence, Set
+from typing import Any, Mapping, NamedTuple, Sequence, Set, Union
 
 import numpy as np
 import pandas as pd
@@ -85,14 +85,16 @@ class NamedRecordable(Recordable):
 class CSVRecorder(Recorder):
     def __init__(self,
                  recordable: Recordable,
-                 output_path: str,
+                 output_path: Union[Path, str],
                  chunk_size: int = 1000):
         super(CSVRecorder, self).__init__(recordable)
 
         self._recordable = recordable
         self._log = Logger()
 
-        self._path = Path(output_path).resolve()
+        self._path = output_path.resolve() \
+            if isinstance(output_path, Path) else Path(output_path).resolve()
+
         if self._path.exists():
             if self._path.is_dir():
                 raise FileExistsError(f'{self._path} exists and is a '

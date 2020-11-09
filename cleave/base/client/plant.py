@@ -17,6 +17,8 @@ from __future__ import annotations
 import warnings
 from abc import ABC, abstractmethod
 from collections import Collection
+from pathlib import Path
+from typing import Union
 
 from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
@@ -120,13 +122,6 @@ class BasePlant(Plant):
         self._cycles = 0
         self._control = control_interface
 
-        # TODO: parameterize!!
-        self._recorders = [
-            CSVRecorder(self._control, './client.csv'),
-            CSVRecorder(self._sensors, './sensors.csv'),
-            CSVRecorder(self._actuators, './actuators.csv'),
-        ]
-
     @property
     def update_freq_hz(self) -> int:
         return self._freq
@@ -176,9 +171,6 @@ class BasePlant(Plant):
         # output stats on shutdown
         self._logger.warn('Shutting down plant, please wait...')
 
-        for recorder in self._recorders:
-            recorder.shutdown()
-
         # call state shutdown
         self._state.on_shutdown()
         self._logger.info('Plant shutdown completed.')
@@ -187,9 +179,6 @@ class BasePlant(Plant):
         self._logger.info('Initializing plant...')
         self._logger.warn(f'Target frequency: {self._freq} Hz')
         self._logger.warn(f'Target time step: {self._target_dt * 1e3:0.1f} ms')
-
-        for recorder in self._recorders:
-            recorder.initialize()
 
         # callback to wait for network before starting simloop
         def _wait_for_network_and_init():
@@ -213,6 +202,47 @@ class BasePlant(Plant):
         self._reactor.callWhenRunning(_wait_for_network_and_init)
         self._reactor.suggestThreadPoolSize(3)  # input, output and processing
         self._reactor.run()
+
+
+class CSVRecordingPlant(BasePlant):
+    def __init__(self,
+                 reactor: PosixReactorBase,
+                 state: State,
+                 sensor_array: SensorArray,
+                 actuator_array: ActuatorArray,
+                 control_interface: BaseControllerInterface,
+                 recording_output_dir: Path = Path('.')):
+        super(CSVRecordingPlant, self).__init__(
+            reactor=reactor,
+            state=state,
+            sensor_array=sensor_array,
+            actuator_array=actuator_array,
+            control_interface=control_interface
+        )
+
+        if not recording_output_dir.exists():
+            recording_output_dir.mkdir(parents=True, exist_ok=False)
+        elif not recording_output_dir.is_dir():
+            raise FileExistsError(f'{recording_output_dir} exists and is not a '
+                                  f'directory, aborting.')
+        self._recorders = {
+            CSVRecorder(self._control, recording_output_dir / 'client.csv'),
+            CSVRecorder(self._sensors, recording_output_dir / 'sensors.csv'),
+            CSVRecorder(self._actuators,
+                        recording_output_dir / 'actuators.csv'),
+        }
+
+    def execute(self):
+        for recorder in self._recorders:
+            recorder.initialize()
+        super(CSVRecordingPlant, self).execute()
+
+    def on_shutdown(self) -> None:
+        super(CSVRecordingPlant, self).on_shutdown()
+
+        # shut down recorders
+        for recorder in self._recorders:
+            recorder.shutdown()
 
 
 # noinspection PyAttributeOutsideInit
@@ -312,7 +342,8 @@ class PlantBuilder:
 
         self._plant_state = plant_state
 
-    def build(self) -> Plant:
+    def build(self,
+              csv_output_dir: Union[str, bool]) -> Plant:
         """
         Builds a Plant instance and returns it. The actual subtype of this
         plant will depend on the previously provided parameters.
@@ -339,8 +370,13 @@ class PlantBuilder:
         )
 
         try:
-            # return _RealtimePlottingPlant(**params) \
-            #     if plotting else _BasePlant(**params)
-            return BasePlant(**params)
+            # TODO: rework
+            if csv_output_dir:
+                return CSVRecordingPlant(
+                    recording_output_dir=Path(csv_output_dir),
+                    **params
+                )
+            else:
+                return BasePlant(**params)
         finally:
             self.reset()
