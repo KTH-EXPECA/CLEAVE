@@ -123,7 +123,8 @@ class BasePlant(Plant):
         # TODO: parameterize!!
         self._recorders = [
             CSVRecorder(self._control, './client.csv'),
-            CSVRecorder(self._sensors, './sensors.csv')
+            CSVRecorder(self._sensors, './sensors.csv'),
+            CSVRecorder(self._actuators, './actuators.csv'),
         ]
 
     @property
@@ -154,8 +155,10 @@ class BasePlant(Plant):
         self._cycles += 1
         control_cmds = self._control.get_actuator_values()
 
-        self._actuators.apply_actuation_inputs(control_cmds)
-        actuator_outputs = self._actuators.get_actuation_values()
+        actuator_outputs = self._actuators.apply_actuation_inputs(
+            plant_cycle=self._cycles,
+            input_values=control_cmds
+        )
 
         state_outputs = self._state.state_update(actuator_outputs)
         # sensor_outputs = {}

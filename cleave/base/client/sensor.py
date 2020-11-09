@@ -225,7 +225,7 @@ class SensorArray(Recordable):
 
             for prop in self._prop_sensors.keys():
                 record[f'{prop}_value'] = prop_values.get(prop, np.nan)
-                record[f'{prop}_sample'] = sensor_samples.get(prop, np.nan)
+                record[f'{prop}_sample'] = sensor_samples.get(prop)
 
             self._records.push_record(**record)
 
