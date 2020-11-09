@@ -16,4 +16,4 @@
 from cleave.impl import InvPendulumController
 
 port = 50000
-controller = InvPendulumController(ref=0.2)
+controller = InvPendulumController(ref=0.0)

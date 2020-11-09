@@ -87,6 +87,7 @@ class CSVRecorder(Recorder):
                  recordable: Recordable,
                  output_path: Union[Path, str],
                  chunk_size: int = 1000):
+        # TODO: maybe add timestamp??
         super(CSVRecorder, self).__init__(recordable)
 
         self._recordable = recordable
