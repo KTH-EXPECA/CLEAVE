@@ -25,7 +25,7 @@ from cleave.base.eventloop import reactor
 from cleave.base.logging import loguru
 from cleave.base.network.backend import UDPControllerService
 from cleave.base.network.client import UDPControllerInterface
-from cleave.base.stats.recordable import CSVRecorder
+from cleave.base.recordable import CSVRecorder
 
 _control_defaults = dict(
     output_dir='./controller_metrics/',

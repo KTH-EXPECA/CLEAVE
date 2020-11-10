@@ -27,7 +27,7 @@ from twisted.internet.protocol import DatagramProtocol
 
 from .protocol import ControlMessageFactory, NoMessage
 from ..logging import Logger
-from ..stats.recordable import NamedRecordable, Recordable, Recorder
+from cleave.base.recordable import NamedRecordable, Recordable, Recorder
 from ...base.util import PhyPropType, SingleElementQ
 
 

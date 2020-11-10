@@ -18,7 +18,7 @@ from typing import Collection, Optional, Sequence, Set
 import numpy as np
 
 from ..logging import Logger
-from ..stats.recordable import NamedRecordable, Recordable, Recorder
+from cleave.base.recordable import NamedRecordable, Recordable, Recorder
 from ...base.util import PhyPropMapping, PhyPropType
 
 

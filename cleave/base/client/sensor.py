@@ -20,7 +20,7 @@ from typing import Collection, Dict, Mapping, Sequence, Set
 
 import numpy as np
 
-from ..stats.recordable import NamedRecordable, Recordable, Recorder
+from cleave.base.recordable import NamedRecordable, Recordable, Recorder
 from ...base.util import PhyPropMapping, PhyPropType
 
 __all__ = ['Sensor', 'SimpleSensor', 'SensorArray',

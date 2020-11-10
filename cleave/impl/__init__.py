@@ -14,6 +14,6 @@
 
 from .inverted_pendulum import \
     InvPendulumController, \
-    InvPendulumStateNoPyglet
+    InvPendulumState
 
-__all__ = ['InvPendulumStateNoPyglet', 'InvPendulumController']
+__all__ = ['InvPendulumState', 'InvPendulumController']

@@ -34,7 +34,7 @@ from twisted.internet.protocol import DatagramProtocol
 from .protocol import *
 from ..backend import Controller
 from ..logging import Logger
-from ..stats.recordable import NamedRecordable, Recordable, Recorder
+from cleave.base.recordable import NamedRecordable, Recordable, Recorder
 from ..util import PhyPropMapping
 
 
