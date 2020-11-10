@@ -43,6 +43,7 @@ class SimClock:
         """
         Returns
         -------
+        float
             A float representing the elapsed time in seconds since the
             initialization of this clock.
         """
@@ -52,6 +53,7 @@ class SimClock:
         """
         Returns
         -------
+        float
             A float representing the elapsed time since the UNIX Epoch,
             adjusted for monotonicity.
         """
@@ -73,6 +75,7 @@ class SimClock:
 
         Returns
         -------
+        TimingResult
             A TimingResult object containing the start and end timestamps of
             the function call, the duration of the function call in seconds
             and the results of the call.

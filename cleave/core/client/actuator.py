@@ -80,6 +80,7 @@ class Actuator(ABC):
 
         Returns
         -------
+        PhyPropType
             A value for the actuated property.
         """
         pass
@@ -111,6 +112,7 @@ class SimpleConstantActuator(Actuator):
         """
         Returns
         -------
+        PhyPropType
             The current value of the actuated property.
         """
         return self._value
@@ -151,6 +153,7 @@ class SimpleImpulseActuator(Actuator):
 
         Returns
         -------
+        PhyPropType
             The actuation value.
         """
         try:
@@ -206,6 +209,7 @@ class ActuatorArray(Recordable):
 
         Returns
         -------
+        PhyPropMapping
             A mapping from actuated property names to output values from the
             corresponding actuators.
 

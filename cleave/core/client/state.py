@@ -14,7 +14,7 @@
 import time
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import Generic, Mapping, Type, TypeVar
+from typing import Generic, Set, Type, TypeVar
 
 from ..logging import Logger
 from ..util import PhyPropMapping
@@ -161,23 +161,40 @@ class State(ABC):
         """
         pass
 
-    def get_sensed_prop_names(self) -> Mapping[str, Type]:
+    def get_sensed_prop_names(self) -> Set[str]:
         """
         Returns
         -------
+        Set
             Set containing the identifiers of the sensed variables.
         """
         return copy(self._sensor_vars)
 
-    def get_actuated_prop_names(self) -> Mapping[str, Type]:
+    def get_actuated_prop_names(self) -> Set[str]:
         """
         Returns
         -------
+        Set
             Set containing the identifiers of the actuated variables.
         """
         return copy(self._actuator_vars)
 
     def state_update(self, control_cmds: PhyPropMapping) -> PhyPropMapping:
+        """
+        Performs a single step update using the give actuation values as
+        inputs and returns the updated values for the sensed variables.
+
+        Parameters
+        ----------
+        control_cmds
+            Actuation inputs.
+
+        Returns
+        -------
+        PhyPropMapping
+            Mapping from sensed property names to values.
+
+        """
         for name, val in control_cmds.items():
             try:
                 assert name in self._actuator_vars
@@ -193,6 +210,7 @@ class State(ABC):
         """
         Returns
         -------
+        PhyPropMapping
             A mapping containing the values of the recorded variables in
             this state.
         """
@@ -202,6 +220,7 @@ class State(ABC):
         """
         Returns
         -------
+        PhyPropMapping
             A mapping from strings to values containing the initialization
             parameters for the controller associated with this physical
             simulation.

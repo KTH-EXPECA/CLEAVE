@@ -93,6 +93,7 @@ class Controller(ABC):
 
         Returns
         -------
+        PhyPropMapping
             A mapping of actuated property names to desired values.
 
         """

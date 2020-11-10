@@ -25,6 +25,9 @@ import msgpack_numpy as m
 
 from ..util import PhyPropType
 
+#: This module contains internal classes which deal with the communication
+#: protocol employed in the communication between plant and controller.
+
 __all__ = ['ControlMsgType', 'ControlMessage', 'ControlMessageFactory',
            'NoMessage']
 
