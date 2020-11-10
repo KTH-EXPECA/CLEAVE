@@ -23,6 +23,10 @@ T = TypeVar('T', int, float, bool, bytes)
 
 
 class StateVariable(Generic[T]):
+    """
+    Base class for semantically significant variables in a State.
+    """
+
     def __init__(self, value: T, record: bool = True):
         self._value = value
         self._record = record
@@ -42,16 +46,34 @@ class StateVariable(Generic[T]):
 
 
 class ControllerParameter(StateVariable):
+    """
+    A semantically significant variable corresponding to an initialization
+    parameter for a controller interacting with this plant.
+
+    Variables of this type will automatically be provided to the controller
+    on initialization (TODO: not implemented yet).
+    """
+
     def __init__(self, value: T, record: bool = False):
         # by default, controller parameters are not recorded
         super(ControllerParameter, self).__init__(value, record)
 
 
 class SensorVariable(StateVariable):
+    """
+    A semantically significant variable corresponding to a property measured
+    by a sensor. Variables of this type will automatically be paired with the
+    corresponding Sensor during emulation.
+    """
     pass
 
 
 class ActuatorVariable(StateVariable):
+    """
+    A semantically significant variable corresponding to a property measured
+    by an actuator. Variables of this type will automatically be paired with the
+    corresponding Actuator during emulation.
+    """
     pass
 
 
@@ -70,6 +92,9 @@ class State(ABC):
     advance() method to implement their logic, as this method will be called
     by the plant on each emulation time step.
     """
+
+    # TODO: wrap this class in another class to avoid exposing internal use
+    #  methods.
 
     def __new__(cls, *args, **kwargs):
         inst = ABC.__new__(cls)
@@ -120,12 +145,19 @@ class State(ABC):
     def advance(self) -> None:
         """
         Called by the plant on every time step to advance the emulation.
+        Needs to be implemented by subclasses.
         """
         pass
 
-    def on_shutdown(self) -> None:
+    def initialize(self) -> None:
         """
-        Callback for clean shutdown in case it's needed.
+        Called by the plant at the beginning of the emulation.
+        """
+        pass
+
+    def shutdown(self) -> None:
+        """
+        Called by the plant on shutdown.
         """
         pass
 

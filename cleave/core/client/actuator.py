@@ -17,8 +17,8 @@ from typing import Collection, Optional, Sequence, Set
 
 import numpy as np
 
-from ..logging import Logger
 from cleave.core.recordable import NamedRecordable, Recordable, Recorder
+from ..logging import Logger
 from ...core.util import PhyPropMapping, PhyPropType
 
 
@@ -55,13 +55,33 @@ class Actuator(ABC):
         """
         return self._prop_name
 
-    # TODO: Document this
     @abstractmethod
     def set_value(self, desired_value: PhyPropType) -> None:
+        """
+        Called to set the target value for this actuator. This method should
+        be implemented by extending classes.
+
+        Parameters
+        ----------
+        desired_value
+            Target value for this actuator.
+
+        Returns
+        -------
+
+        """
         pass
 
     @abstractmethod
     def get_actuation(self) -> PhyPropType:
+        """
+        Returns the next value for the actuation processed governed by this
+        actuator. This method should be implemented by extending classes.
+
+        Returns
+        -------
+            A value for the actuated property.
+        """
         pass
 
 
@@ -73,9 +93,26 @@ class SimpleConstantActuator(Actuator):
     """
 
     def set_value(self, desired_value: PhyPropType) -> None:
+        """
+        Sets the value of the actuated property governed by this actuator.
+
+        Parameters
+        ----------
+        desired_value
+            The value of the actuated property.
+
+        Returns
+        -------
+
+        """
         self._value = desired_value
 
     def get_actuation(self) -> PhyPropType:
+        """
+        Returns
+        -------
+            The current value of the actuated property.
+        """
         return self._value
 
 
@@ -94,9 +131,28 @@ class SimpleImpulseActuator(Actuator):
         self._default_value = default_value
 
     def set_value(self, desired_value: PhyPropType) -> None:
+        """
+        Sets the next value returned by this actuator.
+
+        Parameters
+        ----------
+        desired_value
+            Value returned in the next call to get_actuation().
+        Returns
+        -------
+
+        """
         self._value = desired_value
 
     def get_actuation(self) -> PhyPropType:
+        """
+        Returns the internally stored value, and then resets it to the
+        default value.
+
+        Returns
+        -------
+            The actuation value.
+        """
         try:
             return self._value
         finally:

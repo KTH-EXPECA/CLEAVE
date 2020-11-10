@@ -29,12 +29,7 @@ from .state import State
 from .time import SimClock
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
-# TODO: move somewhere else maybe
-from cleave.core.recordable import CSVRecorder
-
-# from ..stats.plotting import plot_plant_metrics
-# from ..stats.realtime_plotting import RealtimeTimeseriesPlotter
-# from ..stats.stats import RollingStatistics
+from ..recordable import CSVRecorder
 
 _SCALAR_TYPES = (int, float, bool)
 
@@ -135,6 +130,21 @@ class BasePlant(Plant):
         return self._state
 
     def _execute_emu_timestep(self, count: int) -> None:
+        """
+        Executes the emulation timestep. Intended use is inside a Twisted
+        LoopingCall, hence why it takes a single integer parameter which
+        specifies the number of calls queued up in a time interval (should
+        be 1).
+
+        Parameters
+        ----------
+        count
+
+        Returns
+        -------
+
+        """
+
         # 1. get raw actuation inputs
         # 2. process actuation inputs
         # 3. advance state
@@ -168,14 +178,22 @@ class BasePlant(Plant):
             pass
 
     def on_shutdown(self) -> None:
+        """
+        Called on shutdown of the framework.
+        """
+
         # output stats on shutdown
         self._logger.warn('Shutting down plant, please wait...')
 
         # call state shutdown
-        self._state.on_shutdown()
+        self._state.shutdown()
         self._logger.info('Plant shutdown completed.')
 
     def execute(self):
+        """
+        Initiates the emulation of this plant.
+        """
+
         self._logger.info('Initializing plant...')
         self._logger.warn(f'Target frequency: {self._freq} Hz')
         self._logger.warn(f'Target time step: {self._target_dt * 1e3:0.1f} ms')
@@ -189,6 +207,7 @@ class BasePlant(Plant):
             else:
                 # schedule timestep
                 self._logger.info('Starting simulation...')
+                self._state.initialize()
                 loop = task.LoopingCall \
                     .withCount(self._execute_emu_timestep)
                 loop.clock = self._reactor
@@ -205,6 +224,11 @@ class BasePlant(Plant):
 
 
 class CSVRecordingPlant(BasePlant):
+    """
+    Plant with built-in CSV recording capabilities of metrics from the  the
+    physical properties and the network connection.
+    """
+
     def __init__(self,
                  reactor: PosixReactorBase,
                  state: State,
@@ -251,7 +275,9 @@ class PlantBuilder:
     Builder for plant objects.
 
     This class is not meant to be instantiated by users --- a library
-    singleton is provided as cleave.client.builder.
+    singleton is provided.
+
+    TODO: get rid of the singleton, it's not necessary at this point.
     """
 
     def reset(self) -> None:

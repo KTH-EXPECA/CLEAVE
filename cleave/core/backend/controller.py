@@ -18,6 +18,9 @@ from typing import Callable
 from ..util import PhyPropMapping, SingleElementQ
 
 
+# TODO: refactor out all "internal use" methods from this class into a
+#  wrapper class.
+
 class Controller(ABC):
     """
     Base class for controllers. This class defines a a simple interface that
@@ -31,9 +34,37 @@ class Controller(ABC):
     def submit_request(self,
                        control_input: PhyPropMapping,
                        callback: Callable[[PhyPropMapping], None], ) -> None:
+        """
+        (Internal use)
+
+        Submits a actuation input to be processed in an asynchronous fashion.
+
+        Parameters
+        ----------
+        control_input
+            Mapping from property names to values corresponding to the
+            desired values for the actuated properties of this plant.
+        callback
+            A callback function to be executed after advancing the
+            simulation, for instance to send samples to the controller. A
+            single parameter will be passed to this function, corresponding
+            to the mapping from property names to values returned by the
+            process() method of this class.
+
+        Returns
+        -------
+
+        """
         self._input_q.put({'input': control_input, 'callback': callback})
 
     def process_loop(self):
+        """
+        (Internal use)
+
+        Function intended to be used within the event loop of the controller
+        for periodic processing of input samples.
+        """
+
         try:
             control_req = self._input_q.pop_nowait()
         except Empty:

@@ -12,6 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+#: This package contains implementations of plant-controller pairs.
+
 from .inverted_pendulum import \
     InvPendulumController, \
     InvPendulumState
