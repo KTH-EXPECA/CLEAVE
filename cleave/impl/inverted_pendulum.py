@@ -30,9 +30,9 @@ import numpy as np
 import pymunk
 from pymunk.vec2d import Vec2d
 
-from ..base.backend.controller import Controller
-from ..base.client import ActuatorVariable, SensorVariable, State
-from ..base.util import PhyPropType
+from ..core.backend.controller import Controller
+from ..core.client import ActuatorVariable, SensorVariable, State
+from ..core.util import PhyPropType
 
 #: Gravity constants
 G_CONST = Vec2d(0, -9.8)

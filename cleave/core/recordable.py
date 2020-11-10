@@ -35,7 +35,7 @@ from typing import Any, Mapping, NamedTuple, Sequence, Set, Union
 import numpy as np
 import pandas as pd
 
-from cleave.base.logging import Logger
+from cleave.core.logging import Logger
 
 
 class Recorder(abc.ABC):

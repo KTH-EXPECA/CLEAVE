@@ -20,8 +20,8 @@ from typing import Collection, Dict, Mapping, Sequence, Set
 
 import numpy as np
 
-from cleave.base.recordable import NamedRecordable, Recordable, Recorder
-from ...base.util import PhyPropMapping, PhyPropType
+from cleave.core.recordable import NamedRecordable, Recordable, Recorder
+from ...core.util import PhyPropMapping, PhyPropType
 
 __all__ = ['Sensor', 'SimpleSensor', 'SensorArray',
            'NoSensorUpdate', 'RegisteredSensorWarning',
@@ -46,7 +46,7 @@ class NoSensorUpdate(Exception):
 
 class Sensor(ABC):
     """
-    Abstract base class for sensors. Implementations should override the
+    Abstract core class for sensors. Implementations should override the
     process_sample() method with their logic.
     """
 

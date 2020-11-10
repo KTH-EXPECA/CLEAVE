@@ -30,7 +30,7 @@ from .time import SimClock
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
 # TODO: move somewhere else maybe
-from cleave.base.recordable import CSVRecorder
+from cleave.core.recordable import CSVRecorder
 
 # from ..stats.plotting import plot_plant_metrics
 # from ..stats.realtime_plotting import RealtimeTimeseriesPlotter

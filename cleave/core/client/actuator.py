@@ -18,8 +18,8 @@ from typing import Collection, Optional, Sequence, Set
 import numpy as np
 
 from ..logging import Logger
-from cleave.base.recordable import NamedRecordable, Recordable, Recorder
-from ...base.util import PhyPropMapping, PhyPropType
+from cleave.core.recordable import NamedRecordable, Recordable, Recorder
+from ...core.util import PhyPropMapping, PhyPropType
 
 
 class RegisteredActuatorWarning(Warning):
@@ -32,7 +32,7 @@ class UnregisteredPropertyWarning(Warning):
 
 class Actuator(ABC):
     """
-    Abstract base class for actuators. Implementations should override the
+    Abstract core class for actuators. Implementations should override the
     set_value() and get_actuation() methods with their logic.
     """
 

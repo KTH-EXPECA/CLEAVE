@@ -65,7 +65,7 @@ class StateWarning(Warning):
 
 class State(ABC):
     """
-    Abstract base class defining an interface for Plant state evolution over
+    Abstract core class defining an interface for Plant state evolution over
     the course of a simulation. Implementing classes need to extend the
     advance() method to implement their logic, as this method will be called
     by the plant on each emulation time step.
@@ -74,7 +74,7 @@ class State(ABC):
     def __new__(cls, *args, **kwargs):
         inst = ABC.__new__(cls)
         # call setattr on ABC since we are overriding it in this class and we
-        # want to use the base implementation for these special variables
+        # want to use the core implementation for these special variables
         ABC.__setattr__(inst, '_sensor_vars', set())
         ABC.__setattr__(inst, '_actuator_vars', set())
         ABC.__setattr__(inst, '_controller_params', set())
