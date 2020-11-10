@@ -27,8 +27,8 @@ from twisted.internet.protocol import DatagramProtocol
 
 from .protocol import ControlMessageFactory, NoMessage
 from ..logging import Logger
-from cleave.core.recordable import NamedRecordable, Recordable, Recorder
-from ...core.util import PhyPropType, SingleElementQ
+from ..recordable import NamedRecordable, Recordable, Recorder
+from ...core.util import PhyPropMapping, SingleElementQ
 
 
 class BaseControllerInterface(Recordable, ABC):
@@ -42,10 +42,9 @@ class BaseControllerInterface(Recordable, ABC):
         self._log = Logger()
 
     @abstractmethod
-    def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
-            -> None:
+    def put_sensor_values(self, prop_values: PhyPropMapping) -> None:
         """
-        Send a mapping of property names to sensor values to the controller.
+        Send a sample of sensor values to the controller.
 
         Parameters
         ----------
@@ -55,7 +54,7 @@ class BaseControllerInterface(Recordable, ABC):
         pass
 
     @abstractmethod
-    def get_actuator_values(self) -> Mapping[str, PhyPropType]:
+    def get_actuator_values(self) -> PhyPropMapping:
         """
         Waits for incoming data from the controller and returns a mapping
         from actuated property names to values.
@@ -69,6 +68,12 @@ class BaseControllerInterface(Recordable, ABC):
 
     @abstractmethod
     def register_with_reactor(self, reactor: PosixReactorBase) -> None:
+        """
+        Registers this ControllerInterface with the event loop reactor.
+        Parameters
+        ----------
+        reactor
+        """
         pass
 
     def is_ready(self) -> bool:
@@ -116,9 +121,7 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
                 send_size=out['size']
             )
 
-    def put_sensor_values(self, prop_values: Mapping[str, PhyPropType]) \
-            -> None:
-        # TODO: log!
+    def put_sensor_values(self, prop_values: PhyPropMapping) -> None:
         msg = self._msg_fact.create_sensor_message(prop_values)
         payload = msg.serialize()
         # this should always be called from the reactor thread
@@ -126,7 +129,7 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         self._waiting_for_reply[msg.seq] = {'msg' : msg,
                                             'size': len(payload)}
 
-    def get_actuator_values(self) -> Mapping[str, PhyPropType]:
+    def get_actuator_values(self) -> PhyPropMapping:
         try:
             return self._recv_q.pop_nowait()
         except Empty:

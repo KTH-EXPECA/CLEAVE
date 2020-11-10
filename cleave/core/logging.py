@@ -17,6 +17,8 @@ import loguru
 from twisted.logger import ILogObserver, LogLevel, Logger, globalLogPublisher
 from zope.interface import provider
 
+#: This module contains functionality related to logging.
+
 # replace the default handler
 loguru.logger.remove()
 

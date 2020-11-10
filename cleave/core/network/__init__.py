@@ -12,8 +12,8 @@
 #  See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from .exceptions import ProtocolWarning
+from .protocol import ProtocolWarning
 from .backend import UDPControllerService
 from .client import UDPControllerInterface
 
-__all__ = ['ProtocolWarning', 'UDPControllerInterface', 'UDPControllerService']
+__all__ = ['UDPControllerInterface', 'UDPControllerService']

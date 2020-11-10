@@ -66,6 +66,28 @@ class ConfigWrapper:
         return str(self._config_path)
 
     def get_parameter(self, k: str) -> Any:
+        """
+        Looks up and returns a named parameter from the configuration.
+        If the parameter is not defined and not required, this will returned
+        its default value instead.
+
+        Parameters
+        ----------
+        k
+            Parameter name.
+
+        Returns
+        -------
+        Any
+            The parameter value if defined. If the parameter is not defined
+            but optional, this value will correspond to the parameter's
+            default value.
+
+        Raises
+        ------
+        ConfigError
+            If the parameter is required and has not been defined.
+        """
         try:
             try:
                 return self._config[k]

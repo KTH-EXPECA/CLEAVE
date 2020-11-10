@@ -7,6 +7,9 @@ PhyPropType = Union[int, float, bool]  # eventually extend to array types
 PhyPropMapping = Mapping[str, PhyPropType]
 
 
+#: This module contains miscellaneous utilities.
+
+
 class SingleElementQ:
     """
     Utility class to hold a single variable in a thread-safe manner.

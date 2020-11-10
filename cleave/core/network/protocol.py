@@ -152,3 +152,7 @@ class ControlMessageFactory:
                        payload=deser['payload'])
         except StopIteration:
             raise NoMessage()
+
+
+class ProtocolWarning(Warning):
+    pass

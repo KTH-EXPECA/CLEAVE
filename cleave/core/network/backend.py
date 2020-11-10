@@ -34,11 +34,16 @@ from twisted.internet.protocol import DatagramProtocol
 from .protocol import *
 from ..backend import Controller
 from ..logging import Logger
-from cleave.core.recordable import NamedRecordable, Recordable, Recorder
+from ..recordable import NamedRecordable, Recordable, Recorder
 from ..util import PhyPropMapping
 
 
 class UDPControllerService(Recordable, DatagramProtocol):
+    """
+    UDP implementation of a controller service. Receives sensor samples over
+    UDP and pushes them to the controller for processing.
+    """
+
     def __init__(self,
                  port: int,
                  controller: Controller,
@@ -65,7 +70,11 @@ class UDPControllerService(Recordable, DatagramProtocol):
     def record_fields(self) -> Sequence[str]:
         return self._records.record_fields
 
-    def serve(self):
+    def serve(self) -> None:
+        """
+        Starts listening for and serving control requests.
+        """
+
         # start listening
         self._logger.info('Starting controller service...')
 
@@ -77,11 +86,17 @@ class UDPControllerService(Recordable, DatagramProtocol):
         self._reactor.listenUDP(self._port, self)
         self._reactor.run()
 
-    def stopProtocol(self):
-        self._logger.warn('Shutting down controller service, please wait...')
-        self._logger.info('Controller service shutdown complete.')
+    def stopProtocol(self) -> None:
+        """
+        Executed during shutdown.
+        """
+        self._logger.warn('Shutting down controller service.')
 
     def datagramReceived(self, in_dgram: bytes, addr: Tuple[str, int]):
+        """
+        Executed on each datagram received.
+        """
+
         # Todo: add timestamping
         # Todo: real logging
         # TODO: figure out way of measuring number of discarded inputs (ie
