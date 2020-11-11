@@ -112,13 +112,6 @@ class State(ABC):
         self._ti = time.monotonic()
         self._log = Logger()
 
-    def get_delta_t(self):
-        # TODO: change to work with simclock?
-        try:
-            return time.monotonic() - self._ti
-        finally:
-            self._ti = time.monotonic()
-
     def __setattr__(self, key, value):
         if isinstance(value, StateVariable):
             # registering a new physical property
@@ -142,10 +135,16 @@ class State(ABC):
         return self._freq
 
     @abstractmethod
-    def advance(self) -> None:
+    def advance(self, delta_t: float) -> None:
         """
         Called by the plant on every time step to advance the emulation.
         Needs to be implemented by subclasses.
+
+        Parameters
+        ----------
+        delta_t
+            Time elapsed since the previous call to this method. This value
+            will be 0 the first time this method is called.
         """
         pass
 
@@ -179,7 +178,9 @@ class State(ABC):
         """
         return copy(self._actuator_vars)
 
-    def state_update(self, control_cmds: PhyPropMapping) -> PhyPropMapping:
+    def state_update(self,
+                     control_cmds: PhyPropMapping,
+                     delta_t: float) -> PhyPropMapping:
         """
         Performs a single step update using the give actuation values as
         inputs and returns the updated values for the sensed variables.
@@ -188,6 +189,8 @@ class State(ABC):
         ----------
         control_cmds
             Actuation inputs.
+        delta_t
+            Seconds since the previous call to this method.
 
         Returns
         -------
@@ -203,7 +206,7 @@ class State(ABC):
                 self._log.warn('Received update for unregistered actuated '
                                f'property "{name}", skipping...')
 
-        self.advance()
+        self.advance(delta_t)
         return {var: getattr(self, var) for var in self._sensor_vars}
 
     def get_variable_record(self) -> PhyPropMapping:

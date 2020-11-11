@@ -156,7 +156,6 @@ class BasePlant(Plant):
             self._logger.warn('Emulation step took longer '
                               'than allotted time slot!', )
 
-        self._ticker.tick()
         control_cmds = self._control.get_actuator_values()
 
         actuator_outputs = self._actuators.apply_actuation_inputs(
@@ -164,7 +163,10 @@ class BasePlant(Plant):
             input_values=control_cmds
         )
 
-        state_outputs = self._state.state_update(actuator_outputs)
+        state_outputs = self._state.state_update(actuator_outputs,
+                                                 self._ticker.tick())
+        # TODO: deltat and count
+
         # sensor_outputs = {}
         try:
             # this only sends if any sensors are triggered during this state

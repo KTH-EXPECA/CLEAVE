@@ -72,6 +72,7 @@ class InvPendulumState(State):
                  pend_mass: float = 0.2,
                  pend_moment: float = 0.001,  # TODO: calculate with pymunk?
                  ):
+        # TODO: graphical visualization
         super(InvPendulumState, self).__init__(update_freq_hz=upd_freq_hz)
         # set up state
 
@@ -129,28 +130,24 @@ class InvPendulumState(State):
         # self._drawing_rate = upd_freq_hz // 5
         # self._update_count = 0
 
-    def advance(self) -> None:
+    def advance(self, delta_t: float) -> None:
         # apply actuation
         force = self.force
-
         self._cart_body.apply_force_at_local_point(Vec2d(force, 0.0),
                                                    Vec2d(0, 0))
 
         # advance the world state
-        # delta T is received as nanoseconds, turn into seconds
-        delta_t = self.get_delta_t()
         self._space.step(delta_t)
-
         angle_deg = np.degrees(self._pend_body.angle)
 
         # TODO: supportsfloat!
-        state_str = \
-            f'Pos: {self._cart_body.position[0]:0.3f} m | ' \
-            f'Angle: {angle_deg:0.3f} degrees | ' \
-            f'Force: {math.fabs(force):0.1f} N | ' \
-            f'DeltaT: {delta_t:f} s'
-
-        print(f'\r{state_str}', end='\t' * 10)
+        # state_str = \
+        #     f'Pos: {self._cart_body.position[0]:0.3f} m | ' \
+        #     f'Angle: {angle_deg:0.3f} degrees | ' \
+        #     f'Force: {math.fabs(force):0.1f} N | ' \
+        #     f'DeltaT: {delta_t:f} s'
+        #
+        # print(f'\r{state_str}', end='\t' * 10)
 
         # setup new world state
         self.position = self._cart_body.position.x
