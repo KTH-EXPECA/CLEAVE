@@ -88,31 +88,45 @@ class SimClock:
         return TimingResult(ti, tf, tf - ti, results)
 
 
+class Rate(NamedTuple):
+    tick_count: int
+    interval_s: float
+
+
+# noinspection PyAttributeOutsideInit
 class PlantTicker:
     """
-    Utility class to measure actual rate of the plant.
+    Utility class to measure the rate of the plant and provide time deltas
+    between ticks.
     """
 
-    def __init__(self, tick_offset: int = 0):
-        self.reset(tick_offset)
+    def __init__(self):
+        self.reset()
 
-    # noinspection PyAttributeOutsideInit
-    def reset(self, tick_offset: int = 0):
-        self._ticks = tick_offset
-        self._ticks_at_prev_time = tick_offset
-        self._prev_t = time.monotonic()
+    def reset(self):
+        self._ticks = 0
+        self._ticks_at_prev_check = 0
+        self._rate_split = time.monotonic()
+        self._tick_split = None
 
     @property
     def total_ticks(self) -> int:
         return self._ticks
 
-    def tick(self) -> None:
-        self._ticks += 1
-
-    def get_rate(self) -> float:
+    def tick(self) -> float:
         try:
-            return (self._ticks - self._ticks_at_prev_time) / \
-                   (time.monotonic() - self._prev_t)
+            self._ticks += 1
+            return 0 if self._tick_split is None \
+                else time.monotonic() - self._tick_split
         finally:
-            self._ticks_at_prev_time = self._ticks
-            self._prev_t = time.monotonic()
+            self._tick_split = time.monotonic()
+
+    def get_rate(self) -> Rate:
+        try:
+            return Rate(
+                tick_count=self._ticks - self._ticks_at_prev_check,
+                interval_s=time.monotonic() - self._rate_split,
+            )
+        finally:
+            self._ticks_at_prev_check = self._ticks
+            self._rate_split = time.monotonic()

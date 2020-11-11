@@ -26,7 +26,7 @@ from twisted.internet.posixbase import PosixReactorBase
 from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
-from .time import PlantTicker, SimClock
+from .time import PlantTicker
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
 from ..recordable import CSVRecorder
@@ -49,7 +49,6 @@ class Plant(ABC):
 
     def __init__(self):
         self._logger = Logger()
-        self._clock = SimClock()
         self._ticker = PlantTicker()
 
     @abstractmethod
@@ -198,6 +197,15 @@ class BasePlant(Plant):
         self._logger.warn(f'Target frequency: {self._freq} Hz')
         self._logger.warn(f'Target time step: {self._target_dt * 1e3:0.1f} ms')
 
+        # callback for plant rate logging
+        def _log_plant_rate():
+            rate = self._ticker.get_rate()
+            ticks_per_second = rate.tick_count / rate.interval_s
+            self._logger.info(
+                f'Current effective plant rate: '
+                f'{rate.tick_count} ticks in {rate.interval_s:0.3f} seconds, '
+                f'for an average of {ticks_per_second:0.3f} ticks/second.')
+
         # callback to wait for network before starting simloop
         def _wait_for_network_and_init():
             if not self._control.is_ready():
@@ -212,14 +220,11 @@ class BasePlant(Plant):
                     .withCount(self._execute_emu_timestep)
                 sim_loop.clock = self._reactor
 
-                ticker_loop = task.LoopingCall(
-                    lambda: self._logger.info(
-                        f'Current effective plant rate: '
-                        f'{self._ticker.get_rate():0.3f} ticks/second.')
-                )
+                ticker_loop = task.LoopingCall(_log_plant_rate)
+                ticker_loop.clock = self._reactor
 
                 sim_loop.start(interval=self._target_dt)
-                ticker_loop.start(interval=5)
+                ticker_loop.start(interval=5)  # TODO: magic number?
 
         self._control.register_with_reactor(self._reactor)
         # callback for shutdown
