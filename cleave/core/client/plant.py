@@ -26,7 +26,7 @@ from twisted.internet.posixbase import PosixReactorBase
 from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
-from .time import SimClock
+from .time import PlantTicker, SimClock
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
 from ..recordable import CSVRecorder
@@ -50,6 +50,7 @@ class Plant(ABC):
     def __init__(self):
         self._logger = Logger()
         self._clock = SimClock()
+        self._ticker = PlantTicker()
 
     @abstractmethod
     def execute(self):
@@ -114,7 +115,6 @@ class BasePlant(Plant):
         self._state = state
         self._sensors = sensor_array
         self._actuators = actuator_array
-        self._cycles = 0
         self._control = control_interface
 
     @property
@@ -157,11 +157,11 @@ class BasePlant(Plant):
             self._logger.warn('Emulation step took longer '
                               'than allotted time slot!', )
 
-        self._cycles += 1
+        self._ticker.tick()
         control_cmds = self._control.get_actuator_values()
 
         actuator_outputs = self._actuators.apply_actuation_inputs(
-            plant_cycle=self._cycles,
+            plant_cycle=self._ticker.total_ticks,
             input_values=control_cmds
         )
 
@@ -171,7 +171,7 @@ class BasePlant(Plant):
             # this only sends if any sensors are triggered during this state
             # update, otherwise an exception is raised and caught further down.
             sensor_outputs = self._sensors.process_plant_state(
-                plant_cycle=self._cycles,
+                plant_cycle=self._ticker.total_ticks,
                 prop_values=state_outputs)
             self._control.put_sensor_values(sensor_outputs)
         except NoSensorUpdate:
@@ -208,10 +208,18 @@ class BasePlant(Plant):
                 # schedule timestep
                 self._logger.info('Starting simulation...')
                 self._state.initialize()
-                loop = task.LoopingCall \
+                sim_loop = task.LoopingCall \
                     .withCount(self._execute_emu_timestep)
-                loop.clock = self._reactor
-                loop.start(self._target_dt)
+                sim_loop.clock = self._reactor
+
+                ticker_loop = task.LoopingCall(
+                    lambda: self._logger.info(
+                        f'Current effective plant rate: '
+                        f'{self._ticker.get_rate():0.3f} ticks/second.')
+                )
+
+                sim_loop.start(interval=self._target_dt)
+                ticker_loop.start(interval=5)
 
         self._control.register_with_reactor(self._reactor)
         # callback for shutdown

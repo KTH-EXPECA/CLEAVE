@@ -86,3 +86,33 @@ class SimClock:
         tf = self.get_sim_time()
 
         return TimingResult(ti, tf, tf - ti, results)
+
+
+class PlantTicker:
+    """
+    Utility class to measure actual rate of the plant.
+    """
+
+    def __init__(self, tick_offset: int = 0):
+        self.reset(tick_offset)
+
+    # noinspection PyAttributeOutsideInit
+    def reset(self, tick_offset: int = 0):
+        self._ticks = tick_offset
+        self._ticks_at_prev_time = tick_offset
+        self._prev_t = time.monotonic()
+
+    @property
+    def total_ticks(self) -> int:
+        return self._ticks
+
+    def tick(self) -> None:
+        self._ticks += 1
+
+    def get_rate(self) -> float:
+        try:
+            return (self._ticks - self._ticks_at_prev_time) / \
+                   (time.monotonic() - self._prev_t)
+        finally:
+            self._ticks_at_prev_time = self._ticks
+            self._prev_t = time.monotonic()
