@@ -1,5 +1,5 @@
 autodoc
-sphinx>= 3.1
+sphinx < 3.2
 sphinxcontrib-napoleon
 m2r2
 sphinx_press_theme
