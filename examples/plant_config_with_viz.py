@@ -12,12 +12,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-#: This package contains implementations of plant-controller pairs.
+# Example config file for an inverted pendulum plant
 
-from .inverted_pendulum import \
-    InvPendulumController, \
-    InvPendulumState, InvPendulumStateWithViz
+from cleave.core.client import SimpleConstantActuator, SimpleSensor
+from cleave.core.network import UDPControllerInterface
+from cleave.impl import InvPendulumStateWithViz
 
-__all__ = ['InvPendulumState',
-           'InvPendulumController',
-           'InvPendulumStateWithViz']
+host = 'localhost'
+port = 50000
+
+state = InvPendulumStateWithViz(upd_freq_hz=200)
+controller_interface = UDPControllerInterface
+
+sensors = [
+    SimpleSensor('position', 100),
+    SimpleSensor('speed', 100),
+    SimpleSensor('angle', 100),
+    SimpleSensor('ang_vel', 100),
+]
+
+actuators = [
+    SimpleConstantActuator('force', start_value=0)
+]
