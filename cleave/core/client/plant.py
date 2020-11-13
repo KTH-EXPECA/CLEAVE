@@ -26,10 +26,10 @@ from twisted.internet.posixbase import PosixReactorBase
 from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
-from .time import PlantTicker
+from .time import PlantTicker, SimClock
 from ..logging import Logger
 from ..network.client import BaseControllerInterface
-from ..recordable import CSVRecorder
+from ..recordable import CSVRecorder, NamedRecordable
 
 _SCALAR_TYPES = (int, float, bool)
 
@@ -50,6 +50,7 @@ class Plant(ABC):
     def __init__(self):
         self._logger = Logger()
         self._ticker = PlantTicker()
+        self._clock = SimClock()
 
     @abstractmethod
     def execute(self):
@@ -116,6 +117,13 @@ class BasePlant(Plant):
         self._actuators = actuator_array
         self._control = control_interface
 
+        # plant_timings
+        # TODO: put into state wrapper class
+        self._timings = NamedRecordable(
+            name='PlantTimings',
+            record_fields=['seq', 'start', 'end', 'tick_delta']
+        )
+
     @property
     def update_freq_hz(self) -> int:
         return self._freq
@@ -144,13 +152,13 @@ class BasePlant(Plant):
 
         """
 
+        step_start = self._clock.get_sim_time()
+
         # 1. get raw actuation inputs
         # 2. process actuation inputs
         # 3. advance state
         # 4. process sensor outputs
         # 5. send sensor outputs
-        # step_start = self._clock.get_sim_time()
-
         # check that timings are respected!
         if count > 1:
             self._logger.warn('Emulation step took longer '
@@ -159,13 +167,12 @@ class BasePlant(Plant):
         control_cmds = self._control.get_actuator_values()
 
         actuator_outputs = self._actuators.apply_actuation_inputs(
-            plant_cycle=self._ticker.total_ticks,
-            input_values=control_cmds
+            plant_cycle=self._ticker.total_ticks + 1,  # +1 since we haven't
+            input_values=control_cmds  # called tick yet!
         )
 
-        state_outputs = self._state.state_update(actuator_outputs,
-                                                 self._ticker.tick())
-        # TODO: deltat and count
+        delta_t = self._ticker.tick()
+        state_outputs = self._state.state_update(actuator_outputs, delta_t)
 
         # sensor_outputs = {}
         try:
@@ -177,6 +184,13 @@ class BasePlant(Plant):
             self._control.put_sensor_values(sensor_outputs)
         except NoSensorUpdate:
             pass
+        finally:
+            self._timings.push_record(
+                seq=self._ticker.total_ticks,
+                start=step_start,
+                end=self._clock.get_sim_time(),
+                tick_delta=delta_t
+            )
 
     def on_shutdown(self) -> None:
         """
@@ -264,7 +278,9 @@ class CSVRecordingPlant(BasePlant):
         elif not recording_output_dir.is_dir():
             raise FileExistsError(f'{recording_output_dir} exists and is not a '
                                   f'directory, aborting.')
+
         self._recorders = {
+            CSVRecorder(self._timings, recording_output_dir / 'timings.csv'),
             CSVRecorder(self._control, recording_output_dir / 'client.csv'),
             CSVRecorder(self._sensors, recording_output_dir / 'sensors.csv'),
             CSVRecorder(self._actuators,
