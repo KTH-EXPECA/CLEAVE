@@ -44,4 +44,4 @@ def log_to_loguru(event: Dict) -> None:
 
 globalLogPublisher.addObserver(log_to_loguru)
 
-__all__ = ['Logger', 'loguru']
+__all__ = ['Logger', 'loguru', 'LogLevel']

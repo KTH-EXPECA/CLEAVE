@@ -27,7 +27,7 @@ from .actuator import Actuator, ActuatorArray
 from .sensor import NoSensorUpdate, Sensor, SensorArray
 from .state import State
 from .time import PlantTicker, SimClock
-from ..logging import Logger
+from ..logging import LogLevel, Logger
 from ..network.client import BaseControllerInterface
 from ..recordable import CSVRecorder, NamedRecordable
 
@@ -110,8 +110,7 @@ class BasePlant(Plant):
                  control_interface: BaseControllerInterface):
         super(BasePlant, self).__init__()
         self._reactor = reactor
-        self._freq = state.update_frequency
-        self._target_dt = 1.0 / self._freq
+        self._target_dt = 1.0 / state.update_frequency
         self._state = state
         self._sensors = sensor_array
         self._actuators = actuator_array
@@ -126,7 +125,7 @@ class BasePlant(Plant):
 
     @property
     def update_freq_hz(self) -> int:
-        return self._freq
+        return self._state.update_frequency
 
     @property
     def target_step_dt(self) -> float:
@@ -210,17 +209,30 @@ class BasePlant(Plant):
         """
 
         self._logger.info('Initializing plant...')
-        self._logger.warn(f'Target frequency: {self._freq} Hz')
+        self._logger.warn(f'Target frequency: '
+                          f'{self._state.update_frequency} Hz')
         self._logger.warn(f'Target time step: {self._target_dt * 1e3:0.1f} ms')
 
         # callback for plant rate logging
         def _log_plant_rate():
+            if self._ticker.total_ticks < self._state.update_frequency:
+                # todo: more efficient way?
+                # skip first second
+                return
+
             rate = self._ticker.get_rate()
             ticks_per_second = rate.tick_count / rate.interval_s
-            self._logger.info(
-                f'Current effective plant rate: '
-                f'{rate.tick_count} ticks in {rate.interval_s:0.3f} seconds, '
-                f'for an average of {ticks_per_second:0.3f} ticks/second.')
+
+            ratio_expected = ticks_per_second / self._state.update_frequency
+            loglevel = LogLevel.info if ratio_expected > 0.95 else \
+                LogLevel.warn if ratio_expected > 0.85 else LogLevel.error
+
+            self._logger.emit(level=loglevel,
+                              format=f'Current effective plant rate: '
+                                     f'{rate.tick_count} ticks in '
+                                     f'{rate.interval_s:0.3f} seconds, '
+                                     f'for an average of '
+                                     f'{ticks_per_second:0.3f} ticks/second.')
 
         # callback to wait for network before starting simloop
         def _wait_for_network_and_init():
@@ -279,6 +291,7 @@ class CSVRecordingPlant(BasePlant):
             raise FileExistsError(f'{recording_output_dir} exists and is not a '
                                   f'directory, aborting.')
 
+        # TODO: factories?
         self._recorders = {
             CSVRecorder(self._timings, recording_output_dir / 'timings.csv'),
             CSVRecorder(self._control, recording_output_dir / 'client.csv'),
