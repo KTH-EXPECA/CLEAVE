@@ -12,7 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .actuator import Actuator, SimpleConstantActuator, SimpleImpulseActuator
+from .actuator import Actuator, GaussianConstantActuator, \
+    SimpleConstantActuator, SimpleImpulseActuator
 from .plant import Plant, PlantBuilder
 from .sensor import Sensor, SimpleSensor
 from .state import ActuatorVariable, SensorVariable, State
@@ -25,4 +26,5 @@ builder = PlantBuilder(reactor)
 __all__ = ['builder', 'Plant',
            'Sensor', 'SimpleSensor',
            'Actuator', 'SimpleConstantActuator', 'SimpleImpulseActuator',
+           'GaussianConstantActuator',
            'State', 'SensorVariable', 'ActuatorVariable']

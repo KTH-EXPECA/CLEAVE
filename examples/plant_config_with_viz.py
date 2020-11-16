@@ -14,7 +14,7 @@
 
 # Example config file for an inverted pendulum plant
 
-from cleave.core.client import SimpleConstantActuator, SimpleSensor
+from cleave.core.client import GaussianConstantActuator, SimpleSensor
 from cleave.core.network import UDPControllerInterface
 from cleave.impl import InvPendulumStateWithViz
 
@@ -32,5 +32,8 @@ sensors = [
 ]
 
 actuators = [
-    SimpleConstantActuator('force', start_value=0)
+    GaussianConstantActuator('force',
+                             g_mean=0.0,
+                             g_std=1.0,
+                             start_value=0)
 ]

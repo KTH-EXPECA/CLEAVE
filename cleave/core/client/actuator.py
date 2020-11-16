@@ -11,8 +11,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 from abc import ABC, abstractmethod
+from collections import deque
 from typing import Collection, Optional, Sequence, Set
 
 import numpy as np
@@ -160,6 +160,42 @@ class SimpleImpulseActuator(Actuator):
             return self._value
         finally:
             self._value = self._default_value
+
+
+class GaussianConstantActuator(SimpleConstantActuator):
+    def __init__(self,
+                 prop_name: str,
+                 g_mean: float,
+                 g_std: float,
+                 start_value: Optional[PhyPropType] = None,
+                 prealloc_size: int = int(1e6)):
+        super(GaussianConstantActuator, self).__init__(
+            prop_name=prop_name, start_value=start_value
+        )
+        import numpy
+        self._random = numpy.random.default_rng()
+        self._noise_mean = g_mean
+        self._noise_std = g_std
+        self._noise_prealloc = prealloc_size
+
+        # preallocate values for efficiency
+        self._noise = deque(self._random.normal(
+            loc=self._noise_mean, scale=self._noise_std,
+            size=self._noise_prealloc
+        ))
+
+    def set_value(self, desired_value: PhyPropType) -> None:
+        try:
+            noise = self._noise.pop()
+        except IndexError:
+            # empty stack, refill it
+            self._noise = deque(self._random.normal(
+                loc=self._noise_mean, scale=self._noise_std,
+                size=self._noise_prealloc
+            ))
+            noise = self._noise.pop()
+
+        super(GaussianConstantActuator, self).set_value(desired_value + noise)
 
 
 class ActuatorArray(Recordable):
