@@ -12,10 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from abc import ABC, abstractmethod
-from queue import Empty
-from typing import Callable
+from threading import Condition
+from typing import Any, Callable
 
-from ..util import PhyPropMapping, SingleElementQ
+from twisted.internet.posixbase import PosixReactorBase
+from twisted.internet.threads import deferToThreadPool
+from twisted.python.failure import Failure
+
+from ..logging import Logger
+from ..util import PhyPropMapping
 
 
 # TODO: refactor out all "internal use" methods from this class into a
@@ -29,49 +34,6 @@ class Controller(ABC):
 
     def __init__(self):
         super(Controller, self).__init__()
-        self._input_q = SingleElementQ()
-
-    def submit_request(self,
-                       control_input: PhyPropMapping,
-                       callback: Callable[[PhyPropMapping], None], ) -> None:
-        """
-        (Internal use)
-
-        Submits a actuation input to be processed in an asynchronous fashion.
-
-        Parameters
-        ----------
-        control_input
-            Mapping from property names to values corresponding to the
-            desired values for the actuated properties of this plant.
-        callback
-            A callback function to be executed after advancing the
-            simulation, for instance to send samples to the controller. A
-            single parameter will be passed to this function, corresponding
-            to the mapping from property names to values returned by the
-            process() method of this class.
-
-        Returns
-        -------
-
-        """
-        self._input_q.put({'input': control_input, 'callback': callback})
-
-    def process_loop(self):
-        """
-        (Internal use)
-
-        Function intended to be used within the event loop of the controller
-        for periodic processing of input samples.
-        """
-
-        try:
-            control_req = self._input_q.pop_nowait()
-        except Empty:
-            return
-
-        control_output = self.process(control_req['input'])
-        control_req['callback'](control_output)
 
     @abstractmethod
     def process(self, sensor_values: PhyPropMapping) -> PhyPropMapping:
@@ -98,3 +60,46 @@ class Controller(ABC):
 
         """
         pass
+
+
+class BusyControllerException(Exception):
+    pass
+
+
+class ControllerWrapper:
+    def __init__(self,
+                 controller: Controller,
+                 reactor: PosixReactorBase):
+        super(ControllerWrapper, self).__init__()
+        self._controller = controller
+        self._reactor = reactor
+        self._busy_cond = Condition()
+        self._busy = False
+        self._log = Logger()
+
+    def process_sensor_samples(self,
+                               samples: PhyPropMapping,
+                               callback: Callable[[PhyPropMapping], Any]) \
+            -> None:
+        def process() -> PhyPropMapping:
+            with self._busy_cond:
+                if self._busy:
+                    raise BusyControllerException()
+                self._busy = True
+
+            return self._controller.process(samples)
+
+        def busy_errback(fail: Failure) -> None:
+            fail.trap(BusyControllerException)
+            self._log.warn('Controller is busy, discarding received samples.')
+
+        def process_callback(actuation: PhyPropMapping) -> None:
+            with self._busy_cond:
+                self._busy = False
+            callback(actuation)
+
+        deferred = deferToThreadPool(self._reactor,
+                                     self._reactor.getThreadPool(),
+                                     process)
+        deferred.addCallback(process_callback)
+        deferred.addErrback(busy_errback)

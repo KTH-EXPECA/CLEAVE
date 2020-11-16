@@ -27,12 +27,12 @@ import time
 from typing import Sequence, Set, Tuple
 
 import msgpack
-from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
 from .protocol import *
 from ..backend import Controller
+from ..backend.controller import ControllerWrapper
 from ..logging import Logger
 from ..recordable import NamedRecordable, Recordable, Recorder
 from ..util import PhyPropMapping
@@ -50,7 +50,7 @@ class UDPControllerService(Recordable, DatagramProtocol):
                  reactor: PosixReactorBase):
         super(UDPControllerService, self).__init__()
         self._port = port
-        self._control = controller
+        self._control = ControllerWrapper(controller, reactor)
         self._reactor = reactor
         self._msg_fact = ControlMessageFactory()
         self._logger = Logger()
@@ -77,12 +77,6 @@ class UDPControllerService(Recordable, DatagramProtocol):
 
         # start listening
         self._logger.info('Starting controller service...')
-
-        # start controller loop
-        loop = task.LoopingCall(self._control.process_loop)
-        loop.clock = self._reactor
-        loop.start(0)  # runs on every iteration of the event loop
-
         self._reactor.listenUDP(self._port, self)
         self._reactor.run()
 
@@ -129,10 +123,8 @@ class UDPControllerService(Recordable, DatagramProtocol):
                         send_size=out_size
                     )
 
-                self._control.submit_request(
-                    control_input=in_msg.payload,
-                    callback=result_callback
-                )
+                self._control.process_sensor_samples(in_msg.payload,
+                                                     result_callback)
             else:
                 self._logger.warn(f'Ignoring message of unrecognized type '
                                   f'{in_msg.msg_type.name}.')
