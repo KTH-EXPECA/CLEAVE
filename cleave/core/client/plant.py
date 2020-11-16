@@ -158,10 +158,10 @@ class BasePlant(Plant):
         # 3. advance state
         # 4. process sensor outputs
         # 5. send sensor outputs
-        # check that timings are respected!
-        if count > 1:
-            self._logger.warn('Emulation step took longer '
-                              'than allotted time slot!', )
+        # TODO: check that timings are respected!
+        # if count > 1:
+        #     self._logger.warn('Emulation step took longer '
+        #                       'than allotted time slot!', )
 
         control_cmds = self._control.get_actuator_values()
 
@@ -251,7 +251,10 @@ class BasePlant(Plant):
                 ticker_loop = task.LoopingCall(_log_plant_rate)
                 ticker_loop.clock = self._reactor
 
-                sim_loop.start(interval=self._target_dt)
+                # have loop run slightly faster than required, as we rather
+                # have the plant be a bit too fast than too slow
+                # todo: parameterize the scaling factor?
+                sim_loop.start(interval=self._target_dt * 0.9)
                 ticker_loop.start(interval=5)  # TODO: magic number?
 
         self._control.register_with_reactor(self._reactor)
