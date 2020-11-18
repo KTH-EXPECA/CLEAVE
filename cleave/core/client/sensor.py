@@ -14,22 +14,17 @@
 
 from __future__ import annotations
 
-import warnings
-from abc import ABC, abstractmethod
 from typing import Collection, Dict, Mapping, Sequence, Set
 
 import numpy as np
 
-from cleave.core.recordable import NamedRecordable, Recordable, Recorder
-from ...core.util import PhyPropMapping, PhyPropType
+from ..logging import Logger
+from ..recordable import NamedRecordable, Recordable, Recorder
+from ...api.plant import Sensor
+from ...core.util import PhyPropMapping
 
-__all__ = ['Sensor', 'SimpleSensor', 'SensorArray',
-           'NoSensorUpdate', 'RegisteredSensorWarning',
+__all__ = ['SensorArray', 'NoSensorUpdate',
            'IncompatibleFrequenciesError', 'MissingPropertyError']
-
-
-class RegisteredSensorWarning(Warning):
-    pass
 
 
 class IncompatibleFrequenciesError(Exception):
@@ -42,72 +37,6 @@ class MissingPropertyError(Exception):
 
 class NoSensorUpdate(Exception):
     pass
-
-
-class Sensor(ABC):
-    """
-    Abstract core class for sensors. Implementations should override the
-    process_sample() method with their logic.
-    """
-
-    def __init__(self, prop_name: str, fs: int):
-        self._prop_name = prop_name
-        self._sample_freq = fs
-        self._value = None
-
-    @property
-    def measured_property_name(self) -> str:
-        """
-
-        Returns
-        -------
-        str
-            Name of the property monitored by this sensor.
-
-        """
-        return self._prop_name
-
-    @property
-    def sampling_frequency(self) -> int:
-        """
-
-        Returns
-        -------
-        int
-            Sampling frequency of this sensor, expressed in Hertz.
-
-        """
-        return self._sample_freq
-
-    @abstractmethod
-    def process_sample(self, value: PhyPropType) -> PhyPropType:
-        """
-        Processes the measured value. This method should be implemented by
-        subclasses to include sensor-specific behaviors.
-
-        Parameters
-        ----------
-        value
-            The latest measurement of the monitored property.
-
-        Returns
-        -------
-        PhyPropType
-            A possibly transformed value of the monitored property, according to
-            the internal parameters of this sensor.
-
-        """
-        pass
-
-
-class SimpleSensor(Sensor):
-    """
-    Simplest implementation of a sensor, which performs no processing on the
-    read value and returns it as-is.
-    """
-
-    def process_sample(self, value: PhyPropType) -> PhyPropType:
-        return value
 
 
 class SensorArray(Recordable):
@@ -123,15 +52,15 @@ class SensorArray(Recordable):
         self._plant_tick_rate = plant_tick_rate
         self._prop_sensors = dict()
         self._cycle_triggers = dict()
+        self._log = Logger()
 
         # TODO: add clock?
 
         # assign sensors to properties
         for sensor in sensors:
             if sensor.measured_property_name in self._prop_sensors:
-                warnings.warn(f'Replacing already registered sensor for '
-                              f'property {sensor.measured_property_name}',
-                              RegisteredSensorWarning)
+                self._log.warn(f'Replacing already registered sensor for '
+                               f'property {sensor.measured_property_name}')
             elif sensor.sampling_frequency > self._plant_tick_rate:
                 raise IncompatibleFrequenciesError(
                     'Sensor sampling frequency cannot be higher than plant '
@@ -179,8 +108,7 @@ class SensorArray(Recordable):
 
     def process_plant_state(self,
                             plant_cycle: int,
-                            prop_values: PhyPropMapping) \
-            -> Dict[str, PhyPropType]:
+                            prop_values: PhyPropMapping) -> PhyPropMapping:
         """
         Processes measured properties by passing them to the internal
         collection of sensors and returns the processed values.

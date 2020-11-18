@@ -23,14 +23,14 @@ from typing import Union
 from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
 
-from .actuator import Actuator, ActuatorArray
+from .actuator import ActuatorArray
 from .physicalsim import PhysicalSimulation
-from .sensor import NoSensorUpdate, Sensor, SensorArray
+from .sensor import NoSensorUpdate, SensorArray
 from .time import PlantTicker, SimClock
 from ..logging import LogLevel, Logger
 from ..network.client import BaseControllerInterface
 from ..recordable import CSVRecorder, NamedRecordable
-from ...api.plant import State
+from ...api.plant import Actuator, Sensor, State
 
 _SCALAR_TYPES = (int, float, bool)
 

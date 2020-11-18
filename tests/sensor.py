@@ -1,7 +1,8 @@
 import unittest
 from typing import Dict
 
-from cleave.core.client import Sensor, PhyPropType, SimpleSensor
+from cleave.core.client import PhyPropType
+from cleave.api.plant import Sensor, SimpleSensor
 from cleave.core.client import SensorArray
 from cleave.core.network import CommClient
 

@@ -12,11 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from abc import ABC, abstractmethod
-from typing import Any
+from collections import deque
+from typing import Any, Optional
 
 from cleave.core.client.statebase import BaseSemanticVariable, StateBase
 
-__all__ = ['ControllerParameter', 'SensorVariable', 'ActuatorVariable', 'State']
+# __all__ = ['ControllerParameter', 'SensorVariable',
+# 'ActuatorVariable', 'State']
+
+from cleave.core.util import PhyPropType
 
 
 class ControllerParameter(BaseSemanticVariable):
@@ -102,3 +106,237 @@ class State(StateBase, ABC):
         Called by the plant on shutdown.
         """
         pass
+
+
+class Sensor(ABC):
+    """
+    Abstract core class for sensors. Implementations should override the
+    process_sample() method with their logic.
+    """
+
+    def __init__(self, prop_name: str, fs: int):
+        self._prop_name = prop_name
+        self._sample_freq = fs
+        self._value = None
+
+    @property
+    def measured_property_name(self) -> str:
+        """
+
+        Returns
+        -------
+        str
+            Name of the property monitored by this sensor.
+
+        """
+        return self._prop_name
+
+    @property
+    def sampling_frequency(self) -> int:
+        """
+
+        Returns
+        -------
+        int
+            Sampling frequency of this sensor, expressed in Hertz.
+
+        """
+        return self._sample_freq
+
+    @abstractmethod
+    def process_sample(self, value: PhyPropType) -> PhyPropType:
+        """
+        Processes the measured value. This method should be implemented by
+        subclasses to include sensor-specific behaviors.
+
+        Parameters
+        ----------
+        value
+            The latest measurement of the monitored property.
+
+        Returns
+        -------
+        PhyPropType
+            A possibly transformed value of the monitored property, according to
+            the internal parameters of this sensor.
+
+        """
+        pass
+
+
+class SimpleSensor(Sensor):
+    """
+    Simplest implementation of a sensor, which performs no processing on the
+    read value and returns it as-is.
+    """
+
+    def process_sample(self, value: PhyPropType) -> PhyPropType:
+        return value
+
+
+class Actuator(ABC):
+    """
+    Abstract core class for actuators. Implementations should override the
+    set_value() and get_actuation() methods with their logic.
+    """
+
+    def __init__(self,
+                 prop_name: str,
+                 start_value: Optional[PhyPropType] = None):
+        super(Actuator, self).__init__()
+        self._prop_name = prop_name
+        self._value = start_value
+
+    @property
+    def actuated_property_name(self) -> str:
+        """
+
+        Returns
+        -------
+        str
+            Name of the property actuated upon by this actuator.
+
+        """
+        return self._prop_name
+
+    @abstractmethod
+    def set_value(self, desired_value: PhyPropType) -> None:
+        """
+        Called to set the target value for this actuator. This method should
+        be implemented by extending classes.
+
+        Parameters
+        ----------
+        desired_value
+            Target value for this actuator.
+
+        Returns
+        -------
+
+        """
+        pass
+
+    @abstractmethod
+    def get_actuation(self) -> PhyPropType:
+        """
+        Returns the next value for the actuation processed governed by this
+        actuator. This method should be implemented by extending classes.
+
+        Returns
+        -------
+        PhyPropType
+            A value for the actuated property.
+        """
+        pass
+
+
+class SimpleConstantActuator(Actuator):
+    """
+    Implementation of a perfect actuator which keeps its value after being
+    read (i.e. can be thought of as applying a constant force/actuation on
+    the target variable).
+    """
+
+    def set_value(self, desired_value: PhyPropType) -> None:
+        """
+        Sets the value of the actuated property governed by this actuator.
+
+        Parameters
+        ----------
+        desired_value
+            The value of the actuated property.
+
+        Returns
+        -------
+
+        """
+        self._value = desired_value
+
+    def get_actuation(self) -> PhyPropType:
+        """
+        Returns
+        -------
+        PhyPropType
+            The current value of the actuated property.
+        """
+        return self._value
+
+
+class SimpleImpulseActuator(Actuator):
+    """
+    Implementation if a perfect actuator which resets its value after being
+    read (i.e. can be thought as an actuator which applies impulses to the
+    target variable).
+    """
+
+    def __init__(self,
+                 prop_name: str,
+                 default_value: PhyPropType):
+        super(SimpleImpulseActuator, self).__init__(prop_name=prop_name,
+                                                    start_value=default_value)
+        self._default_value = default_value
+
+    def set_value(self, desired_value: PhyPropType) -> None:
+        """
+        Sets the next value returned by this actuator.
+
+        Parameters
+        ----------
+        desired_value
+            Value returned in the next call to get_actuation().
+        Returns
+        -------
+
+        """
+        self._value = desired_value
+
+    def get_actuation(self) -> PhyPropType:
+        """
+        Returns the internally stored value, and then resets it to the
+        default value.
+
+        Returns
+        -------
+        PhyPropType
+            The actuation value.
+        """
+        try:
+            return self._value
+        finally:
+            self._value = self._default_value
+
+
+class GaussianConstantActuator(SimpleConstantActuator):
+    def __init__(self,
+                 prop_name: str,
+                 g_mean: float,
+                 g_std: float,
+                 start_value: Optional[PhyPropType] = None,
+                 prealloc_size: int = int(1e6)):
+        super(GaussianConstantActuator, self).__init__(
+            prop_name=prop_name, start_value=start_value
+        )
+        import numpy
+        self._random = numpy.random.default_rng()
+        self._noise_mean = g_mean
+        self._noise_std = g_std
+        self._noise_prealloc = prealloc_size
+
+        # preallocate values for efficiency
+        self._noise = deque(self._random.normal(
+            loc=self._noise_mean, scale=self._noise_std,
+            size=self._noise_prealloc
+        ))
+
+    def set_value(self, desired_value: PhyPropType) -> None:
+        try:
+            noise = self._noise.pop()
+        except IndexError:
+            # empty stack, refill it
+            self._noise = deque(self._random.normal(
+                loc=self._noise_mean, scale=self._noise_std,
+                size=self._noise_prealloc
+            ))
+            noise = self._noise.pop()
+
+        super(GaussianConstantActuator, self).set_value(desired_value + noise)

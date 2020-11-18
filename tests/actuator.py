@@ -1,7 +1,8 @@
 import unittest
 from typing import Any
 
-from cleave.core.client import Actuator, SimpleActuator
+from cleave.core.client import SimpleActuator
+from cleave.api.plant import Actuator
 
 
 class DummyDampenedActuator(Actuator):
