@@ -32,7 +32,8 @@ import pymunk
 from pymunk.vec2d import Vec2d
 
 from ..core.backend.controller import Controller
-from ..core.client import ActuatorVariable, SensorVariable, State
+from ..core.client import State
+from ..api.plant import ActuatorVariable, SensorVariable
 from ..core.util import PhyPropMapping
 
 #: Gravity constants

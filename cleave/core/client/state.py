@@ -14,67 +14,13 @@
 import time
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import Generic, Set, Type, TypeVar
+from typing import Set
+
+from .semantics import BaseSemanticVariable
+from ...api.plant import ActuatorVariable, ControllerParameter, SensorVariable
 
 from ..logging import Logger
 from ..util import PhyPropMapping
-
-T = TypeVar('T', int, float, bool, bytes)
-
-
-class StateVariable(Generic[T]):
-    """
-    Base class for semantically significant variables in a State.
-    """
-
-    def __init__(self, value: T, record: bool = True):
-        self._value = value
-        self._record = record
-
-    def get_value(self) -> T:
-        return self._value
-
-    def set_value(self, value: T):
-        self._value = value
-
-    def get_type(self) -> Type:
-        return type(self._value)
-
-    @property
-    def record(self) -> bool:
-        return self._record
-
-
-class ControllerParameter(StateVariable):
-    """
-    A semantically significant variable corresponding to an initialization
-    parameter for a controller interacting with this plant.
-
-    Variables of this type will automatically be provided to the controller
-    on initialization (TODO: not implemented yet).
-    """
-
-    def __init__(self, value: T, record: bool = False):
-        # by default, controller parameters are not recorded
-        super(ControllerParameter, self).__init__(value, record)
-
-
-class SensorVariable(StateVariable):
-    """
-    A semantically significant variable corresponding to a property measured
-    by a sensor. Variables of this type will automatically be paired with the
-    corresponding Sensor during emulation.
-    """
-    pass
-
-
-class ActuatorVariable(StateVariable):
-    """
-    A semantically significant variable corresponding to a property measured
-    by an actuator. Variables of this type will automatically be paired with the
-    corresponding Actuator during emulation.
-    """
-    pass
 
 
 class StateError(Exception):
@@ -113,7 +59,7 @@ class State(ABC):
         self._log = Logger()
 
     def __setattr__(self, key, value):
-        if isinstance(value, StateVariable):
+        if isinstance(value, BaseSemanticVariable):
             # registering a new physical property
             if isinstance(value, SensorVariable):
                 self._sensor_vars.add(key)
