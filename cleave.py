@@ -15,7 +15,6 @@
 import socket
 import sys
 from pathlib import Path
-from typing import Tuple
 
 import click
 
@@ -57,22 +56,13 @@ def cli(verbose: int, colorize_logs: bool):
 
 
 @cli.command('run-plant')
-@click.option('-a', '--host-address', type=(str, int), default=('', -1),
-              show_default=False, required=False,
-              help='IP address of the controller service, given as an '
-                   '<hostname> <port> pair.')
 @click.argument('config_file_path',
                 type=click.Path(exists=True,
                                 file_okay=True,
                                 dir_okay=False))
-def run_plant(host_address: Tuple[str, int],
-              config_file_path: str):
-    host_addr_config = {} if host_address == ('', -1) \
-        else {'host': host_address[0], 'port': host_address[1]}
-
+def run_plant(config_file_path: str):
     config = ConfigWrapper(
         config_path=config_file_path,
-        cmd_line_overrides=host_addr_config,
         defaults=_plant_defaults
     )
 
@@ -91,20 +81,13 @@ def run_plant(host_address: Tuple[str, int],
 
 
 @cli.command('run-controller')
-@click.option('-p', '--bind-port', type=int, default=-1,
-              show_default=False, required=False,
-              help='Port to listen on for incoming control requests.')
 @click.argument('config_file_path',
                 type=click.Path(exists=True,
                                 file_okay=True,
                                 dir_okay=False))
-def run_controller(bind_port: int,
-                   config_file_path: str):
-    port_override = {'port': bind_port} if bind_port > 0 else {}
-
+def run_controller(config_file_path: str):
     config = ConfigWrapper(
         config_path=config_file_path,
-        cmd_line_overrides=port_override,
         defaults=_control_defaults
     )
 
