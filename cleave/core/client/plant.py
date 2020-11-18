@@ -244,7 +244,7 @@ class BasePlant(Plant):
                 # have the plant be a bit too fast than too slow
                 # todo: parameterize the scaling factor?
                 # todo: tune this
-                sim_loop.start(interval=self._physim.tick_delta * 0.9)
+                sim_loop.start(interval=self._physim.tick_delta)
                 ticker_loop.start(interval=5)  # TODO: magic number?
 
         self._control.register_with_reactor(self._reactor)

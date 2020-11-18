@@ -19,7 +19,7 @@ from cleave.impl import InvPendulumState
 
 host = 'localhost'
 port = 50000
-tick_rate = 2000
+tick_rate = 200
 
 state = InvPendulumState()
 
