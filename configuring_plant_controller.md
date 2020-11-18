@@ -33,7 +33,8 @@ The framework currently provides some implementations of these classes, please s
 An example plant config would then look something like this:
 
 ```python
-from cleave.core.client import SimpleActuator, SimpleSensor, Sensor, State
+from cleave.core.client import SimpleActuator, SimpleSensor, Sensor
+from cleave.api.plant import State
 
 class InvPendulumState(State):
     ...

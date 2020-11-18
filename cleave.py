@@ -81,6 +81,7 @@ def run_plant(host_address: Tuple[str, int],
     builder.set_plant_state(config.state)
     builder.set_sensors(config.sensors)
     builder.set_actuators(config.actuators)
+    builder.set_simulation_tick_rate(config.tick_rate)
     # builder.set_plant_sinks(config.plant_sinks)
     # builder.set_client_sinks(config.client_sinks)
 

@@ -31,9 +31,8 @@ import numpy as np
 import pymunk
 from pymunk.vec2d import Vec2d
 
+from ..api.plant import ActuatorVariable, SensorVariable, State
 from ..core.backend.controller import Controller
-from ..core.client import State
-from ..api.plant import ActuatorVariable, SensorVariable
 from ..core.util import PhyPropMapping
 
 #: Gravity constants
@@ -101,7 +100,6 @@ def visualization_loop(input_q: Queue,
 
 class InvPendulumState(State):
     def __init__(self,
-                 upd_freq_hz: int,
                  ground_friction: float = 0.1,
                  cart_mass: float = 0.5,
                  cart_dims: Vec2d = Vec2d(0.3, 0.2),
@@ -110,8 +108,7 @@ class InvPendulumState(State):
                  pend_mass: float = 0.2,
                  pend_moment: float = 0.001,  # TODO: calculate with pymunk?
                  ):
-        # TODO: graphical visualization
-        super(InvPendulumState, self).__init__(update_freq_hz=upd_freq_hz)
+        super(InvPendulumState, self).__init__()
         # set up state
 
         # space
@@ -197,7 +194,6 @@ class InvPendulumState(State):
 class InvPendulumStateWithViz(InvPendulumState):
     # TODO: tidy up, document
     def __init__(self,
-                 upd_freq_hz: int,
                  ground_friction: float = 0.1,
                  cart_mass: float = 0.5,
                  cart_dims: Vec2d = Vec2d(0.3, 0.2),
@@ -213,7 +209,6 @@ class InvPendulumStateWithViz(InvPendulumState):
         from multiprocessing.context import Process
 
         super(InvPendulumStateWithViz, self).__init__(
-            upd_freq_hz=upd_freq_hz,
             ground_friction=ground_friction,
             cart_mass=cart_mass,
             cart_dims=cart_dims,

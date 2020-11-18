@@ -117,10 +117,10 @@ class SensorArray(Recordable):
     """
 
     def __init__(self,
-                 plant_freq: int,
+                 plant_tick_rate: int,
                  sensors: Collection[Sensor]):
         super(SensorArray, self).__init__()
-        self._plant_freq = plant_freq
+        self._plant_tick_rate = plant_tick_rate
         self._prop_sensors = dict()
         self._cycle_triggers = dict()
 
@@ -132,12 +132,12 @@ class SensorArray(Recordable):
                 warnings.warn(f'Replacing already registered sensor for '
                               f'property {sensor.measured_property_name}',
                               RegisteredSensorWarning)
-            elif sensor.sampling_frequency > self._plant_freq:
+            elif sensor.sampling_frequency > self._plant_tick_rate:
                 raise IncompatibleFrequenciesError(
                     'Sensor sampling frequency cannot be higher than plant '
                     'update frequency!'
                 )
-            elif self._plant_freq % sensor.sampling_frequency != 0:
+            elif self._plant_tick_rate % sensor.sampling_frequency != 0:
                 raise IncompatibleFrequenciesError(
                     'Sensor sampling frequency must be a divisor of plant '
                     'sampling frequency!'
@@ -152,8 +152,9 @@ class SensorArray(Recordable):
             # count as reference, the sensor needs to sample at cycles:
             # [0, 3, 6, 8, 12, ..., 600]
             p_cycles_per_s_cycle = \
-                self._plant_freq // sensor.sampling_frequency
-            for trigger in range(0, self._plant_freq, p_cycles_per_s_cycle):
+                self._plant_tick_rate // sensor.sampling_frequency
+            for trigger in range(0, self._plant_tick_rate,
+                                 p_cycles_per_s_cycle):
                 if trigger not in self._cycle_triggers:
                     self._cycle_triggers[trigger] = []
 
@@ -200,7 +201,7 @@ class SensorArray(Recordable):
             sensor values.
 
         """
-        cycle = plant_cycle % self._plant_freq
+        cycle = plant_cycle % self._plant_tick_rate
         sensor_samples = dict()
         try:
             # check which sensors need to be updated this cycle

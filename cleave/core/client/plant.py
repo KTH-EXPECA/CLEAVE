@@ -24,12 +24,13 @@ from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
 
 from .actuator import Actuator, ActuatorArray
+from .physicalsim import PhysicalSimulation
 from .sensor import NoSensorUpdate, Sensor, SensorArray
-from .state import State
 from .time import PlantTicker, SimClock
 from ..logging import LogLevel, Logger
 from ..network.client import BaseControllerInterface
 from ..recordable import CSVRecorder, NamedRecordable
+from ...api.plant import State
 
 _SCALAR_TYPES = (int, float, bool)
 
@@ -66,7 +67,7 @@ class Plant(ABC):
 
     @property
     @abstractmethod
-    def update_freq_hz(self) -> int:
+    def simulation_tick_rate(self) -> int:
         """
         The update frequency of this plant in Hz. Depending on
         implementation, accessing this property may or may not be thread-safe.
@@ -81,16 +82,8 @@ class Plant(ABC):
 
     @property
     @abstractmethod
-    def plant_state(self) -> State:
-        """
-        The State object associated with this plant. Depending on
-        implementation, accessing this property may or may not be thread-safe.
-
-        Returns
-        -------
-        State
-            The plant State.
-        """
+    def simulation_tick_dt(self) -> float:
+        # TODO: document
         pass
 
     @abstractmethod
@@ -104,14 +97,13 @@ class Plant(ABC):
 class BasePlant(Plant):
     def __init__(self,
                  reactor: PosixReactorBase,
-                 state: State,
+                 physim: PhysicalSimulation,
                  sensor_array: SensorArray,
                  actuator_array: ActuatorArray,
                  control_interface: BaseControllerInterface):
         super(BasePlant, self).__init__()
         self._reactor = reactor
-        self._target_dt = 1.0 / state.update_frequency
-        self._state = state
+        self._physim = physim
         self._sensors = sensor_array
         self._actuators = actuator_array
         self._control = control_interface
@@ -124,16 +116,12 @@ class BasePlant(Plant):
         )
 
     @property
-    def update_freq_hz(self) -> int:
-        return self._state.update_frequency
+    def simulation_tick_rate(self) -> int:
+        return self._physim.tick_rate
 
     @property
-    def target_step_dt(self) -> float:
-        return self._target_dt
-
-    @property
-    def plant_state(self) -> State:
-        return self._state
+    def simulation_tick_dt(self) -> float:
+        return self._physim.tick_delta
 
     def _execute_emu_timestep(self, count: int) -> None:
         """
@@ -171,7 +159,7 @@ class BasePlant(Plant):
         )
 
         delta_t = self._ticker.tick()
-        state_outputs = self._state.state_update(actuator_outputs, delta_t)
+        state_outputs = self._physim.advance_state(actuator_outputs, delta_t)
 
         # sensor_outputs = {}
         try:
@@ -199,23 +187,24 @@ class BasePlant(Plant):
         # output stats on shutdown
         self._logger.warn('Shutting down plant, please wait...')
 
-        # call state shutdown
-        self._state.shutdown()
+        # call simulation shutdown
+        self._physim.shutdown()
         self._logger.info('Plant shutdown completed.')
 
     def execute(self):
         """
-        Initiates the emulation of this plant.
+        Initiates the simluation of this plant.
         """
 
         self._logger.info('Initializing plant...')
         self._logger.warn(f'Target frequency: '
-                          f'{self._state.update_frequency} Hz')
-        self._logger.warn(f'Target time step: {self._target_dt * 1e3:0.1f} ms')
+                          f'{self._physim.tick_rate} Hz')
+        self._logger.warn(f'Target time step: '
+                          f'{self._physim.tick_delta * 1e3:0.1f} ms')
 
         # callback for plant rate logging
         def _log_plant_rate():
-            if self._ticker.total_ticks < self._state.update_frequency:
+            if self._ticker.total_ticks < self._physim.tick_rate:
                 # todo: more efficient way?
                 # skip first second
                 return
@@ -223,7 +212,7 @@ class BasePlant(Plant):
             rate = self._ticker.get_rate()
             ticks_per_second = rate.tick_count / rate.interval_s
 
-            ratio_expected = ticks_per_second / self._state.update_frequency
+            ratio_expected = ticks_per_second / self._physim.tick_rate
             loglevel = LogLevel.info if ratio_expected > 0.95 else \
                 LogLevel.warn if ratio_expected > 0.85 else LogLevel.error
 
@@ -243,7 +232,7 @@ class BasePlant(Plant):
             else:
                 # schedule timestep
                 self._logger.info('Starting simulation...')
-                self._state.initialize()
+                self._physim.initialize()
                 sim_loop = task.LoopingCall \
                     .withCount(self._execute_emu_timestep)
                 sim_loop.clock = self._reactor
@@ -254,7 +243,8 @@ class BasePlant(Plant):
                 # have loop run slightly faster than required, as we rather
                 # have the plant be a bit too fast than too slow
                 # todo: parameterize the scaling factor?
-                sim_loop.start(interval=self._target_dt * 0.9)
+                # todo: tune this
+                sim_loop.start(interval=self._physim.tick_delta * 0.9)
                 ticker_loop.start(interval=5)  # TODO: magic number?
 
         self._control.register_with_reactor(self._reactor)
@@ -275,14 +265,14 @@ class CSVRecordingPlant(BasePlant):
 
     def __init__(self,
                  reactor: PosixReactorBase,
-                 state: State,
+                 physim: PhysicalSimulation,
                  sensor_array: SensorArray,
                  actuator_array: ActuatorArray,
                  control_interface: BaseControllerInterface,
                  recording_output_dir: Path = Path('.')):
         super(CSVRecordingPlant, self).__init__(
             reactor=reactor,
-            state=state,
+            physim=physim,
             sensor_array=sensor_array,
             actuator_array=actuator_array,
             control_interface=control_interface
@@ -340,6 +330,7 @@ class PlantBuilder:
         self._actuators = []
         self._controller = None
         self._plant_state = None
+        self._simulation_tick_rate = 1
 
     def __init__(self, reactor: PosixReactorBase):
         self._reactor = reactor
@@ -382,6 +373,9 @@ class PlantBuilder:
     def set_actuators(self, actuators: Collection[Actuator]) -> None:
         self._actuators = list(actuators)
 
+    def set_simulation_tick_rate(self, rate: int) -> None:
+        self._simulation_tick_rate = rate
+
     def set_controller(self, controller: BaseControllerInterface) -> None:
         if self._controller is not None:
             warnings.warn(
@@ -415,8 +409,7 @@ class PlantBuilder:
 
         self._plant_state = plant_state
 
-    def build(self,
-              csv_output_dir: Union[str, bool]) -> Plant:
+    def build(self, csv_output_dir: Union[str, bool]) -> Plant:
         """
         Builds a Plant instance and returns it. The actual subtype of this
         plant will depend on the previously provided parameters.
@@ -434,9 +427,10 @@ class PlantBuilder:
         #  types of plants?
         params = dict(
             reactor=self._reactor,
-            state=self._plant_state,
+            physim=PhysicalSimulation(self._plant_state,
+                                      self._simulation_tick_rate),
             sensor_array=SensorArray(
-                plant_freq=self._plant_state.update_frequency,
+                plant_tick_rate=self._simulation_tick_rate,
                 sensors=self._sensors),
             actuator_array=ActuatorArray(actuators=self._actuators),
             control_interface=self._controller

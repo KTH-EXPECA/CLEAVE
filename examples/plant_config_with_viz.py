@@ -20,8 +20,9 @@ from cleave.impl import InvPendulumStateWithViz
 
 host = 'localhost'
 port = 50000
+tick_rate = 200
 
-state = InvPendulumStateWithViz(upd_freq_hz=200)
+state = InvPendulumStateWithViz()
 controller_interface = UDPControllerInterface
 
 sensors = [
