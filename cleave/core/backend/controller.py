@@ -11,7 +11,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from abc import ABC, abstractmethod
 from threading import Condition
 from typing import Any, Callable
 
@@ -20,43 +19,8 @@ from twisted.internet.threads import deferToThreadPool
 from twisted.python.failure import Failure
 
 from ..logging import Logger
-from ..util import PhyPropMapping
-
-
-class Controller(ABC):
-    """
-    Base class for controllers. This class defines a a simple interface that
-    extending subclasses need to implement.
-    """
-
-    def __init__(self):
-        super(Controller, self).__init__()
-
-    @abstractmethod
-    def process(self, sensor_values: PhyPropMapping) -> PhyPropMapping:
-        """
-        Processes samples and produces a control command.
-
-        Samples arrive in the form of a dictionary of mappings from sensor
-        property name to measured value. Actuator commands should be returned
-        in the same fashion, in a dictionary of mappings from actuated
-        property name to actuated value.
-
-        This method needs to be implemented by extending subclasses with
-        their respective logic.
-
-        Parameters
-        ----------
-        sensor_values
-            A mapping of sensor property names to measured values.
-
-        Returns
-        -------
-        PhyPropMapping
-            A mapping of actuated property names to desired values.
-
-        """
-        pass
+from ...api.controller import Controller
+from ...api.util import PhyPropMapping
 
 
 class BusyControllerException(Exception):

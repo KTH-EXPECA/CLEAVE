@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from ..logging import Logger
-from ..util import PhyPropMapping
+from ...api.util import PhyPropMapping
 from ...api.plant import State
 
 

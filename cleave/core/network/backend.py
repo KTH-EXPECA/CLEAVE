@@ -31,11 +31,11 @@ from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
 from .protocol import *
-from ..backend import Controller
+from ...api.controller import Controller
 from ..backend.controller import ControllerWrapper
 from ..logging import Logger
 from ..recordable import NamedRecordable, Recordable, Recorder
-from ..util import PhyPropMapping
+from ...api.util import PhyPropMapping
 
 
 class UDPControllerService(Recordable, DatagramProtocol):

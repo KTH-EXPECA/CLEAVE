@@ -28,7 +28,8 @@ from twisted.internet.protocol import DatagramProtocol
 from .protocol import ControlMessageFactory, NoMessage
 from ..logging import Logger
 from ..recordable import NamedRecordable, Recordable, Recorder
-from ...core.util import PhyPropMapping, SingleElementQ
+from ...core.util import SingleElementQ
+from ...api.util import PhyPropMapping
 
 
 class BaseControllerInterface(Recordable, ABC):

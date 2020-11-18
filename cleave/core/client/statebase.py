@@ -17,7 +17,7 @@ from copy import copy
 from typing import Any, Set, SupportsBytes, SupportsFloat, SupportsInt, \
     Type, final
 
-from cleave.core.util import PhyPropMapping
+from cleave.api.util import PhyPropMapping
 
 
 class BaseSemanticVariable(SupportsFloat,

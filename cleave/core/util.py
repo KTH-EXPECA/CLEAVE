@@ -1,10 +1,6 @@
 from queue import Empty
 from threading import Condition
-from typing import Any, Mapping, Optional, Union
-
-#: Type of properties that can be handled by sensors and actuators.
-PhyPropType = Union[int, float, bool]  # eventually extend to array types
-PhyPropMapping = Mapping[str, PhyPropType]
+from typing import Any, Optional
 
 
 #: This module contains miscellaneous utilities.

@@ -15,7 +15,7 @@
 # Example config file for an inverted pendulum plant
 
 from cleave.api.plant import GaussianConstantActuator, SimpleSensor
-from cleave.core.network import UDPControllerInterface
+from cleave.core.network import UDPControllerInterface  # TODO: remove
 from cleave.impl import InvPendulumStateWithViz
 
 host = 'localhost'

@@ -11,27 +11,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from typing import Mapping, Union
 
-# Example config file for an inverted pendulum plant
-
-from cleave.api.plant import SimpleConstantActuator, SimpleSensor
-from cleave.core.network import UDPControllerInterface  # TODO: remove
-from cleave.impl import InvPendulumState
-
-host = 'localhost'
-port = 50000
-tick_rate = 2000
-
-state = InvPendulumState()
-controller_interface = UDPControllerInterface
-
-sensors = [
-    SimpleSensor('position', 100),
-    SimpleSensor('speed', 100),
-    SimpleSensor('angle', 100),
-    SimpleSensor('ang_vel', 100),
-]
-
-actuators = [
-    SimpleConstantActuator('force', start_value=0)
-]
+#: Type of properties that can be handled by sensors and actuators.
+PhyPropType = Union[int, float, bool]
+# TODO: eventually extend to array types
+PhyPropMapping = Mapping[str, PhyPropType]

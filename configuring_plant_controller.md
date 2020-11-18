@@ -61,7 +61,8 @@ The controller config file on the other hand needs to define a single top-level 
 See this source file for details on what a controller needs to implement.
 
 ```python
-from cleave.core.backend import Controller
+
+from cleave.api.controller import Controller
 
 class InvPendController(Controller):
     ...

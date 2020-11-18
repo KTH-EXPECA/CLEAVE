@@ -21,7 +21,7 @@ import numpy as np
 from ..logging import Logger
 from ..recordable import NamedRecordable, Recordable, Recorder
 from ...api.plant import Sensor
-from ...core.util import PhyPropMapping
+from ...api.util import PhyPropMapping
 
 __all__ = ['SensorArray', 'NoSensorUpdate',
            'IncompatibleFrequenciesError', 'MissingPropertyError']

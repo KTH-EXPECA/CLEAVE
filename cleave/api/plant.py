@@ -15,12 +15,8 @@ from abc import ABC, abstractmethod
 from collections import deque
 from typing import Any, Optional
 
-from cleave.core.client.statebase import BaseSemanticVariable, StateBase
-
-# __all__ = ['ControllerParameter', 'SensorVariable',
-# 'ActuatorVariable', 'State']
-
-from cleave.core.util import PhyPropType
+from ..core.client.statebase import BaseSemanticVariable, StateBase
+from .util import PhyPropType
 
 
 class ControllerParameter(BaseSemanticVariable):

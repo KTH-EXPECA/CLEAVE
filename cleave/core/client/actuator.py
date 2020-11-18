@@ -18,7 +18,7 @@ import numpy as np
 from ..recordable import NamedRecordable, Recordable, Recorder
 from ..logging import Logger
 from ...api.plant import Actuator
-from ...core.util import PhyPropMapping
+from ...api.util import PhyPropMapping
 
 
 class RegisteredActuatorWarning(Warning):
