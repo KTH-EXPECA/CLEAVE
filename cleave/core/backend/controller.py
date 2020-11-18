@@ -23,9 +23,6 @@ from ..logging import Logger
 from ..util import PhyPropMapping
 
 
-# TODO: refactor out all "internal use" methods from this class into a
-#  wrapper class.
-
 class Controller(ABC):
     """
     Base class for controllers. This class defines a a simple interface that
