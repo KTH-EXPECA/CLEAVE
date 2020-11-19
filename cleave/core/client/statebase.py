@@ -61,6 +61,8 @@ class StateBase(ABC):
     having to resort to hacks.
     """
 
+    # TODO: add way to prevent semantic variables to be added at runtime?
+
     def __init__(self):
         super(StateBase, self).__init__()
         self._sensor_vars = set()

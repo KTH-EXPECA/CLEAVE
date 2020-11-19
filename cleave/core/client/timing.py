@@ -94,7 +94,7 @@ class Rate(NamedTuple):
 
 
 # noinspection PyAttributeOutsideInit
-class PlantTicker:
+class SimTicker:
     """
     Utility class to measure the rate of the plant and provide time deltas
     between ticks.

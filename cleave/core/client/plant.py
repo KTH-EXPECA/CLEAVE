@@ -26,10 +26,10 @@ from twisted.internet.posixbase import PosixReactorBase
 from .actuator import ActuatorArray
 from .physicalsim import PhysicalSimulation
 from .sensor import NoSensorUpdate, SensorArray
-from .time import PlantTicker, SimClock
+from .timing import SimClock
 from ..logging import LogLevel, Logger
 from ..network.client import BaseControllerInterface
-from ..recordable import CSVRecorder, NamedRecordable
+from ..recordable import CSVRecorder
 from ...api.plant import Actuator, Sensor, State
 
 _SCALAR_TYPES = (int, float, bool)
@@ -50,7 +50,6 @@ class Plant(ABC):
 
     def __init__(self):
         self._logger = Logger()
-        self._ticker = PlantTicker()
         self._clock = SimClock()
 
     @abstractmethod
@@ -108,12 +107,12 @@ class BasePlant(Plant):
         self._actuators = actuator_array
         self._control = control_interface
 
-        # plant_timings
-        # TODO: put into state wrapper class
-        self._timings = NamedRecordable(
-            name='PlantTimings',
-            record_fields=['seq', 'start', 'end', 'tick_delta']
-        )
+        # # plant_timings
+        # # TODO: put into state wrapper class
+        # self._timings = NamedRecordable(
+        #     name='PlantTimings',
+        #     record_fields=['seq', 'start', 'end', 'tick_delta']
+        # )
 
     @property
     def simulation_tick_rate(self) -> int:
@@ -154,30 +153,22 @@ class BasePlant(Plant):
         control_cmds = self._control.get_actuator_values()
 
         actuator_outputs = self._actuators.apply_actuation_inputs(
-            plant_cycle=self._ticker.total_ticks + 1,  # +1 since we haven't
+            plant_cycle=self._physim.tick_count + 1,  # +1 since we haven't
             input_values=control_cmds  # called tick yet!
         )
 
-        delta_t = self._ticker.tick()
-        state_outputs = self._physim.advance_state(actuator_outputs, delta_t)
+        state_outputs = self._physim.advance_state(actuator_outputs)
 
         # sensor_outputs = {}
         try:
             # this only sends if any sensors are triggered during this state
             # update, otherwise an exception is raised and caught further down.
             sensor_outputs = self._sensors.process_plant_state(
-                plant_cycle=self._ticker.total_ticks,
+                plant_cycle=self._physim.tick_count,
                 prop_values=state_outputs)
             self._control.put_sensor_values(sensor_outputs)
         except NoSensorUpdate:
             pass
-        finally:
-            self._timings.push_record(
-                seq=self._ticker.total_ticks,
-                start=step_start,
-                end=self._clock.get_sim_time(),
-                tick_delta=delta_t
-            )
 
     def on_shutdown(self) -> None:
         """
@@ -204,12 +195,13 @@ class BasePlant(Plant):
 
         # callback for plant rate logging
         def _log_plant_rate():
-            if self._ticker.total_ticks < self._physim.tick_rate:
+            # TODO: put into PhySim class
+            if self._physim.tick_count < self._physim.tick_rate:
                 # todo: more efficient way?
                 # skip first second
                 return
 
-            rate = self._ticker.get_rate()
+            rate = self._physim.ticker.get_rate()
             ticks_per_second = rate.tick_count / rate.interval_s
 
             ratio_expected = ticks_per_second / self._physim.tick_rate
@@ -286,7 +278,7 @@ class CSVRecordingPlant(BasePlant):
 
         # TODO: factories?
         self._recorders = {
-            CSVRecorder(self._timings, recording_output_dir / 'timings.csv'),
+            # CSVRecorder(self._timings, recording_output_dir / 'timings.csv'),
             CSVRecorder(self._control, recording_output_dir / 'client.csv'),
             CSVRecorder(self._sensors, recording_output_dir / 'sensors.csv'),
             CSVRecorder(self._actuators,
