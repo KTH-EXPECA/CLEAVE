@@ -116,11 +116,11 @@ class BasePlant(Plant):
 
     @property
     def simulation_tick_rate(self) -> int:
-        return self._physim.tick_rate
+        return self._physim.target_tick_rate
 
     @property
     def simulation_tick_dt(self) -> float:
-        return self._physim.tick_delta
+        return self._physim.target_tick_delta
 
     def _execute_emu_timestep(self, count: int) -> None:
         """
@@ -189,14 +189,14 @@ class BasePlant(Plant):
 
         self._logger.info('Initializing plant...')
         self._logger.warn(f'Target frequency: '
-                          f'{self._physim.tick_rate} Hz')
+                          f'{self._physim.target_tick_rate} Hz')
         self._logger.warn(f'Target time step: '
-                          f'{self._physim.tick_delta * 1e3:0.1f} ms')
+                          f'{self._physim.target_tick_delta * 1e3:0.1f} ms')
 
         # callback for plant rate logging
         def _log_plant_rate():
             # TODO: put into PhySim class
-            if self._physim.tick_count < self._physim.tick_rate:
+            if self._physim.tick_count < self._physim.target_tick_rate:
                 # todo: more efficient way?
                 # skip first second
                 return
@@ -204,7 +204,7 @@ class BasePlant(Plant):
             rate = self._physim.ticker.get_rate()
             ticks_per_second = rate.tick_count / rate.interval_s
 
-            ratio_expected = ticks_per_second / self._physim.tick_rate
+            ratio_expected = ticks_per_second / self._physim.target_tick_rate
             loglevel = LogLevel.info if ratio_expected > 0.95 else \
                 LogLevel.warn if ratio_expected > 0.85 else LogLevel.error
 
@@ -236,7 +236,7 @@ class BasePlant(Plant):
                 # have the plant be a bit too fast than too slow
                 # todo: parameterize the scaling factor?
                 # todo: tune this
-                sim_loop.start(interval=self._physim.tick_delta)
+                sim_loop.start(interval=self._physim.target_tick_delta)
                 ticker_loop.start(interval=5)  # TODO: magic number?
 
         self._control.register_with_reactor(self._reactor)

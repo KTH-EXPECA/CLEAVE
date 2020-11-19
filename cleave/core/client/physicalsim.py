@@ -56,11 +56,11 @@ class PhysicalSimulation(Recordable):
         return self._recordable.record_fields
 
     @property
-    def tick_rate(self) -> int:
+    def target_tick_rate(self) -> int:
         return self._tick_rate
 
     @property
-    def tick_delta(self) -> float:
+    def target_tick_delta(self) -> float:
         return self._tick_dt
 
     @property
