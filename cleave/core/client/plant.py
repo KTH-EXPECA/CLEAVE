@@ -108,7 +108,7 @@ class BasePlant(Plant):
         self._control = control_interface
 
         # # plant_timings
-        # # TODO: put into state wrapper class
+        # # TODO: re-add timing recording
         # self._timings = NamedRecordable(
         #     name='PlantTimings',
         #     record_fields=['seq', 'start', 'end', 'tick_delta']
@@ -278,7 +278,7 @@ class CSVRecordingPlant(BasePlant):
 
         # TODO: factories?
         self._recorders = {
-            # CSVRecorder(self._timings, recording_output_dir / 'timings.csv'),
+            CSVRecorder(self._physim, recording_output_dir / 'simulation.csv'),
             CSVRecorder(self._control, recording_output_dir / 'client.csv'),
             CSVRecorder(self._sensors, recording_output_dir / 'sensors.csv'),
             CSVRecorder(self._actuators,
