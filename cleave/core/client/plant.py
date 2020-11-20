@@ -195,6 +195,13 @@ class BasePlant(Plant):
                            'Aborting.')
         self._reactor.stop()
 
+    def _simloop_errback(self, failure: Failure):
+        # general purpose errback to ouput a traceback and cleanly shutdown
+        # after an exception in the simulation loop
+        self._logger.critical('Exception in simulation loop.')
+        self._logger.error(f'\n{failure.getTraceback()}')
+        self._reactor.stop()
+
     def execute(self):
         """
         Initiates the simluation of this plant.
@@ -229,7 +236,9 @@ class BasePlant(Plant):
                 # todo: tune this
                 sim_loop_deferred = sim_loop.start(
                     interval=self._physim.target_tick_delta)
-                sim_loop_deferred.addErrback(self._unrecoverable_state_errback)
+                sim_loop_deferred \
+                    .addErrback(self._unrecoverable_state_errback) \
+                    .addErrback(self._simloop_errback)
 
                 ticker_loop.start(interval=5)  # TODO: magic number?
 
