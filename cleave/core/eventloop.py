@@ -14,9 +14,12 @@
 
 
 from twisted.internet import selectreactor
+from twisted.internet.posixbase import PosixReactorBase
 
 selectreactor.install()
 
 from twisted.internet import reactor
+
+reactor: PosixReactorBase = reactor
 
 __all__ = ['reactor']

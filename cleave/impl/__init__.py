@@ -13,11 +13,3 @@
 #  limitations under the License.
 
 #: This package contains implementations of plant-controller pairs.
-
-from .inverted_pendulum import \
-    InvPendulumController, \
-    InvPendulumState, InvPendulumStateWithViz
-
-__all__ = ['InvPendulumState',
-           'InvPendulumController',
-           'InvPendulumStateWithViz']
