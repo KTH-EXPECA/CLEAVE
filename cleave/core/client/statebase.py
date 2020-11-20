@@ -34,6 +34,21 @@ class BaseSemanticVariable(SupportsFloat,
                  value: Any,
                  record: bool = True,
                  sanity_check: Optional[Callable[[Any], bool]] = None):
+        """
+        Parameters
+        ----------
+        value
+            The initial value for this variable.
+        record
+            Whether this variable should be recorded or not (WIP)
+            TODO: record variables
+        sanity_check
+            A callable which takes a single input value and returns a
+            boolean. If this value is not None, the callable give will be
+            invoked with the updated value of the semantic variable after
+            every tick of the plant. If the callable returns false,
+            the simulation will fail with an UnrecoverableState error.
+        """
         self._value = value
         self._record = record
         self._check = sanity_check
