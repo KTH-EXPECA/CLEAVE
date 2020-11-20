@@ -11,6 +11,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+#: This module contains the base API components for implementing and
+#: extending arbitrary Controllers for interaction with the CLEAVE framework.
+
 from abc import ABC, abstractmethod
 
 from .util import PhyPropMapping
@@ -18,7 +22,7 @@ from .util import PhyPropMapping
 
 class Controller(ABC):
     """
-    Base class for controllers. This class defines a a simple interface that
+    Base class for controllers, which defines a a simple interface that
     extending subclasses need to implement.
     """
 

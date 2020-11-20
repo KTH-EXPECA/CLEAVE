@@ -11,21 +11,36 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+#: This module contains the base API components for implementing and
+#: extending arbitrary simulations of physical plants which are executed in
+#: the context of the CLEAVE framework.
+
+import json
 from abc import ABC, abstractmethod
 from collections import deque
 from typing import Any, Optional
 
+from .util import PhyPropMapping, PhyPropType
 from ..core.client.statebase import BaseSemanticVariable, StateBase
-from .util import PhyPropType
+
+
+class UnrecoverableState(Exception):
+    def __init__(self, prop_values: PhyPropMapping):
+        super(UnrecoverableState, self).__init__(
+            json.dumps(prop_values, indent=4)
+        )
 
 
 class ControllerParameter(BaseSemanticVariable):
     """
+    Note: Parameter from plant to controller is not yet implemented.
+
     A semantically significant variable corresponding to an initialization
     parameter for a controller interacting with this plant.
 
     Variables of this type will automatically be provided to the controller
-    on initialization (TODO: not implemented yet).
+    on initialization
     """
 
     def __init__(self, value: Any, record: bool = False):
@@ -106,13 +121,23 @@ class State(StateBase, ABC):
 
 class Sensor(ABC):
     """
-    Abstract core class for sensors. Implementations should override the
-    process_sample() method with their logic.
+    This class defines an interface for sensors attached to a simulated plant.
+    Implementations should override the process_sample() method with their
+    logic.
     """
 
-    def __init__(self, prop_name: str, fs: int):
+    def __init__(self, prop_name: str, sample_freq: int):
+        """
+        Parameters
+        ----------
+        prop_name
+            Name of the property this sensor measures.
+        sample_freq
+            Sampling frequency of this sensor.
+        """
+
         self._prop_name = prop_name
-        self._sample_freq = fs
+        self._sample_freq = sample_freq
         self._value = None
 
     @property
@@ -179,6 +204,14 @@ class Actuator(ABC):
     def __init__(self,
                  prop_name: str,
                  start_value: Optional[PhyPropType] = None):
+        """
+        Parameters
+        ----------
+        prop_name
+            Name of the property actuated upon by this actuator.
+        start_value
+            Starting value this actuator outputs.
+        """
         super(Actuator, self).__init__()
         self._prop_name = prop_name
         self._value = start_value
@@ -303,6 +336,10 @@ class SimpleImpulseActuator(Actuator):
 
 
 class GaussianConstantActuator(SimpleConstantActuator):
+    """
+    Implementation of an actuator with Gaussian noise in its output.
+    """
+
     def __init__(self,
                  prop_name: str,
                  g_mean: float,

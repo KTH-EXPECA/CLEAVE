@@ -12,3 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+#: The cleave.api package contains the components intended for easy
+#: interaction with the framework. The components are primarily comprised of
+#: abstract base classes which users should extend with their desired
+#: functionality for a particular plant and/or controller setup.

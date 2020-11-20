@@ -31,8 +31,9 @@ import numpy as np
 import pymunk
 from pymunk.vec2d import Vec2d
 
-from ..api.plant import ActuatorVariable, SensorVariable, State
 from ..api.controller import Controller
+from ..api.plant import ActuatorVariable, SensorVariable, State, \
+    UnrecoverableState
 from ..api.util import PhyPropMapping
 
 #: Gravity constants
@@ -189,6 +190,12 @@ class InvPendulumState(State):
         self.speed = self._cart_body.velocity.x
         self.angle = self._pend_body.angle
         self.ang_vel = self._pend_body.angular_velocity
+
+        # check failure condition
+        if np.abs(self.angle) > 0.34:  # ~20 degrees
+            raise UnrecoverableState(
+                prop_values={'angle': self.angle, 'position': self.position}
+            )
 
 
 class InvPendulumStateWithViz(InvPendulumState):

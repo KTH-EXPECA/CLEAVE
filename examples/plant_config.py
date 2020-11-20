@@ -15,7 +15,7 @@
 # Example config file for an inverted pendulum plant
 
 from cleave.api.plant import SimpleConstantActuator, SimpleSensor
-from cleave.impl import InvPendulumState
+from cleave.impl.inverted_pendulum import InvPendulumState
 
 host = 'localhost'
 port = 50000

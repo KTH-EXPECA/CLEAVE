@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 # example config for a controller for an inverted pendulum plant
-from cleave.impl import InvPendulumController
+from cleave.impl.inverted_pendulum import InvPendulumController
 
 port = 50000
 controller = InvPendulumController(ref=0.0)

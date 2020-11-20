@@ -20,6 +20,7 @@ from pathlib import Path
 
 from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
+from twisted.python.failure import Failure
 
 from .actuator import ActuatorArray
 from .physicalsim import PhysicalSimulation
@@ -28,7 +29,7 @@ from .timing import SimClock
 from ..logging import LogLevel, Logger
 from ..network.client import BaseControllerInterface
 from ..recordable import CSVRecorder
-from ...api.plant import Actuator, Sensor
+from ...api.plant import Actuator, Sensor, UnrecoverableState
 
 
 class Plant(ABC):
@@ -157,6 +158,43 @@ class BasePlant(Plant):
         self._physim.shutdown()
         self._logger.info('Plant shutdown completed.')
 
+    def _log_plant_rate_callback(self):
+        # callback for plant rate logging
+        # TODO: put into PhySim class
+        if self._physim.tick_count < self._physim.target_tick_rate:
+            # todo: more efficient way?
+            # skip first second
+            return
+
+        rate = self._physim.ticker.get_rate()
+        ticks_per_second = rate.tick_count / rate.interval_s
+
+        ratio_expected = ticks_per_second / self._physim.target_tick_rate
+        loglevel = LogLevel.info if ratio_expected > 0.95 else \
+            LogLevel.warn if ratio_expected > 0.85 else LogLevel.error
+
+        self._logger.emit(level=loglevel,
+                          format=f'Current effective plant rate: '
+                                 f'{rate.tick_count} ticks in '
+                                 f'{rate.interval_s:0.3f} seconds, '
+                                 f'for an average of '
+                                 f'{ticks_per_second:0.3f} ticks/second.')
+
+    def _unrecoverable_state_errback(self, failure: Failure):
+        failure.trap(UnrecoverableState)
+        import datetime
+        # called after the state raises an UnrecoverableState
+        # log the error and shutdown
+
+        err_log_path = \
+            Path(f'./errlog_{datetime.datetime.now():%Y%m%d_%H%M%S.%f}.txt')
+        with err_log_path.open('w') as fp:
+            print(failure.getErrorMessage(), file=fp)
+
+        self._logger.error('Simulation has reach an unrecoverable state. '
+                           'Aborting.')
+        self._reactor.stop()
+
     def execute(self):
         """
         Initiates the simluation of this plant.
@@ -167,28 +205,6 @@ class BasePlant(Plant):
                           f'{self._physim.target_tick_rate} Hz')
         self._logger.warn(f'Target time step: '
                           f'{self._physim.target_tick_delta * 1e3:0.1f} ms')
-
-        # callback for plant rate logging
-        def _log_plant_rate():
-            # TODO: put into PhySim class
-            if self._physim.tick_count < self._physim.target_tick_rate:
-                # todo: more efficient way?
-                # skip first second
-                return
-
-            rate = self._physim.ticker.get_rate()
-            ticks_per_second = rate.tick_count / rate.interval_s
-
-            ratio_expected = ticks_per_second / self._physim.target_tick_rate
-            loglevel = LogLevel.info if ratio_expected > 0.95 else \
-                LogLevel.warn if ratio_expected > 0.85 else LogLevel.error
-
-            self._logger.emit(level=loglevel,
-                              format=f'Current effective plant rate: '
-                                     f'{rate.tick_count} ticks in '
-                                     f'{rate.interval_s:0.3f} seconds, '
-                                     f'for an average of '
-                                     f'{ticks_per_second:0.3f} ticks/second.')
 
         # callback to wait for network before starting simloop
         def _wait_for_network_and_init():
@@ -204,14 +220,17 @@ class BasePlant(Plant):
                     .withCount(self._execute_emu_timestep)
                 sim_loop.clock = self._reactor
 
-                ticker_loop = task.LoopingCall(_log_plant_rate)
+                ticker_loop = task.LoopingCall(self._log_plant_rate_callback)
                 ticker_loop.clock = self._reactor
 
                 # have loop run slightly faster than required, as we rather
                 # have the plant be a bit too fast than too slow
                 # todo: parameterize the scaling factor?
                 # todo: tune this
-                sim_loop.start(interval=self._physim.target_tick_delta)
+                sim_loop_deferred = sim_loop.start(
+                    interval=self._physim.target_tick_delta)
+                sim_loop_deferred.addErrback(self._unrecoverable_state_errback)
+
                 ticker_loop.start(interval=5)  # TODO: magic number?
 
         self._control.register_with_reactor(self._reactor)

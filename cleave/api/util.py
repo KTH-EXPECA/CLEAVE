@@ -13,6 +13,8 @@
 #  limitations under the License.
 from typing import Mapping, Union
 
+#: This module contains miscellaneous API components.
+
 #: Type of properties that can be handled by sensors and actuators.
 PhyPropType = Union[int, float, bool]
 # TODO: eventually extend to array types
