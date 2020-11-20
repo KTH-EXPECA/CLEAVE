@@ -5,3 +5,15 @@ cleave.impl package
    :members:
    :private-members:
    :show-inheritance:
+
+Submodules
+----------
+
+cleave.impl.inverted\_pendulum module
+-------------------------------------
+
+.. automodule:: cleave.impl.inverted_pendulum
+   :members:
+   :private-members:
+   :show-inheritance:
+
