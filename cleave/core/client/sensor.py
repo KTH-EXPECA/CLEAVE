@@ -14,17 +14,19 @@
 
 from __future__ import annotations
 
-from typing import Collection, Dict, Mapping, Sequence, Set
+from typing import Collection, Dict, Sequence, Set
 
 import numpy as np
 
+from .timing import SimTicker
 from ..logging import Logger
+from ..network.client import BaseControllerInterface
 from ..recordable import NamedRecordable, Recordable, Recorder
 from ...api.plant import Sensor
 from ...api.util import PhyPropMapping
 
-__all__ = ['SensorArray', 'NoSensorUpdate',
-           'IncompatibleFrequenciesError', 'MissingPropertyError']
+__all__ = ['SensorArray', 'IncompatibleFrequenciesError',
+           'MissingPropertyError']
 
 
 class IncompatibleFrequenciesError(Exception):
@@ -35,9 +37,11 @@ class MissingPropertyError(Exception):
     pass
 
 
-class NoSensorUpdate(Exception):
-    pass
+# class NoSensorUpdate(Exception):
+#     pass
 
+
+# TODO: timed callback-based sensors!
 
 class SensorArray(Recordable):
     """
@@ -47,13 +51,17 @@ class SensorArray(Recordable):
 
     def __init__(self,
                  plant_tick_rate: int,
-                 sensors: Collection[Sensor]):
+                 sensors: Collection[Sensor],
+                 control: BaseControllerInterface):
         super(SensorArray, self).__init__()
         self._plant_tick_rate = plant_tick_rate
+        self._control = control
+
+        self._log = Logger()
+        self._ticker = SimTicker()
+
         self._prop_sensors = dict()
         self._cycle_triggers = dict()
-        self._log = Logger()
-
         # TODO: add clock?
 
         # assign sensors to properties
@@ -90,7 +98,7 @@ class SensorArray(Recordable):
                 self._cycle_triggers[trigger].append(sensor)
 
             # set up underlying recorder
-            record_fields = ['plant_seq']
+            record_fields = ['tick']
             opt_record_fields = {}
             for prop in self._prop_sensors.keys():
                 record_fields.append(f'{prop}_value')
@@ -102,22 +110,14 @@ class SensorArray(Recordable):
                 opt_record_fields=opt_record_fields
             )
 
-    def get_sensor_rates(self) -> Mapping[str, int]:
-        return {prop: sensor.sampling_frequency
-                for prop, sensor in self._prop_sensors.items()}
-
-    def process_plant_state(self,
-                            plant_cycle: int,
-                            prop_values: PhyPropMapping) -> PhyPropMapping:
+    def process_and_send_samples(self,
+                                 prop_values: PhyPropMapping) -> None:
         """
         Processes measured properties by passing them to the internal
         collection of sensors and returns the processed values.
 
         Parameters
         ----------
-        plant_cycle
-            The cycle number of the plant, used for determining which sensors
-            should fire.
         prop_values
             Dictionary containing mappings from property names to measured
             values.
@@ -129,10 +129,13 @@ class SensorArray(Recordable):
             sensor values.
 
         """
-        cycle = plant_cycle % self._plant_tick_rate
+        self._ticker.tick()
+        ticks = self._ticker.total_ticks
+
+        cycle = ticks % self._plant_tick_rate
         sensor_samples = dict()
         try:
-            # check which sensors need to be updated this cycle
+            # check which sensors need to be updated this cycle and send them
             for sensor in self._cycle_triggers[cycle]:
                 try:
                     prop_name = sensor.measured_property_name
@@ -142,14 +145,17 @@ class SensorArray(Recordable):
                     raise MissingPropertyError(
                         'Missing expected update for property '
                         f'{sensor.measured_property_name}!')
-            return sensor_samples
+
+            # finally, if we have anything to send, send it
+            self._control.put_sensor_values(sensor_samples)
         except KeyError:
             # no sensors on this cycle
-            raise NoSensorUpdate()
+            # raise NoSensorUpdate()
+            pass
         finally:
             # record stuff
             record = {
-                'plant_seq': plant_cycle,
+                'tick': ticks,
             }
 
             for prop in self._prop_sensors.keys():

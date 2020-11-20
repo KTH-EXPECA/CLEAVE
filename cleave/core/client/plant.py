@@ -25,7 +25,7 @@ from twisted.internet.posixbase import PosixReactorBase
 
 from .actuator import ActuatorArray
 from .physicalsim import PhysicalSimulation
-from .sensor import NoSensorUpdate, SensorArray
+from .sensor import SensorArray
 from .timing import SimClock
 from ..logging import LogLevel, Logger
 from ..network.client import BaseControllerInterface
@@ -97,22 +97,24 @@ class BasePlant(Plant):
     def __init__(self,
                  reactor: PosixReactorBase,
                  physim: PhysicalSimulation,
-                 sensor_array: SensorArray,
-                 actuator_array: ActuatorArray,
+                 sensors: Collection[Sensor],
+                 actuators: Collection[Actuator],
                  control_interface: BaseControllerInterface):
         super(BasePlant, self).__init__()
         self._reactor = reactor
         self._physim = physim
-        self._sensors = sensor_array
-        self._actuators = actuator_array
         self._control = control_interface
 
-        # # plant_timings
-        # # TODO: re-add timing recording
-        # self._timings = NamedRecordable(
-        #     name='PlantTimings',
-        #     record_fields=['seq', 'start', 'end', 'tick_delta']
-        # )
+        self._sensors = SensorArray(
+            sensors=sensors,
+            plant_tick_rate=self._physim.target_tick_rate,
+            control=self._control
+        )
+
+        self._actuators = ActuatorArray(
+            actuators=actuators,
+            control=self._control
+        )
 
     @property
     def simulation_tick_rate(self) -> int:
@@ -137,9 +139,6 @@ class BasePlant(Plant):
         -------
 
         """
-
-        step_start = self._clock.get_sim_time()
-
         # 1. get raw actuation inputs
         # 2. process actuation inputs
         # 3. advance state
@@ -150,25 +149,11 @@ class BasePlant(Plant):
         #     self._logger.warn('Emulation step took longer '
         #                       'than allotted time slot!', )
 
-        control_cmds = self._control.get_actuator_values()
-
-        actuator_outputs = self._actuators.apply_actuation_inputs(
-            plant_cycle=self._physim.tick_count + 1,  # +1 since we haven't
-            input_values=control_cmds  # called tick yet!
-        )
-
+        actuator_outputs = self._actuators.get_actuation_inputs()
         state_outputs = self._physim.advance_state(actuator_outputs)
-
         # sensor_outputs = {}
-        try:
-            # this only sends if any sensors are triggered during this state
-            # update, otherwise an exception is raised and caught further down.
-            sensor_outputs = self._sensors.process_plant_state(
-                plant_cycle=self._physim.tick_count,
-                prop_values=state_outputs)
-            self._control.put_sensor_values(sensor_outputs)
-        except NoSensorUpdate:
-            pass
+        # this only sends if any sensors are triggered during this state update
+        self._sensors.process_and_send_samples(prop_values=state_outputs)
 
     def on_shutdown(self) -> None:
         """
@@ -258,15 +243,15 @@ class CSVRecordingPlant(BasePlant):
     def __init__(self,
                  reactor: PosixReactorBase,
                  physim: PhysicalSimulation,
-                 sensor_array: SensorArray,
-                 actuator_array: ActuatorArray,
+                 sensors: Collection[Sensor],
+                 actuators: Collection[Actuator],
                  control_interface: BaseControllerInterface,
                  recording_output_dir: Path = Path('.')):
         super(CSVRecordingPlant, self).__init__(
             reactor=reactor,
             physim=physim,
-            sensor_array=sensor_array,
-            actuator_array=actuator_array,
+            sensors=sensors,
+            actuators=actuators,
             control_interface=control_interface
         )
 
@@ -421,10 +406,8 @@ class PlantBuilder:
             reactor=self._reactor,
             physim=PhysicalSimulation(self._plant_state,
                                       self._simulation_tick_rate),
-            sensor_array=SensorArray(
-                plant_tick_rate=self._simulation_tick_rate,
-                sensors=self._sensors),
-            actuator_array=ActuatorArray(actuators=self._actuators),
+            sensors=self._sensors,
+            actuators=self._actuators,
             control_interface=self._controller
         )
 

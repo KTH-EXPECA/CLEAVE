@@ -34,7 +34,7 @@ class PhysicalSimulation(Recordable):
         self._act_vars = self._state.get_actuated_prop_names()
         self._sensor_vars = self._state.get_sensed_prop_names()
 
-        tick_rec = ['tick_count', 'tick_dt']
+        tick_rec = ['tick', 'tick_dt']
 
         self._recordable = NamedRecordable(
             name=self.__class__.__name__,
@@ -110,7 +110,7 @@ class PhysicalSimulation(Recordable):
             record[f'output_{name}'] = val
 
         # record
-        record['tick_count'] = self._ticker.total_ticks
+        record['tick'] = self._ticker.total_ticks
         record['tick_dt'] = delta_t
         self._recordable.push_record(**record)
 

@@ -15,8 +15,10 @@ from typing import Collection, Sequence, Set
 
 import numpy as np
 
-from ..recordable import NamedRecordable, Recordable, Recorder
+from .timing import SimTicker
 from ..logging import Logger
+from ..network.client import BaseControllerInterface
+from ..recordable import NamedRecordable, Recordable, Recorder
 from ...api.plant import Actuator
 from ...api.util import PhyPropMapping
 
@@ -35,10 +37,16 @@ class ActuatorArray(Recordable):
     Plant.
     """
 
-    def __init__(self, actuators: Collection[Actuator]):
+    def __init__(self,
+                 actuators: Collection[Actuator],
+                 control: BaseControllerInterface):
         super(ActuatorArray, self).__init__()
+
         self._log = Logger()
         self._actuators = dict()
+        self._control = control
+        self._ticker = SimTicker()
+
         for actuator in actuators:
             if actuator.actuated_property_name in self._actuators:
                 self._log.warn(
@@ -49,7 +57,7 @@ class ActuatorArray(Recordable):
             self._actuators[actuator.actuated_property_name] = actuator
 
         # set up underlying recorder
-        record_fields = ['plant_seq']
+        record_fields = ['tick']
         opt_record_fields = {}
         for prop in self._actuators.keys():
             record_fields.append(f'{prop}_value')
@@ -61,18 +69,12 @@ class ActuatorArray(Recordable):
             opt_record_fields=opt_record_fields
         )
 
-    def apply_actuation_inputs(self,
-                               plant_cycle: int,
-                               input_values: PhyPropMapping) -> PhyPropMapping:
+    def get_actuation_inputs(self) -> PhyPropMapping:
         """
-        Applies the desired actuation values to the internal actuators.
+        Fetches raw commands from the controller, processes them and returns.
 
         Parameters
         ----------
-        plant_cycle:
-            The current plant cycle.
-        input_values
-            Mapping from property names to desired actuation values.
 
         Returns
         -------
@@ -82,7 +84,11 @@ class ActuatorArray(Recordable):
 
         """
 
-        for prop, value in input_values.items():
+        self._ticker.tick()
+
+        raw_cmds = self._control.get_actuator_values()
+
+        for prop, value in raw_cmds.items():
             try:
                 self._actuators[prop].set_value(value)
             except KeyError:
@@ -94,7 +100,7 @@ class ActuatorArray(Recordable):
                 continue
         # record inputs and outputs
         record = {
-            'plant_seq': plant_cycle,
+            'tick': self._ticker.total_ticks,
         }
         act_values = {}
 
@@ -102,7 +108,7 @@ class ActuatorArray(Recordable):
             actuation = act.get_actuation()
             act_values[prop] = actuation
             record[f'{prop}_value'] = actuation
-            record[f'{prop}_target'] = input_values.get(prop)
+            record[f'{prop}_target'] = raw_cmds.get(prop)
 
         self._records.push_record(**record)
 
