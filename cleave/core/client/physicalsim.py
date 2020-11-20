@@ -16,7 +16,7 @@ from typing import Sequence, Set
 from .timing import SimTicker
 from ..logging import Logger
 from ..recordable import NamedRecordable, Recordable, Recorder
-from ...api.plant import State
+from ...api.plant import State, UnrecoverableState
 from ...api.util import PhyPropMapping
 
 
@@ -102,6 +102,14 @@ class PhysicalSimulation(Recordable):
 
         delta_t = self._ticker.tick()
         self._state.advance(delta_t)
+
+        # sanity check!
+        failed_sanity_check = self._state.check_semantic_sanity()
+        if len(failed_sanity_check) > 0:
+            # some variables failed their sanity check! (for instance,
+            # maybe the plant is now unrecoverable since the inverted pendulum
+            # exceeded some angle...)
+            raise UnrecoverableState(failed_sanity_check)
 
         sensed_props = {}
         for name in self._sensor_vars:

@@ -88,8 +88,12 @@ class State(StateBase, ABC):
             if value.record:
                 self._record_vars.add(key)
 
+            # if it has a sanity check, register it
+            if value.sanity_check is not None:
+                self._sanity_checks[key] = value.sanity_check
+
             # unpack value to discard wrapper object
-            value = value.get_value()
+            value = value.value
         super(State, self).__setattr__(key, value)
 
     @abstractmethod

@@ -32,8 +32,7 @@ import pymunk
 from pymunk.vec2d import Vec2d
 
 from ..api.controller import Controller
-from ..api.plant import ActuatorVariable, SensorVariable, State, \
-    UnrecoverableState
+from ..api.plant import ActuatorVariable, SensorVariable, State
 from ..api.util import PhyPropMapping
 
 #: Gravity constants
@@ -57,6 +56,7 @@ def visualization_loop(input_q: Queue,
         if shutdown_event.is_set():
             pyglet.app.exit()
 
+        # TODO: needs a timeout for shutdown
         coord_dict = input_q.get()
 
         window.clear()
@@ -157,14 +157,13 @@ class InvPendulumState(State):
         self.force = ActuatorVariable(0.0)
         self.position = SensorVariable(self._cart_body.position.x)
         self.speed = SensorVariable(self._cart_body.velocity.x)
-        self.angle = SensorVariable(self._pend_body.angle)
-        self.ang_vel = SensorVariable(self._pend_body.angular_velocity)
 
-        # self._screen = Screen(size=(100, 100))
-        #
-        # # drawing rate
-        # self._drawing_rate = upd_freq_hz // 5
-        # self._update_count = 0
+        # the angle should never exceed ~20 degrees
+        self.angle = SensorVariable(self._pend_body.angle,
+                                    sanity_check=
+                                    lambda angle: np.abs(angle) < 0.34)
+
+        self.ang_vel = SensorVariable(self._pend_body.angular_velocity)
 
     def advance(self, delta_t: float) -> None:
         # apply actuation
@@ -174,28 +173,13 @@ class InvPendulumState(State):
 
         # advance the world state
         self._space.step(delta_t)
-        angle_deg = np.degrees(self._pend_body.angle)
-
-        # TODO: supportsfloat!
-        # state_str = \
-        #     f'Pos: {self._cart_body.position[0]:0.3f} m | ' \
-        #     f'Angle: {angle_deg:0.3f} degrees | ' \
-        #     f'Force: {math.fabs(force):0.1f} N | ' \
-        #     f'DeltaT: {delta_t:f} s'
-        #
-        # print(f'\r{state_str}', end='\t' * 10)
+        # angle_deg = np.degrees(self._pend_body.angle)
 
         # setup new world state
         self.position = self._cart_body.position.x
         self.speed = self._cart_body.velocity.x
         self.angle = self._pend_body.angle
         self.ang_vel = self._pend_body.angular_velocity
-
-        # check failure condition
-        if np.abs(self.angle) > 0.34:  # ~20 degrees
-            raise UnrecoverableState(
-                prop_values={'angle': self.angle, 'position': self.position}
-            )
 
 
 class InvPendulumStateWithViz(InvPendulumState):

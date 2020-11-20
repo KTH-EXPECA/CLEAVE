@@ -8,16 +8,18 @@ Welcome to CLEAVE's documentation!
 
 .. mdinclude:: ../../README.md
 
+==================================
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Main CLEAVE API:
 
-   modules
-   cleave.core
-   cleave.core.backend
-   cleave.core.client
-   cleave.core.network
-   cleave.impl
+   cleave.api
+
+==================================
+
+.. include:: modules.rst
+
 
 Indices and tables
 ==================

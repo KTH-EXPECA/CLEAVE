@@ -14,10 +14,12 @@
 import abc
 from abc import ABC
 from copy import copy
-from typing import Any, Set, SupportsBytes, SupportsFloat, SupportsInt, \
-    Type, final
+from typing import Any, Callable, Dict, Optional, Set, SupportsBytes, \
+    SupportsFloat, \
+    SupportsInt, \
+    final
 
-from cleave.api.util import PhyPropMapping
+from ...api.util import PhyPropMapping
 
 
 class BaseSemanticVariable(SupportsFloat,
@@ -28,22 +30,25 @@ class BaseSemanticVariable(SupportsFloat,
     Base class for semantically significant variables in a State.
     """
 
-    def __init__(self, value: Any, record: bool = True):
+    def __init__(self,
+                 value: Any,
+                 record: bool = True,
+                 sanity_check: Optional[Callable[[Any], bool]] = None):
         self._value = value
         self._record = record
+        self._check = sanity_check
 
-    def get_value(self) -> Any:
+    @property
+    def value(self) -> Any:
         return self._value
-
-    def set_value(self, value: Any):
-        self._value = value
-
-    def get_type(self) -> Type:
-        return type(self._value)
 
     @property
     def record(self) -> bool:
         return self._record
+
+    @property
+    def sanity_check(self) -> Optional[Callable[[Any], bool]]:
+        return self._check
 
     def __float__(self) -> float:
         return float(self._value)
@@ -69,6 +74,7 @@ class StateBase(ABC):
         self._actuator_vars = set()
         self._controller_params = set()
         self._record_vars = set()
+        self._sanity_checks = dict()
 
     @final
     def get_sensed_prop_names(self) -> Set[str]:
@@ -113,3 +119,23 @@ class StateBase(ABC):
         """
 
         return {var: getattr(self, var) for var in self._controller_params}
+
+    @final
+    def check_semantic_sanity(self) -> Dict[str, Any]:
+        """
+        Checks that the semantic variables in this state have acceptable values.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Returns a mapping containing the properties for which the check
+            failed and their associated values.
+        """
+
+        failed = {}
+        for var, cond in self._sanity_checks.items():
+            val = getattr(self, var)
+            if not cond(val):
+                failed[var] = val
+
+        return failed
