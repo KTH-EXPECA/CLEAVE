@@ -25,7 +25,7 @@
 #  limitations under the License.
 import math
 from multiprocessing import Event, Queue
-from queue import Full
+from queue import Empty, Full
 
 import numpy as np
 import pymunk
@@ -53,11 +53,18 @@ def visualization_loop(input_q: Queue,
     floor_offset = Vec2d(screen_w / 2, 5)  # TODO fix magic number
 
     def on_draw(dt):
-        if shutdown_event.is_set():
-            pyglet.app.exit()
-
         # TODO: needs a timeout for shutdown
-        coord_dict = input_q.get()
+        while True:
+            if shutdown_event.is_set():
+                window.close()
+                pyglet.app.exit()
+                return
+
+            try:
+                coord_dict = input_q.get(block=True, timeout=0.01)
+                break
+            except Empty:
+                continue
 
         window.clear()
         for shape in coord_dict['shapes']:

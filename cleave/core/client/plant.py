@@ -185,14 +185,16 @@ class BasePlant(Plant):
         import datetime
         # called after the state raises an UnrecoverableState
         # log the error and shutdown
+        self._logger.error('Simulation has reach an unrecoverable state. '
+                           'Aborting.')
 
         err_log_path = \
-            Path(f'./errlog_{datetime.datetime.now():%Y%m%d_%H%M%S.%f}.txt')
+            Path(f'./errlog_{datetime.datetime.now():%Y%m%d_%H%M%S.%f}.json')
         with err_log_path.open('w') as fp:
             print(failure.getErrorMessage(), file=fp)
 
-        self._logger.error('Simulation has reach an unrecoverable state. '
-                           'Aborting.')
+        self._logger.error('Details of variables which failed sanity checks '
+                           f'have been output to {err_log_path.resolve()}')
         self._reactor.stop()
 
     def _simloop_errback(self, failure: Failure):
