@@ -11,16 +11,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
-from .plant import Plant, PlantBuilder
-from ...api.plant import Actuator, ActuatorVariable, GaussianConstantActuator, \
-    Sensor, SensorVariable, \
-    SimpleConstantActuator, SimpleImpulseActuator, SimpleSensor, \
-    State
-from ..eventloop import reactor
-
-#: Global PlantBuilder instance
-# TODO: remove Factory pattern now that we're using modular config files?
-builder = PlantBuilder(reactor)
-
-__all__ = ['builder', 'Plant']

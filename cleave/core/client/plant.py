@@ -14,11 +14,9 @@
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
 from collections import Collection
 from pathlib import Path
-from typing import Union
 
 from twisted.internet import task
 from twisted.internet.posixbase import PosixReactorBase
@@ -30,17 +28,7 @@ from .timing import SimClock
 from ..logging import LogLevel, Logger
 from ..network.client import BaseControllerInterface
 from ..recordable import CSVRecorder
-from ...api.plant import Actuator, Sensor, State
-
-_SCALAR_TYPES = (int, float, bool)
-
-
-class PlantBuilderWarning(Warning):
-    pass
-
-
-class EmulationWarning(Warning):
-    pass
+from ...api.plant import Actuator, Sensor
 
 
 class Plant(ABC):
@@ -115,6 +103,8 @@ class BasePlant(Plant):
             actuators=actuators,
             control=self._control
         )
+
+        # TODO: record timings? 
 
     @property
     def simulation_tick_rate(self) -> int:
@@ -281,144 +271,3 @@ class CSVRecordingPlant(BasePlant):
         # shut down recorders
         for recorder in self._recorders:
             recorder.shutdown()
-
-
-# noinspection PyAttributeOutsideInit
-class PlantBuilder:
-    """
-    Builder for plant objects.
-
-    This class is not meant to be instantiated by users --- a library
-    singleton is provided.
-
-    TODO: get rid of the singleton, it's not necessary at this point.
-    """
-
-    def reset(self) -> None:
-        """
-        Resets this builder, removing all previously added sensors,
-        actuators, as well as detaching the plant state and comm client.
-
-        Returns
-        -------
-
-        """
-        self._sensors = []
-        self._actuators = []
-        self._controller = None
-        self._plant_state = None
-        self._simulation_tick_rate = 1
-
-    def __init__(self, reactor: PosixReactorBase):
-        self._reactor = reactor
-        self.reset()
-
-    def attach_sensor(self, sensor: Sensor) -> None:
-        """
-        Attaches a sensor to the plant under construction.
-
-        Parameters
-        ----------
-        sensor
-            A Sensor instance to be attached to the target plant.
-
-
-        Returns
-        -------
-
-        """
-        self._sensors.append(sensor)
-
-    def attach_actuator(self, actuator: Actuator) -> None:
-        """
-        Attaches an actuator to the plant under construction.
-
-        Parameters
-        ----------
-        actuator
-            An Actuator instance to be attached to the target plant.
-
-        Returns
-        -------
-
-        """
-        self._actuators.append(actuator)
-
-    def set_sensors(self, sensors: Collection[Sensor]) -> None:
-        self._sensors = list(sensors)
-
-    def set_actuators(self, actuators: Collection[Actuator]) -> None:
-        self._actuators = list(actuators)
-
-    def set_simulation_tick_rate(self, rate: int) -> None:
-        self._simulation_tick_rate = rate
-
-    def set_controller(self, controller: BaseControllerInterface) -> None:
-        if self._controller is not None:
-            warnings.warn(
-                'Replacing already set controller for plant.',
-                PlantBuilderWarning
-            )
-
-        self._controller = controller
-
-    def set_plant_state(self, plant_state: State) -> None:
-        """
-        Sets the State that will govern the evolution of the plant.
-
-        Note that any previously assigned State will be overwritten by this
-        operation.
-
-        Parameters
-        ----------
-        plant_state
-            A State instance to assign to the plant.
-
-        Returns
-        -------
-
-        """
-        if self._plant_state is not None:
-            warnings.warn(
-                'Replacing already set State for plant.',
-                PlantBuilderWarning
-            )
-
-        self._plant_state = plant_state
-
-    def build(self, csv_output_dir: Union[str, bool]) -> Plant:
-        """
-        Builds a Plant instance and returns it. The actual subtype of this
-        plant will depend on the previously provided parameters.
-
-        Parameters
-        ----------
-        Returns
-        -------
-        Plant
-            A Plant instance.
-
-        """
-
-        # TODO: raise error if missing parameters OR instantiate different
-        #  types of plants?
-        params = dict(
-            reactor=self._reactor,
-            physim=PhysicalSimulation(self._plant_state,
-                                      self._simulation_tick_rate),
-            sensors=self._sensors,
-            actuators=self._actuators,
-            control_interface=self._controller
-        )
-
-        try:
-            # TODO: rework
-            if csv_output_dir:
-                return CSVRecordingPlant(
-                    recording_output_dir=Path(csv_output_dir),
-                    **params
-                )
-            else:
-                return BasePlant(**params)
-        finally:
-            self.reset()

@@ -18,7 +18,8 @@ from pathlib import Path
 
 import click
 
-from cleave.core.client import builder
+from cleave.core.client.physicalsim import PhysicalSimulation
+from cleave.core.client.plant import CSVRecordingPlant
 from cleave.core.config import ConfigWrapper
 from cleave.core.eventloop import reactor
 from cleave.core.logging import loguru
@@ -67,16 +68,17 @@ def run_plant(config_file_path: str):
     )
 
     host_addr = (socket.gethostbyname(config.host), config.port)
-    builder.set_controller(config.controller_interface(host_addr))
-    builder.set_plant_state(config.state)
-    builder.set_sensors(config.sensors)
-    builder.set_actuators(config.actuators)
-    builder.set_simulation_tick_rate(config.tick_rate)
-    # builder.set_plant_sinks(config.plant_sinks)
-    # builder.set_client_sinks(config.client_sinks)
-
-    # TODO: extra options to build?
-    plant = builder.build(csv_output_dir=config.output_dir)
+    plant = CSVRecordingPlant(
+        reactor=reactor,
+        physim=PhysicalSimulation(
+            state=config.state,
+            tick_rate=config.tick_rate
+        ),
+        sensors=config.sensors,
+        actuators=config.actuators,
+        control_interface=config.controller_interface(host_addr),
+        recording_output_dir=Path(config.output_dir)
+    )
     plant.execute()
 
 
