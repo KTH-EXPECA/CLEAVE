@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Installation for general usage</title>
+    
+      <link rel="stylesheet" href="_static/pygments.css">
+      <link rel="stylesheet" href="_static/theme.css">
+      <link rel="stylesheet" href="_static/sphinx_press_theme.css">
+      
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+
+      <!-- sphinx script_files -->
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+
+      
+      <script src="_static/theme-vendors.js"></script>
+      <script src="_static/theme.js" defer></script>
+    
+  <link rel="index" title="Index" href="genindex.html" />
+  <link rel="search" title="Search" href="search.html" /> 
+  </head>
+
+  <body>
+    <div id="app" class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <span class="site-name">CLEAVE</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link ">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link ">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">Quick search</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="Search" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#installation-instructions">Main CLEAVE API:</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="cleave.html#subpackages">subpackages</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.core.html" class="reference internal ">cleave.core package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.impl.html" class="reference internal ">cleave.impl package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+    <li>Installation for general usage</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main">
+            
+  <div class="section" id="installation-for-general-usage">
+<span id="installation-gen"></span><h1>Installation for general usage<a class="headerlink" href="#installation-for-general-usage" title="Permalink to this headline">¶</a></h1>
+<p><strong>NOTE: Although these instructions will eventually be the recommended way of downloading and installing the framework, they are currently a work-in-progress, and do not work yet. For failsafe ways to install the framework, see section</strong> <a class="reference internal" href="#installation-dev"><span class="std std-ref">Installation for development</span></a> <strong>below.</strong></p>
+<div class="section" id="from-pypi">
+<h2>From PyPI:<a class="headerlink" href="#from-pypi" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Set up a Python <code class="code docutils literal notranslate"><span class="pre">virtualenv</span></code> and activate it:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ virtualenv --python<span class="o">=</span>python3.8 ./venv
+created virtual environment CPython3.8.3.final.0-64 in 212ms
+$ . ./venv/bin/activate
+<span class="o">(</span>venv<span class="o">)</span> $
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Next, install the framework from PyPI using <code class="code docutils literal notranslate"><span class="pre">pip</span></code>:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ pip install cleave
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Alternatively, if you already have set up a project with an associated virtualenv, you can add <code class="code docutils literal notranslate"><span class="pre">cleave</span></code> to your <code class="code docutils literal notranslate"><span class="pre">requirements.txt</span></code> :</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># example requirements.txt
+...
+numpy
+pandas
+cleave
+scipy
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ pip install -Ur ./requirements.txt
+</pre></div>
+</div>
+</div>
+<div class="section" id="from-the-repository">
+<h2>From the repository<a class="headerlink" href="#from-the-repository" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Set up a <code class="code docutils literal notranslate"><span class="pre">virtualenv</span></code> and activate it as before:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ virtualenv --python<span class="o">=</span>python3.8 ./venv
+created virtual environment CPython3.8.3.final.0-64 in 212ms
+$ . ./venv/bin/activate
+<span class="o">(</span>venv<span class="o">)</span> $
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Install the package through <code class="code docutils literal notranslate"><span class="pre">pip</span></code> by explicitly pointing it toward the repository:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ pip install -U git+git://github.com/KTH-EXPECA/CLEAVE.git#egg<span class="o">=</span>cleave
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>This can also be inserted into a <code class="code docutils literal notranslate"><span class="pre">requirements.txt</span></code> file:</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># example requirements.txt
+...
+numpy
+pandas
+-e git://github.com/KTH-EXPECA/CLEAVE.git#egg=cleave
+scipy
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="installation-for-development">
+<span id="installation-dev"></span><h1>Installation for development<a class="headerlink" href="#installation-for-development" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic simple">
+<li><p>Clone the CLEAVE repository:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:KTH-EXPECA/CLEAVE.git
+$ <span class="nb">cd</span> ./CLEAVE
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Create a Python 3.8+ <code class="code docutils literal notranslate"><span class="pre">virtualenv</span></code> and install the development dependencies:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ virtualenv --python<span class="o">=</span>python3.8 ./venv
+created virtual environment CPython3.8.3.final.0-64 in 212ms
+...
+
+$ . ./venv/bin/activate
+<span class="o">(</span>venv<span class="o">)</span> $ pip install -Ur ./requirements.txt
+...
+</pre></div>
+</div>
+<div class="section" id="optional-set-up-the-sphinx-documentation-environment">
+<h2>(Optional) Set up the Sphinx documentation environment<a class="headerlink" href="#optional-set-up-the-sphinx-documentation-environment" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Install the documentation dependencies:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ pip install -Ur requirements_docs.txt
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Document code using the Numpy docstring format (see below).</p></li>
+<li><p>Generate reStructured text files for the code by running <code class="code docutils literal notranslate"><span class="pre">sphinx-apidocs</span></code> from the top-level directory and passing it the output directory (<code class="code docutils literal notranslate"><span class="pre">docs/source</span></code>) and the <code class="code docutils literal notranslate"><span class="pre">cleave</span></code> package directory as arguments:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ sphinx-apidoc -fo docs/source ./cleave
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Finally, to preview what the documentation will look like when published on <a class="reference external" href="https://cleave.readthedocs.io">readthedocs</a>, build it with <code class="code docutils literal notranslate"><span class="pre">GNU</span> <span class="pre">Make</span></code>:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> docs/
+$ make html
+</pre></div>
+</div>
+<p>The compiled HTML structure will be output to <code class="code docutils literal notranslate"><span class="pre">docs/build</span></code>, from where it can be viewed in a browser.</p>
+</div>
+</div>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, KTH Royal Institute of Technology.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.2 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a>.
+</div>
+            </div>
+          </div>
+      </page>
+    </div>
+    
+    
+  </body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>cleave.core.client package</title>
+    
+      <link rel="stylesheet" href="_static/pygments.css">
+      <link rel="stylesheet" href="_static/theme.css">
+      <link rel="stylesheet" href="_static/sphinx_press_theme.css">
+      
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+
+      <!-- sphinx script_files -->
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+
+      
+      <script src="_static/theme-vendors.js"></script>
+      <script src="_static/theme.js" defer></script>
+    
+  <link rel="index" title="Index" href="genindex.html" />
+  <link rel="search" title="Search" href="search.html" />
+  <link rel="next" title="cleave.core.network package" href="cleave.core.network.html" />
+  <link rel="prev" title="cleave.core.backend package" href="cleave.core.backend.html" /> 
+  </head>
+
+  <body>
+    <div id="app" class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <span class="site-name">CLEAVE</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link ">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link ">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">Quick search</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="Search" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#installation-instructions">Main CLEAVE API:</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="cleave.html#subpackages">subpackages</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.core.html" class="reference internal ">cleave.core package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.impl.html" class="reference internal ">cleave.impl package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+      <li><a href="cleave.html">cleave package</a> &raquo;</li>
+    
+      <li><a href="cleave.core.html">cleave.core package</a> &raquo;</li>
+    
+    <li>cleave.core.client package</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="cleave.core.backend.html"
+       title="previous chapter">← cleave.core.backend package</a>
+  </li>
+  <li class="next">
+    <a href="cleave.core.network.html"
+       title="next chapter">cleave.core.network package →</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main">
+            
+  <div class="section" id="module-cleave.core.client">
+<span id="cleave-core-client-package"></span><h1>cleave.core.client package<a class="headerlink" href="#module-cleave.core.client" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-cleave.core.client.actuator">
+<span id="cleave-core-client-actuator-module"></span><h2>cleave.core.client.actuator module<a class="headerlink" href="#module-cleave.core.client.actuator" title="Permalink to this headline">¶</a></h2>
+<dl class="py exception">
+<dt id="cleave.core.client.actuator.RegisteredActuatorWarning">
+<em class="property">exception </em><code class="sig-prename descclassname">cleave.core.client.actuator.</code><code class="sig-name descname">RegisteredActuatorWarning</code><a class="headerlink" href="#cleave.core.client.actuator.RegisteredActuatorWarning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Warning</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="cleave.core.client.actuator.UnregisteredPropertyWarning">
+<em class="property">exception </em><code class="sig-prename descclassname">cleave.core.client.actuator.</code><code class="sig-name descname">UnregisteredPropertyWarning</code><a class="headerlink" href="#cleave.core.client.actuator.UnregisteredPropertyWarning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Warning</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.client.actuator.ActuatorArray">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.actuator.</code><code class="sig-name descname">ActuatorArray</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">actuators</span><span class="p">:</span> <span class="n">Collection<span class="p">[</span><a class="reference internal" href="cleave.api.html#cleave.api.plant.Actuator" title="cleave.api.plant.Actuator">cleave.api.plant.Actuator</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">control</span><span class="p">:</span> <span class="n"><a class="reference internal" href="cleave.core.network.html#cleave.core.network.client.BaseControllerInterface" title="cleave.core.network.client.BaseControllerInterface">cleave.core.network.client.BaseControllerInterface</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.actuator.ActuatorArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.core.html#cleave.core.recordable.Recordable" title="cleave.core.recordable.Recordable"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.recordable.Recordable</span></code></a></p>
+<p>Internal utility class to manage a collection of Actuators attached to a
+Plant.</p>
+<dl class="py method">
+<dt id="cleave.core.client.actuator.ActuatorArray.get_actuation_inputs">
+<code class="sig-name descname">get_actuation_inputs</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span><a class="headerlink" href="#cleave.core.client.actuator.ActuatorArray.get_actuation_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetches raw commands from the controller, processes them and returns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A mapping from actuated property names to output values from the
+corresponding actuators.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>PhyPropMapping</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.client.physicalsim">
+<span id="cleave-core-client-physicalsim-module"></span><h2>cleave.core.client.physicalsim module<a class="headerlink" href="#module-cleave.core.client.physicalsim" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.client.physicalsim.PhysicalSimulation">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.physicalsim.</code><code class="sig-name descname">PhysicalSimulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span><span class="p">:</span> <span class="n"><a class="reference internal" href="cleave.api.html#cleave.api.plant.State" title="cleave.api.plant.State">cleave.api.plant.State</a></span></em>, <em class="sig-param"><span class="n">tick_rate</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.physicalsim.PhysicalSimulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.core.html#cleave.core.recordable.Recordable" title="cleave.core.recordable.Recordable"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.recordable.Recordable</span></code></a></p>
+<dl class="py method">
+<dt id="cleave.core.client.physicalsim.PhysicalSimulation.advance_state">
+<code class="sig-name descname">advance_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_values</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span><a class="headerlink" href="#cleave.core.client.physicalsim.PhysicalSimulation.advance_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a single step update using the given actuation values as
+inputs and returns the updated values for the sensed variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>input_values</strong> – Actuation inputs.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Mapping from sensed property names to values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>PhyPropMapping</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.client.plant">
+<span id="cleave-core-client-plant-module"></span><h2>cleave.core.client.plant module<a class="headerlink" href="#module-cleave.core.client.plant" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.client.plant.Plant">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.plant.</code><code class="sig-name descname">Plant</code><a class="headerlink" href="#cleave.core.client.plant.Plant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Interface for all plants.</p>
+<dl class="py method">
+<dt id="cleave.core.client.plant.Plant.execute">
+<em class="property">abstract </em><code class="sig-name descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.plant.Plant.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes this plant. Depending on implementation, this method may or
+may not be asynchronous.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.plant.Plant.simulation_tick_rate">
+<em class="property">abstract property </em><code class="sig-name descname">simulation_tick_rate</code><a class="headerlink" href="#cleave.core.client.plant.Plant.simulation_tick_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>The update frequency of this plant in Hz. Depending on
+implementation, accessing this property may or may not be thread-safe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The update frequency of the plant in Hertz.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.plant.Plant.on_shutdown">
+<em class="property">abstract </em><code class="sig-name descname">on_shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.client.plant.Plant.on_shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle shutdown stuff.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.client.plant.BasePlant">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.plant.</code><code class="sig-name descname">BasePlant</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reactor</span><span class="p">:</span> <span class="n">PosixReactorBase</span></em>, <em class="sig-param"><span class="n">physim</span><span class="p">:</span> <span class="n">PhysicalSimulation</span></em>, <em class="sig-param"><span class="n">sensors</span><span class="p">:</span> <span class="n">Collection<span class="p">[</span>Sensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">actuators</span><span class="p">:</span> <span class="n">Collection<span class="p">[</span>Actuator<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">control_interface</span><span class="p">:</span> <span class="n">BaseControllerInterface</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.plant.BasePlant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.core.client.plant.Plant" title="cleave.core.client.plant.Plant"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.client.plant.Plant</span></code></a></p>
+<dl class="py method">
+<dt id="cleave.core.client.plant.BasePlant.simulation_tick_rate">
+<em class="property">property </em><code class="sig-name descname">simulation_tick_rate</code><a class="headerlink" href="#cleave.core.client.plant.BasePlant.simulation_tick_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>The update frequency of this plant in Hz. Depending on
+implementation, accessing this property may or may not be thread-safe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The update frequency of the plant in Hertz.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.plant.BasePlant._execute_emu_timestep">
+<code class="sig-name descname">_execute_emu_timestep</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">count</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.client.plant.BasePlant._execute_emu_timestep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes the emulation timestep. Intended use is inside a Twisted
+LoopingCall, hence why it takes a single integer parameter which
+specifies the number of calls queued up in a time interval (should
+be 1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>count</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.plant.BasePlant.on_shutdown">
+<code class="sig-name descname">on_shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.client.plant.BasePlant.on_shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called on shutdown of the framework.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.plant.BasePlant.execute">
+<code class="sig-name descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.plant.BasePlant.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initiates the simluation of this plant.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.client.plant.CSVRecordingPlant">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.plant.</code><code class="sig-name descname">CSVRecordingPlant</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reactor</span><span class="p">:</span> <span class="n">PosixReactorBase</span></em>, <em class="sig-param"><span class="n">physim</span><span class="p">:</span> <span class="n">PhysicalSimulation</span></em>, <em class="sig-param"><span class="n">sensors</span><span class="p">:</span> <span class="n">Collection<span class="p">[</span>Sensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">actuators</span><span class="p">:</span> <span class="n">Collection<span class="p">[</span>Actuator<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">control_interface</span><span class="p">:</span> <span class="n">BaseControllerInterface</span></em>, <em class="sig-param"><span class="n">recording_output_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="default_value">PosixPath('.')</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.plant.CSVRecordingPlant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.core.client.plant.BasePlant" title="cleave.core.client.plant.BasePlant"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.client.plant.BasePlant</span></code></a></p>
+<p>Plant with built-in CSV recording capabilities of metrics from the  the
+physical properties and the network connection.</p>
+<dl class="py method">
+<dt id="cleave.core.client.plant.CSVRecordingPlant.execute">
+<code class="sig-name descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.plant.CSVRecordingPlant.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initiates the simluation of this plant.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.plant.CSVRecordingPlant.on_shutdown">
+<code class="sig-name descname">on_shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.client.plant.CSVRecordingPlant.on_shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called on shutdown of the framework.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.client.sensor">
+<span id="cleave-core-client-sensor-module"></span><h2>cleave.core.client.sensor module<a class="headerlink" href="#module-cleave.core.client.sensor" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.client.sensor.SensorArray">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.sensor.</code><code class="sig-name descname">SensorArray</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plant_tick_rate</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">sensors</span><span class="p">:</span> <span class="n">Collection<span class="p">[</span><a class="reference internal" href="cleave.api.html#cleave.api.plant.Sensor" title="cleave.api.plant.Sensor">cleave.api.plant.Sensor</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">control</span><span class="p">:</span> <span class="n"><a class="reference internal" href="cleave.core.network.html#cleave.core.network.client.BaseControllerInterface" title="cleave.core.network.client.BaseControllerInterface">cleave.core.network.client.BaseControllerInterface</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.sensor.SensorArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.core.html#cleave.core.recordable.Recordable" title="cleave.core.recordable.Recordable"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.recordable.Recordable</span></code></a></p>
+<p>Internal utility class to manage a collection of Sensors attached to a
+Plant.</p>
+<dl class="py method">
+<dt id="cleave.core.client.sensor.SensorArray.process_and_send_samples">
+<code class="sig-name descname">process_and_send_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_values</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.client.sensor.SensorArray.process_and_send_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes measured properties by passing them to the internal
+collection of sensors and returns the processed values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>prop_values</strong> – Dictionary containing mappings from property names to measured
+values.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dictionary containing mappings from property names to processed
+sensor values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="cleave.core.client.sensor.IncompatibleFrequenciesError">
+<em class="property">exception </em><code class="sig-prename descclassname">cleave.core.client.sensor.</code><code class="sig-name descname">IncompatibleFrequenciesError</code><a class="headerlink" href="#cleave.core.client.sensor.IncompatibleFrequenciesError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="cleave.core.client.sensor.MissingPropertyError">
+<em class="property">exception </em><code class="sig-prename descclassname">cleave.core.client.sensor.</code><code class="sig-name descname">MissingPropertyError</code><a class="headerlink" href="#cleave.core.client.sensor.MissingPropertyError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.client.statebase">
+<span id="cleave-core-client-statebase-module"></span><h2>cleave.core.client.statebase module<a class="headerlink" href="#module-cleave.core.client.statebase" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.client.statebase.BaseSemanticVariable">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.statebase.</code><code class="sig-name descname">BaseSemanticVariable</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.statebase.BaseSemanticVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">typing.SupportsFloat</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">typing.SupportsInt</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">typing.SupportsBytes</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for semantically significant variables in a State.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – The initial value for this variable.</p></li>
+<li><p><strong>record</strong> – Whether this variable should be recorded or not (WIP)
+TODO: record variables</p></li>
+<li><p><strong>sanity_check</strong> – A callable which takes a single input value and returns a
+boolean. If this value is not None, the callable give will be
+invoked with the updated value of the semantic variable after
+every tick of the plant. If the callable returns false,
+the simulation will fail with an UnrecoverableState error.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.client.statebase.StateBase">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.statebase.</code><code class="sig-name descname">StateBase</code><a class="headerlink" href="#cleave.core.client.statebase.StateBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Defines the underlying structure for the State interface without
+having to resort to hacks.</p>
+<dl class="py method">
+<dt id="cleave.core.client.statebase.StateBase.get_sensed_prop_names">
+<em class="property">final </em><code class="sig-name descname">get_sensed_prop_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Set<span class="p">[</span>str<span class="p">]</span><a class="headerlink" href="#cleave.core.client.statebase.StateBase.get_sensed_prop_names" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Set containing the identifiers of the sensed variables.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.statebase.StateBase.get_actuated_prop_names">
+<em class="property">final </em><code class="sig-name descname">get_actuated_prop_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Set<span class="p">[</span>str<span class="p">]</span><a class="headerlink" href="#cleave.core.client.statebase.StateBase.get_actuated_prop_names" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Set containing the identifiers of the actuated variables.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.statebase.StateBase.get_record_variables">
+<em class="property">final </em><code class="sig-name descname">get_record_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span><a class="headerlink" href="#cleave.core.client.statebase.StateBase.get_record_variables" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A mapping containing the values of the recorded variables in
+this state.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>PhyPropMapping</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.statebase.StateBase.get_controller_parameters">
+<em class="property">final </em><code class="sig-name descname">get_controller_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span><a class="headerlink" href="#cleave.core.client.statebase.StateBase.get_controller_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A mapping from strings to values containing the initialization
+parameters for the controller associated with this physical
+simulation.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>PhyPropMapping</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.statebase.StateBase.check_semantic_sanity">
+<em class="property">final </em><code class="sig-name descname">check_semantic_sanity</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Dict<span class="p">[</span>str<span class="p">, </span>Any<span class="p">]</span><a class="headerlink" href="#cleave.core.client.statebase.StateBase.check_semantic_sanity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks that the semantic variables in this state have acceptable values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Returns a mapping containing the properties for which the check
+failed and their associated values.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Dict[str, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.client.timing">
+<span id="cleave-core-client-timing-module"></span><h2>cleave.core.client.timing module<a class="headerlink" href="#module-cleave.core.client.timing" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.client.timing.TimingResult">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.timing.</code><code class="sig-name descname">TimingResult</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">start</span></em>, <em class="sig-param"><span class="n">end</span></em>, <em class="sig-param"><span class="n">duration</span></em>, <em class="sig-param"><span class="n">results</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.timing.TimingResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<p>Create new instance of TimingResult(start, end, duration, results)</p>
+<dl class="py attribute">
+<dt id="cleave.core.client.timing.TimingResult.start">
+<code class="sig-name descname">start</code><em class="property">: float</em><a class="headerlink" href="#cleave.core.client.timing.TimingResult.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cleave.core.client.timing.TimingResult.end">
+<code class="sig-name descname">end</code><em class="property">: float</em><a class="headerlink" href="#cleave.core.client.timing.TimingResult.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cleave.core.client.timing.TimingResult.duration">
+<code class="sig-name descname">duration</code><em class="property">: float</em><a class="headerlink" href="#cleave.core.client.timing.TimingResult.duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cleave.core.client.timing.TimingResult.results">
+<code class="sig-name descname">results</code><em class="property">: Any</em><a class="headerlink" href="#cleave.core.client.timing.TimingResult.results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.timing.TimingResult._asdict">
+<code class="sig-name descname">_asdict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.timing.TimingResult._asdict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new dict which maps field names to their values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.timing.TimingResult._make">
+<em class="property">classmethod </em><code class="sig-name descname">_make</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">iterable</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.timing.TimingResult._make" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a new TimingResult object from a sequence or iterable</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.timing.TimingResult._replace">
+<code class="sig-name descname">_replace</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.timing.TimingResult._replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new TimingResult object replacing specified fields with new values</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.client.timing.SimClock">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.timing.</code><code class="sig-name descname">SimClock</code><a class="headerlink" href="#cleave.core.client.timing.SimClock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class provides consistent simulation timing measurements.</p>
+<dl class="py method">
+<dt id="cleave.core.client.timing.SimClock.get_sim_time">
+<code class="sig-name descname">get_sim_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; float<a class="headerlink" href="#cleave.core.client.timing.SimClock.get_sim_time" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A float representing the elapsed time in seconds since the
+initialization of this clock.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.timing.SimClock.get_adjusted_realtime">
+<code class="sig-name descname">get_adjusted_realtime</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; float<a class="headerlink" href="#cleave.core.client.timing.SimClock.get_adjusted_realtime" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A float representing the elapsed time since the UNIX Epoch,
+adjusted for monotonicity.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.timing.SimClock.time_subroutine">
+<code class="sig-name descname">time_subroutine</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span><span class="p">:</span> <span class="n">Callable<span class="p">[</span><span class="p">[</span>Any<span class="p">]</span><span class="p">, </span>Any<span class="p">]</span></span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#cleave.core.client.timing.TimingResult" title="cleave.core.client.timing.TimingResult">cleave.core.client.timing.TimingResult</a><a class="headerlink" href="#cleave.core.client.timing.SimClock.time_subroutine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Times the execution of a function with respect to this clock.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fn</strong> – Function to be timed.</p></li>
+<li><p><strong>args</strong> – Args to pass to the timed function.</p></li>
+<li><p><strong>kwargs</strong> – Kwargs to pass to the timed function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A TimingResult object containing the start and end timestamps of
+the function call, the duration of the function call in seconds
+and the results of the call.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#cleave.core.client.timing.TimingResult" title="cleave.core.client.timing.TimingResult">TimingResult</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.client.timing.Rate">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.timing.</code><code class="sig-name descname">Rate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tick_count</span></em>, <em class="sig-param"><span class="n">interval_s</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.timing.Rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<p>Create new instance of Rate(tick_count, interval_s)</p>
+<dl class="py attribute">
+<dt id="cleave.core.client.timing.Rate.tick_count">
+<code class="sig-name descname">tick_count</code><em class="property">: int</em><a class="headerlink" href="#cleave.core.client.timing.Rate.tick_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cleave.core.client.timing.Rate.interval_s">
+<code class="sig-name descname">interval_s</code><em class="property">: float</em><a class="headerlink" href="#cleave.core.client.timing.Rate.interval_s" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.timing.Rate._asdict">
+<code class="sig-name descname">_asdict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.timing.Rate._asdict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new dict which maps field names to their values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.timing.Rate._make">
+<em class="property">classmethod </em><code class="sig-name descname">_make</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">iterable</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.timing.Rate._make" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a new Rate object from a sequence or iterable</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.client.timing.Rate._replace">
+<code class="sig-name descname">_replace</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.client.timing.Rate._replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new Rate object replacing specified fields with new values</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.client.timing.SimTicker">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.client.timing.</code><code class="sig-name descname">SimTicker</code><a class="headerlink" href="#cleave.core.client.timing.SimTicker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Utility class to measure the rate of the plant and provide time deltas
+between ticks.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="cleave.core.backend.html"
+       title="previous chapter">← cleave.core.backend package</a>
+  </li>
+  <li class="next">
+    <a href="cleave.core.network.html"
+       title="next chapter">cleave.core.network package →</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, KTH Royal Institute of Technology.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.2 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a>.
+</div>
+            </div>
+          </div>
+      </page>
+    </div>
+    
+    
+  </body>
+</html>

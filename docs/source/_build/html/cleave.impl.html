@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>cleave.impl package</title>
+    
+      <link rel="stylesheet" href="_static/pygments.css">
+      <link rel="stylesheet" href="_static/theme.css">
+      <link rel="stylesheet" href="_static/sphinx_press_theme.css">
+      
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+
+      <!-- sphinx script_files -->
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+
+      
+      <script src="_static/theme-vendors.js"></script>
+      <script src="_static/theme.js" defer></script>
+    
+  <link rel="index" title="Index" href="genindex.html" />
+  <link rel="search" title="Search" href="search.html" />
+  <link rel="prev" title="cleave.core.network package" href="cleave.core.network.html" /> 
+  </head>
+
+  <body>
+    <div id="app" class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <span class="site-name">CLEAVE</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link  router-link-active">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link  router-link-active">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">Quick search</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="Search" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#installation-instructions">Main CLEAVE API:</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="cleave.html#subpackages">subpackages</a></span>
+      </p>
+      <ul class="current">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.core.html" class="reference internal ">cleave.core package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 current"><a href="#" class="reference internal current">cleave.impl package</a>
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#submodules" class="reference internal">Submodules</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.impl.inverted_pendulum" class="reference internal">cleave.impl.inverted_pendulum module</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+      <li><a href="cleave.html">cleave package</a> &raquo;</li>
+    
+    <li>cleave.impl package</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="cleave.core.network.html"
+       title="previous chapter">← cleave.core.network package</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main">
+            
+  <div class="section" id="module-cleave.impl">
+<span id="cleave-impl-package"></span><h1>cleave.impl package<a class="headerlink" href="#module-cleave.impl" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-cleave.impl.inverted_pendulum">
+<span id="cleave-impl-inverted-pendulum-module"></span><h2>cleave.impl.inverted_pendulum module<a class="headerlink" href="#module-cleave.impl.inverted_pendulum" title="Permalink to this headline">¶</a></h2>
+<dl class="py data">
+<dt id="cleave.impl.inverted_pendulum.G_CONST">
+<code class="sig-prename descclassname">cleave.impl.inverted_pendulum.</code><code class="sig-name descname">G_CONST</code><em class="property"> = Vec2d(0, -9.8)</em><a class="headerlink" href="#cleave.impl.inverted_pendulum.G_CONST" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gravity constants</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.impl.inverted_pendulum.InvPendulumState">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.impl.inverted_pendulum.</code><code class="sig-name descname">InvPendulumState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ground_friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">cart_mass</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.5</span></em>, <em class="sig-param"><span class="n">cart_dims</span><span class="p">:</span> <span class="n">pymunk.vec2d.Vec2d</span> <span class="o">=</span> <span class="default_value">Vec2d(0.3, 0.2)</span></em>, <em class="sig-param"><span class="n">pend_com</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.6</span></em>, <em class="sig-param"><span class="n">pend_width</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">pend_mass</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">pend_moment</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.api.html#cleave.api.plant.State" title="cleave.api.plant.State"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.api.plant.State</span></code></a></p>
+<dl class="py method">
+<dt id="cleave.impl.inverted_pendulum.InvPendulumState.advance">
+<code class="sig-name descname">advance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">delta_t</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumState.advance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the plant on every time step to advance the emulation.
+Needs to be implemented by subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>delta_t</strong> – Time elapsed since the previous call to this method. This value
+will be 0 the first time this method is called.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.impl.inverted_pendulum.InvPendulumStateWithViz">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.impl.inverted_pendulum.</code><code class="sig-name descname">InvPendulumStateWithViz</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ground_friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">cart_mass</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.5</span></em>, <em class="sig-param"><span class="n">cart_dims</span><span class="p">:</span> <span class="n">pymunk.vec2d.Vec2d</span> <span class="o">=</span> <span class="default_value">Vec2d(0.3, 0.2)</span></em>, <em class="sig-param"><span class="n">pend_com</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.6</span></em>, <em class="sig-param"><span class="n">pend_width</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">pend_mass</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">pend_moment</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.001</span></em>, <em class="sig-param"><span class="n">screen_w</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">screen_h</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">700</span></em>, <em class="sig-param"><span class="n">caption</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'Inverted Pendulum Simulation'</span></em>, <em class="sig-param"><span class="n">ppm</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">200.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumStateWithViz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.impl.inverted_pendulum.InvPendulumState" title="cleave.impl.inverted_pendulum.InvPendulumState"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.impl.inverted_pendulum.InvPendulumState</span></code></a></p>
+<dl class="py method">
+<dt id="cleave.impl.inverted_pendulum.InvPendulumStateWithViz.initialize">
+<code class="sig-name descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumStateWithViz.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the plant at the beginning of the emulation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.impl.inverted_pendulum.InvPendulumStateWithViz.shutdown">
+<code class="sig-name descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumStateWithViz.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the plant on shutdown.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.impl.inverted_pendulum.InvPendulumStateWithViz.advance">
+<code class="sig-name descname">advance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">delta_t</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumStateWithViz.advance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the plant on every time step to advance the emulation.
+Needs to be implemented by subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>delta_t</strong> – Time elapsed since the previous call to this method. This value
+will be 0 the first time this method is called.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.impl.inverted_pendulum.InvPendulumController">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.impl.inverted_pendulum.</code><code class="sig-name descname">InvPendulumController</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">max_force</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">25</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumController" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.api.html#cleave.api.controller.Controller" title="cleave.api.controller.Controller"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.api.controller.Controller</span></code></a></p>
+<dl class="py attribute">
+<dt id="cleave.impl.inverted_pendulum.InvPendulumController.K">
+<code class="sig-name descname">K</code><em class="property"> = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]</em><a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumController.K" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pendulum parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.impl.inverted_pendulum.InvPendulumController.process">
+<code class="sig-name descname">process</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sensor_values</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span><a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumController.process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes samples and produces a control command.</p>
+<p>Samples arrive in the form of a dictionary of mappings from sensor
+property name to measured value. Actuator commands should be returned
+in the same fashion, in a dictionary of mappings from actuated
+property name to actuated value.</p>
+<p>This method needs to be implemented by extending subclasses with
+their respective logic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sensor_values</strong> – A mapping of sensor property names to measured values.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A mapping of actuated property names to desired values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>PhyPropMapping</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="cleave.core.network.html"
+       title="previous chapter">← cleave.core.network package</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, KTH Royal Institute of Technology.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.2 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a>.
+</div>
+            </div>
+          </div>
+      </page>
+    </div>
+    
+    
+  </body>
+</html>

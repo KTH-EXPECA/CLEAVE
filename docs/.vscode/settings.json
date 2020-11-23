@@ -1,0 +1,4 @@
+{
+    "python.pythonPath": "/home/molguin/.venvs/CLEAVE/bin/python",
+    "restructuredtext.confPath": "${workspaceFolder}/source"
+}

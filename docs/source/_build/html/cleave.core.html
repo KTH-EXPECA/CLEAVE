@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>cleave.core package</title>
+    
+      <link rel="stylesheet" href="_static/pygments.css">
+      <link rel="stylesheet" href="_static/theme.css">
+      <link rel="stylesheet" href="_static/sphinx_press_theme.css">
+      
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+
+      <!-- sphinx script_files -->
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+
+      
+      <script src="_static/theme-vendors.js"></script>
+      <script src="_static/theme.js" defer></script>
+    
+  <link rel="index" title="Index" href="genindex.html" />
+  <link rel="search" title="Search" href="search.html" />
+  <link rel="next" title="cleave.core.backend package" href="cleave.core.backend.html" />
+  <link rel="prev" title="cleave package" href="cleave.html" /> 
+  </head>
+
+  <body>
+    <div id="app" class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <span class="site-name">CLEAVE</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link  router-link-active">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link  router-link-active">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">Quick search</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="Search" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#installation-instructions">Main CLEAVE API:</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="cleave.html#subpackages">subpackages</a></span>
+      </p>
+      <ul class="current">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 current"><a href="#" class="reference internal current">cleave.core package</a>
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#subpackages" class="reference internal">Subpackages</a></li>
+                
+                  <li class="toctree-l2"><a href="#submodules" class="reference internal">Submodules</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.core.config" class="reference internal">cleave.core.config module</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.core.eventloop" class="reference internal">cleave.core.eventloop module</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.core.logging" class="reference internal">cleave.core.logging module</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.core.recordable" class="reference internal">cleave.core.recordable module</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.core.util" class="reference internal">cleave.core.util module</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.impl.html" class="reference internal ">cleave.impl package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+      <li><a href="cleave.html">cleave package</a> &raquo;</li>
+    
+    <li>cleave.core package</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="cleave.html"
+       title="previous chapter">← cleave package</a>
+  </li>
+  <li class="next">
+    <a href="cleave.core.backend.html"
+       title="next chapter">cleave.core.backend package →</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main">
+            
+  <div class="section" id="module-cleave.core">
+<span id="cleave-core-package"></span><h1>cleave.core package<a class="headerlink" href="#module-cleave.core" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cleave.core.backend.html">cleave.core.backend package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.backend.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.backend.html#module-cleave.core.backend.controller">cleave.core.backend.controller module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cleave.core.client.html">cleave.core.client package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.client.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.actuator">cleave.core.client.actuator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.physicalsim">cleave.core.client.physicalsim module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.plant">cleave.core.client.plant module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.sensor">cleave.core.client.sensor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.statebase">cleave.core.client.statebase module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.timing">cleave.core.client.timing module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cleave.core.network.html">cleave.core.network package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.network.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.network.html#module-cleave.core.network.backend">cleave.core.network.backend module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.network.html#module-cleave.core.network.client">cleave.core.network.client module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cleave.core.network.html#module-cleave.core.network.protocol">cleave.core.network.protocol module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-cleave.core.config">
+<span id="cleave-core-config-module"></span><h2>cleave.core.config module<a class="headerlink" href="#module-cleave.core.config" title="Permalink to this headline">¶</a></h2>
+<dl class="py exception">
+<dt id="cleave.core.config.ConfigError">
+<em class="property">exception </em><code class="sig-prename descclassname">cleave.core.config.</code><code class="sig-name descname">ConfigError</code><a class="headerlink" href="#cleave.core.config.ConfigError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.eventloop">
+<span id="cleave-core-eventloop-module"></span><h2>cleave.core.eventloop module<a class="headerlink" href="#module-cleave.core.eventloop" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-cleave.core.logging">
+<span id="cleave-core-logging-module"></span><h2>cleave.core.logging module<a class="headerlink" href="#module-cleave.core.logging" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.logging.Logger">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.logging.</code><code class="sig-name descname">Logger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">namespace</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.Logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A L{Logger} emits log messages to an observer.  You should instantiate it
+as a class or module attribute, as documented in L{this module’s
+documentation &lt;twisted.logger&gt;}.</p>
+<p>&#64;type namespace: L{str}
+&#64;ivar namespace: the namespace for this logger</p>
+<p>&#64;type source: L{object}
+&#64;ivar source: The object which is emitting events via this logger</p>
+<p>&#64;type: L{ILogObserver}
+&#64;ivar observer: The observer that this logger will send events to.</p>
+<dl class="simple">
+<dt>&#64;param namespace: The namespace for this logger.  Uses a dotted</dt><dd><p>notation, as used by python modules.  If not L{None}, then the name
+of the module of the caller is used.</p>
+</dd>
+</dl>
+<p>&#64;type namespace: L{str} (native string)</p>
+<dl class="simple">
+<dt>&#64;param source: The object which is emitting events via this</dt><dd><p>logger; this is automatically set on instances of a class
+if this L{Logger} is an attribute of that class.</p>
+</dd>
+</dl>
+<p>&#64;type source: L{object}</p>
+<dl class="simple">
+<dt>&#64;param observer: The observer that this logger will send events to.</dt><dd><p>If L{None}, use the L{global log publisher &lt;globalLogPublisher&gt;}.</p>
+</dd>
+</dl>
+<p>&#64;type observer: L{ILogObserver}</p>
+<dl class="py method">
+<dt id="cleave.core.logging.Logger._namespaceFromCallingContext">
+<em class="property">static </em><code class="sig-name descname">_namespaceFromCallingContext</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.Logger._namespaceFromCallingContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Derive a namespace from the module containing the caller’s caller.</p>
+<p>&#64;return: the fully qualified python name of a module.
+&#64;rtype: L{str} (native string)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.logging.Logger.emit">
+<code class="sig-name descname">emit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">level</span></em>, <em class="sig-param"><span class="n">format</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.Logger.emit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emit a log event to all log observers at the given level.</p>
+<p>&#64;param level: a L{LogLevel}</p>
+<dl class="simple">
+<dt>&#64;param format: a message format using new-style (PEP 3101)</dt><dd><p>formatting.  The logging event (which is a L{dict}) is
+used to render this format string.</p>
+</dd>
+<dt>&#64;param kwargs: additional key/value pairs to include in the event.</dt><dd><p>Note that values which are later mutated may result in
+non-deterministic behavior from observers that schedule work for
+later execution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.logging.Logger.failure">
+<code class="sig-name descname">failure</code><span class="sig-paren">(</span><em class="sig-param">format</em>, <em class="sig-param">failure=None</em>, <em class="sig-param">level=&lt;LogLevel=critical&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.Logger.failure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log a failure and emit a traceback.</p>
+<p>For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">frob</span><span class="p">(</span><span class="n">knob</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">failure</span><span class="p">(</span><span class="s2">&quot;While frobbing </span><span class="si">{knob}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">knob</span><span class="o">=</span><span class="n">knob</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">d</span> <span class="o">=</span> <span class="n">deferredFrob</span><span class="p">(</span><span class="n">knob</span><span class="p">)</span>
+<span class="n">d</span><span class="o">.</span><span class="n">addErrback</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">log</span><span class="o">.</span><span class="n">failure</span><span class="p">(</span><span class="s2">&quot;While frobbing </span><span class="si">{knob}</span><span class="s2">&quot;</span><span class="p">,</span>
+                                   <span class="n">f</span><span class="p">,</span> <span class="n">knob</span><span class="o">=</span><span class="n">knob</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This method is generally meant to capture unexpected exceptions in
+code; an exception that is caught and handled somehow should be logged,
+if appropriate, via L{Logger.error} instead.  If some unknown exception
+occurs and your code doesn’t know how to handle it, as in the above
+example, then this method provides a means to describe the failure in
+nerd-speak.  This is done at L{LogLevel.critical} by default, since no
+corrective guidance can be offered to an user/administrator, and the
+impact of the condition is unknown.</p>
+<dl class="simple">
+<dt>&#64;param format: a message format using new-style (PEP 3101) formatting.</dt><dd><p>The logging event (which is a L{dict}) is used to render this
+format string.</p>
+</dd>
+<dt>&#64;param failure: a L{Failure} to log.  If L{None}, a L{Failure} is</dt><dd><p>created from the exception in flight.</p>
+</dd>
+</dl>
+<p>&#64;param level: a L{LogLevel} to use.</p>
+<dl class="simple">
+<dt>&#64;param kwargs: additional key/value pairs to include in the event.</dt><dd><p>Note that values which are later mutated may result in
+non-deterministic behavior from observers that schedule work for
+later execution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.logging.Logger.debug">
+<code class="sig-name descname">debug</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">format</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.Logger.debug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emit a log event at log level L{LogLevel.debug}.</p>
+<dl class="simple">
+<dt>&#64;param format: a message format using new-style (PEP 3101) formatting.</dt><dd><p>The logging event (which is a L{dict}) is used to render this
+format string.</p>
+</dd>
+<dt>&#64;param kwargs: additional key/value pairs to include in the event.</dt><dd><p>Note that values which are later mutated may result in
+non-deterministic behavior from observers that schedule work for
+later execution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.logging.Logger.info">
+<code class="sig-name descname">info</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">format</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.Logger.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emit a log event at log level L{LogLevel.info}.</p>
+<dl class="simple">
+<dt>&#64;param format: a message format using new-style (PEP 3101) formatting.</dt><dd><p>The logging event (which is a L{dict}) is used to render this
+format string.</p>
+</dd>
+<dt>&#64;param kwargs: additional key/value pairs to include in the event.</dt><dd><p>Note that values which are later mutated may result in
+non-deterministic behavior from observers that schedule work for
+later execution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.logging.Logger.warn">
+<code class="sig-name descname">warn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">format</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.Logger.warn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emit a log event at log level L{LogLevel.warn}.</p>
+<dl class="simple">
+<dt>&#64;param format: a message format using new-style (PEP 3101) formatting.</dt><dd><p>The logging event (which is a L{dict}) is used to render this
+format string.</p>
+</dd>
+<dt>&#64;param kwargs: additional key/value pairs to include in the event.</dt><dd><p>Note that values which are later mutated may result in
+non-deterministic behavior from observers that schedule work for
+later execution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.logging.Logger.error">
+<code class="sig-name descname">error</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">format</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.Logger.error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emit a log event at log level L{LogLevel.error}.</p>
+<dl class="simple">
+<dt>&#64;param format: a message format using new-style (PEP 3101) formatting.</dt><dd><p>The logging event (which is a L{dict}) is used to render this
+format string.</p>
+</dd>
+<dt>&#64;param kwargs: additional key/value pairs to include in the event.</dt><dd><p>Note that values which are later mutated may result in
+non-deterministic behavior from observers that schedule work for
+later execution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.logging.Logger.critical">
+<code class="sig-name descname">critical</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">format</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.Logger.critical" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emit a log event at log level L{LogLevel.critical}.</p>
+<dl class="simple">
+<dt>&#64;param format: a message format using new-style (PEP 3101) formatting.</dt><dd><p>The logging event (which is a L{dict}) is used to render this
+format string.</p>
+</dd>
+<dt>&#64;param kwargs: additional key/value pairs to include in the event.</dt><dd><p>Note that values which are later mutated may result in
+non-deterministic behavior from observers that schedule work for
+later execution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.logging.LogLevel">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.logging.</code><code class="sig-name descname">LogLevel</code><a class="headerlink" href="#cleave.core.logging.LogLevel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">constantly._constants.Names</span></code></p>
+<p>Constants describing log levels.</p>
+<dl class="simple">
+<dt>&#64;cvar debug: Debugging events: Information of use to a developer of the</dt><dd><p>software, not generally of interest to someone running the software
+unless they are attempting to diagnose a software issue.</p>
+</dd>
+<dt>&#64;cvar info: Informational events: Routine information about the status of</dt><dd><p>an application, such as incoming connections, startup of a subsystem,
+etc.</p>
+</dd>
+<dt>&#64;cvar warn: Warning events: Events that may require greater attention than</dt><dd><p>informational events but are not a systemic failure condition, such as
+authorization failures, bad data from a network client, etc.  Such
+events are of potential interest to system administrators, and should
+ideally be phrased in such a way, or documented, so as to indicate an
+action that an administrator might take to mitigate the warning.</p>
+</dd>
+<dt>&#64;cvar error: Error conditions: Events indicating a systemic failure, such</dt><dd><p>as programming errors in the form of unhandled exceptions, loss of
+connectivity to an external system without which no useful work can
+proceed, such as a database or API endpoint, or resource exhaustion.
+Similarly to warnings, errors that are related to operational
+parameters may be actionable to system administrators and should
+provide references to resources which an administrator might use to
+resolve them.</p>
+</dd>
+<dt>&#64;cvar critical: Critical failures: Errors indicating systemic failure (ie.</dt><dd><p>service outage), data corruption, imminent data loss, etc. which must
+be handled immediately.  This includes errors unanticipated by the
+software, such as unhandled exceptions, wherein the cause and
+consequences are unknown.</p>
+</dd>
+</dl>
+<p>Classes representing constants containers are not intended to be
+instantiated.</p>
+<p>The class object itself is used directly.</p>
+<dl class="py method">
+<dt id="cleave.core.logging.LogLevel.levelWithName">
+<em class="property">classmethod </em><code class="sig-name descname">levelWithName</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.LogLevel.levelWithName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the log level with the given name.</p>
+<p>&#64;param name: The name of a log level.
+&#64;type name: L{str} (native string)</p>
+<p>&#64;return: The L{LogLevel} with the specified C{name}.
+&#64;rtype: L{LogLevel}</p>
+<dl class="simple">
+<dt>&#64;raise InvalidLogLevelError: if the C{name} does not name a valid log</dt><dd><p>level.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.logging.LogLevel._priorityForLevel">
+<em class="property">classmethod </em><code class="sig-name descname">_priorityForLevel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">level</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.logging.LogLevel._priorityForLevel" title="Permalink to this definition">¶</a></dt>
+<dd><p>We want log levels to have defined ordering - the order of definition -
+but they aren’t value constants (the only value is the name).  This is
+arguably a bug in Twisted, so this is just a workaround for U{until
+this is fixed in some way
+&lt;<a class="reference external" href="https://twistedmatrix.com/trac/ticket/6523">https://twistedmatrix.com/trac/ticket/6523</a>&gt;}.</p>
+<p>&#64;param level: A log level.
+&#64;type level: L{LogLevel}</p>
+<p>&#64;return: A numeric index indicating priority (lower is higher level).
+&#64;rtype: L{int}</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.recordable">
+<span id="cleave-core-recordable-module"></span><h2>cleave.core.recordable module<a class="headerlink" href="#module-cleave.core.recordable" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.recordable.Recorder">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.recordable.</code><code class="sig-name descname">Recorder</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">recordable</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#cleave.core.recordable.Recordable" title="cleave.core.recordable.Recordable">cleave.core.recordable.Recordable</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.recordable.Recorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Interface for Recorder objects. Recorder and Recordable objects together
+implement the Observable pattern for text records of the plant state.</p>
+<dl class="py method">
+<dt id="cleave.core.recordable.Recorder.notify">
+<em class="property">abstract </em><code class="sig-name descname">notify</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">latest_record</span><span class="p">:</span> <span class="n">NamedTuple</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.recordable.Recorder.notify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Notify this recorder of the latest record generated by a recordable
+it is monitoring.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.recordable.Recorder.initialize">
+<code class="sig-name descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.recordable.Recorder.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called on plant startup.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.recordable.Recorder.shutdown">
+<code class="sig-name descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.recordable.Recorder.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called on plant shutdown.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.recordable.Recorder.flush">
+<code class="sig-name descname">flush</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.recordable.Recorder.flush" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mainly intended for IO-backed recorders, to force flushing of any
+potentially memory-stored data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.recordable.Recordable">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.recordable.</code><code class="sig-name descname">Recordable</code><a class="headerlink" href="#cleave.core.recordable.Recordable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Interface for Recordable objects. Recorder and Recordable objects together
+implement the Observable pattern for text records of the plant state.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.recordable.NamedRecordable">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.recordable.</code><code class="sig-name descname">NamedRecordable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">record_fields</span><span class="p">:</span> <span class="n">Sequence<span class="p">[</span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">opt_record_fields</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Any<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.recordable.NamedRecordable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.core.recordable.Recordable" title="cleave.core.recordable.Recordable"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.recordable.Recordable</span></code></a></p>
+<p>A base implementation of a named recordable object.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.recordable.CSVRecorder">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.recordable.</code><code class="sig-name descname">CSVRecorder</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">recordable</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#cleave.core.recordable.Recordable" title="cleave.core.recordable.Recordable">cleave.core.recordable.Recordable</a></span></em>, <em class="sig-param"><span class="n">output_path</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>pathlib.Path<span class="p">, </span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">chunk_size</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">1000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.recordable.CSVRecorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.core.recordable.Recorder" title="cleave.core.recordable.Recorder"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.recordable.Recorder</span></code></a></p>
+<p>Implementation of a CSV-file backed Recorder.</p>
+<dl class="py method">
+<dt id="cleave.core.recordable.CSVRecorder.initialize">
+<code class="sig-name descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.recordable.CSVRecorder.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called on plant startup.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.recordable.CSVRecorder.flush">
+<code class="sig-name descname">flush</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.recordable.CSVRecorder.flush" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flushes the internal record buffer to the backing CSV file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.recordable.CSVRecorder.notify">
+<code class="sig-name descname">notify</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">latest_record</span><span class="p">:</span> <span class="n">NamedTuple</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.recordable.CSVRecorder.notify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Notify this recorder of the latest record generated by a recordable
+it is monitoring.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.recordable.CSVRecorder.shutdown">
+<code class="sig-name descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.recordable.CSVRecorder.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called on plant shutdown.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.util">
+<span id="cleave-core-util-module"></span><h2>cleave.core.util module<a class="headerlink" href="#module-cleave.core.util" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.util.SingleElementQ">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.util.</code><code class="sig-name descname">SingleElementQ</code><a class="headerlink" href="#cleave.core.util.SingleElementQ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Utility class to hold a single variable in a thread-safe manner.
+Subsequent calls to put() without calling pop() will overwrite the stored
+variable. Conversely, pop() always returns the LATEST value for the
+stored variable.</p>
+<dl class="py method">
+<dt id="cleave.core.util.SingleElementQ.put">
+<code class="sig-name descname">put</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="p">:</span> <span class="n">Any</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.util.SingleElementQ.put" title="Permalink to this definition">¶</a></dt>
+<dd><p>Thread-safely store a value. Overwrites any previously stored value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> – The value to store in this container.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.util.SingleElementQ.pop">
+<code class="sig-name descname">pop</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">timeout</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>float<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; Any<a class="headerlink" href="#cleave.core.util.SingleElementQ.pop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pop the latest value for the stored variable. If timeout is None (the
+default), block until a value is available. Otherwise, block for up to
+timeout seconds, after which an Empty exception is raised if no value
+was made available within that time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>timeout</strong> – Number of seconds to block for. If None, blocks indefinitely.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The stored value.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>Empty</strong> – If timeout is not None and no value is available when it runs out.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.util.SingleElementQ.pop_nowait">
+<code class="sig-name descname">pop_nowait</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Any<a class="headerlink" href="#cleave.core.util.SingleElementQ.pop_nowait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pops the latest value for the stored variable without waiting. If no
+value has been set yet, raises an Empty exception.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Latest value for the stored variable.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Any</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>Empty</strong> – If no value for the stored variable exists.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="cleave.html"
+       title="previous chapter">← cleave package</a>
+  </li>
+  <li class="next">
+    <a href="cleave.core.backend.html"
+       title="next chapter">cleave.core.backend package →</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, KTH Royal Institute of Technology.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.2 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a>.
+</div>
+            </div>
+          </div>
+      </page>
+    </div>
+    
+    
+  </body>
+</html>

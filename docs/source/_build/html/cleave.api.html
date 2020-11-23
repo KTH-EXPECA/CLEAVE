@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>cleave.api package</title>
+    
+      <link rel="stylesheet" href="_static/pygments.css">
+      <link rel="stylesheet" href="_static/theme.css">
+      <link rel="stylesheet" href="_static/sphinx_press_theme.css">
+      
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+
+      <!-- sphinx script_files -->
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+
+      
+      <script src="_static/theme-vendors.js"></script>
+      <script src="_static/theme.js" defer></script>
+    
+  <link rel="index" title="Index" href="genindex.html" />
+  <link rel="search" title="Search" href="search.html" />
+  <link rel="next" title="cleave package" href="cleave.html" />
+  <link rel="prev" title="Welcome to the CLEAVE project documentation!" href="index.html" /> 
+  </head>
+
+  <body>
+    <div id="app" class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <span class="site-name">CLEAVE</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link  router-link-active">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link  router-link-active">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link  router-link-active">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link  router-link-active">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">Quick search</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="Search" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#installation-instructions">Main CLEAVE API:</a></span>
+      </p>
+      <ul class="current">
+        
+          <li class="toctree-l1 current"><a href="#" class="reference internal current">cleave.api package</a>
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#submodules" class="reference internal">Submodules</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.api.controller" class="reference internal">cleave.api.controller module</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.api.plant" class="reference internal">cleave.api.plant module</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.api.util" class="reference internal">cleave.api.util module</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="cleave.html#subpackages">subpackages</a></span>
+      </p>
+      <ul class="current">
+        
+          <li class="toctree-l1 current"><a href="#" class="reference internal current">cleave.api package</a>
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#submodules" class="reference internal">Submodules</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.api.controller" class="reference internal">cleave.api.controller module</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.api.plant" class="reference internal">cleave.api.plant module</a></li>
+                
+                  <li class="toctree-l2"><a href="#module-cleave.api.util" class="reference internal">cleave.api.util module</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.core.html" class="reference internal ">cleave.core package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.impl.html" class="reference internal ">cleave.impl package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+    <li>cleave.api package</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="index.html"
+       title="previous chapter">← Welcome to the CLEAVE project documentation!</a>
+  </li>
+  <li class="next">
+    <a href="cleave.html"
+       title="next chapter">cleave package →</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main">
+            
+  <div class="section" id="module-cleave.api">
+<span id="cleave-api-package"></span><h1>cleave.api package<a class="headerlink" href="#module-cleave.api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-cleave.api.controller">
+<span id="cleave-api-controller-module"></span><h2>cleave.api.controller module<a class="headerlink" href="#module-cleave.api.controller" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.api.controller.Controller">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.controller.</code><code class="sig-name descname">Controller</code><a class="headerlink" href="#cleave.api.controller.Controller" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for controllers, which defines a a simple interface that
+extending subclasses need to implement.</p>
+<dl class="py method">
+<dt id="cleave.api.controller.Controller.process">
+<em class="property">abstract </em><code class="sig-name descname">process</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sensor_values</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span><a class="headerlink" href="#cleave.api.controller.Controller.process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes samples and produces a control command.</p>
+<p>Samples arrive in the form of a dictionary of mappings from sensor
+property name to measured value. Actuator commands should be returned
+in the same fashion, in a dictionary of mappings from actuated
+property name to actuated value.</p>
+<p>This method needs to be implemented by extending subclasses with
+their respective logic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sensor_values</strong> – A mapping of sensor property names to measured values.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A mapping of actuated property names to desired values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>PhyPropMapping</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.api.plant">
+<span id="cleave-api-plant-module"></span><h2>cleave.api.plant module<a class="headerlink" href="#module-cleave.api.plant" title="Permalink to this headline">¶</a></h2>
+<dl class="py exception">
+<dt id="cleave.api.plant.UnrecoverableState">
+<em class="property">exception </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">UnrecoverableState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_values</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.UnrecoverableState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.ControllerParameter">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">ControllerParameter</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.ControllerParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.core.client.html#cleave.core.client.statebase.BaseSemanticVariable" title="cleave.core.client.statebase.BaseSemanticVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.client.statebase.BaseSemanticVariable</span></code></a></p>
+<p>Note: Parameter from plant to controller is not yet implemented.</p>
+<p>A semantically significant variable corresponding to an initialization
+parameter for a controller interacting with this plant.</p>
+<p>Variables of this type will automatically be provided to the controller
+on initialization</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – The initial value for this variable.</p></li>
+<li><p><strong>record</strong> – Whether this variable should be recorded or not (WIP)
+TODO: record variables</p></li>
+<li><p><strong>sanity_check</strong> – A callable which takes a single input value and returns a
+boolean. If this value is not None, the callable give will be
+invoked with the updated value of the semantic variable after
+every tick of the plant. If the callable returns false,
+the simulation will fail with an UnrecoverableState error.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.SensorVariable">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">SensorVariable</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.SensorVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.core.client.html#cleave.core.client.statebase.BaseSemanticVariable" title="cleave.core.client.statebase.BaseSemanticVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.client.statebase.BaseSemanticVariable</span></code></a></p>
+<p>A semantically significant variable corresponding to a property measured
+by a sensor. Variables of this type will automatically be paired with the
+corresponding Sensor during emulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – The initial value for this variable.</p></li>
+<li><p><strong>record</strong> – Whether this variable should be recorded or not (WIP)
+TODO: record variables</p></li>
+<li><p><strong>sanity_check</strong> – A callable which takes a single input value and returns a
+boolean. If this value is not None, the callable give will be
+invoked with the updated value of the semantic variable after
+every tick of the plant. If the callable returns false,
+the simulation will fail with an UnrecoverableState error.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.ActuatorVariable">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">ActuatorVariable</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.ActuatorVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.core.client.html#cleave.core.client.statebase.BaseSemanticVariable" title="cleave.core.client.statebase.BaseSemanticVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.client.statebase.BaseSemanticVariable</span></code></a></p>
+<p>A semantically significant variable corresponding to a property measured
+by an actuator. Variables of this type will automatically be paired with the
+corresponding Actuator during emulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – The initial value for this variable.</p></li>
+<li><p><strong>record</strong> – Whether this variable should be recorded or not (WIP)
+TODO: record variables</p></li>
+<li><p><strong>sanity_check</strong> – A callable which takes a single input value and returns a
+boolean. If this value is not None, the callable give will be
+invoked with the updated value of the semantic variable after
+every tick of the plant. If the callable returns false,
+the simulation will fail with an UnrecoverableState error.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.State">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">State</code><a class="headerlink" href="#cleave.api.plant.State" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.core.client.html#cleave.core.client.statebase.StateBase" title="cleave.core.client.statebase.StateBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.client.statebase.StateBase</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract core class defining an interface for Plant state evolution over
+the course of a simulation. Implementing classes need to extend the
+advance() method to implement their logic, as this method will be called
+by the plant on each emulation time step.</p>
+<dl class="py method">
+<dt id="cleave.api.plant.State.advance">
+<em class="property">abstract </em><code class="sig-name descname">advance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">delta_t</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.api.plant.State.advance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the plant on every time step to advance the emulation.
+Needs to be implemented by subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>delta_t</strong> – Time elapsed since the previous call to this method. This value
+will be 0 the first time this method is called.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.api.plant.State.initialize">
+<code class="sig-name descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.api.plant.State.initialize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the plant at the beginning of the emulation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.api.plant.State.shutdown">
+<code class="sig-name descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.api.plant.State.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the plant on shutdown.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.Sensor">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">Sensor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">sample_freq</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.Sensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>This class defines an interface for sensors attached to a simulated plant.
+Implementations should override the process_sample() method with their
+logic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prop_name</strong> – Name of the property this sensor measures.</p></li>
+<li><p><strong>sample_freq</strong> – Sampling frequency of this sensor.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="cleave.api.plant.Sensor.measured_property_name">
+<em class="property">property </em><code class="sig-name descname">measured_property_name</code><a class="headerlink" href="#cleave.api.plant.Sensor.measured_property_name" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Name of the property monitored by this sensor.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.api.plant.Sensor.sampling_frequency">
+<em class="property">property </em><code class="sig-name descname">sampling_frequency</code><a class="headerlink" href="#cleave.api.plant.Sensor.sampling_frequency" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Sampling frequency of this sensor, expressed in Hertz.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.api.plant.Sensor.process_sample">
+<em class="property">abstract </em><code class="sig-name descname">process_sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><a class="headerlink" href="#cleave.api.plant.Sensor.process_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes the measured value. This method should be implemented by
+subclasses to include sensor-specific behaviors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> – The latest measurement of the monitored property.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A possibly transformed value of the monitored property, according to
+the internal parameters of this sensor.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>PhyPropType</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.SimpleSensor">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">SimpleSensor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">sample_freq</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.SimpleSensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.api.plant.Sensor" title="cleave.api.plant.Sensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.api.plant.Sensor</span></code></a></p>
+<p>Simplest implementation of a sensor, which performs no processing on the
+read value and returns it as-is.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prop_name</strong> – Name of the property this sensor measures.</p></li>
+<li><p><strong>sample_freq</strong> – Sampling frequency of this sensor.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="cleave.api.plant.SimpleSensor.process_sample">
+<code class="sig-name descname">process_sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><a class="headerlink" href="#cleave.api.plant.SimpleSensor.process_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes the measured value. This method should be implemented by
+subclasses to include sensor-specific behaviors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> – The latest measurement of the monitored property.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A possibly transformed value of the monitored property, according to
+the internal parameters of this sensor.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>PhyPropType</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.Actuator">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">Actuator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">start_value</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.Actuator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract core class for actuators. Implementations should override the
+set_value() and get_actuation() methods with their logic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prop_name</strong> – Name of the property actuated upon by this actuator.</p></li>
+<li><p><strong>start_value</strong> – Starting value this actuator outputs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="cleave.api.plant.Actuator.actuated_property_name">
+<em class="property">property </em><code class="sig-name descname">actuated_property_name</code><a class="headerlink" href="#cleave.api.plant.Actuator.actuated_property_name" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Name of the property actuated upon by this actuator.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.api.plant.Actuator.set_value">
+<em class="property">abstract </em><code class="sig-name descname">set_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">desired_value</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.api.plant.Actuator.set_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called to set the target value for this actuator. This method should
+be implemented by extending classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>desired_value</strong> – Target value for this actuator.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.api.plant.Actuator.get_actuation">
+<em class="property">abstract </em><code class="sig-name descname">get_actuation</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><a class="headerlink" href="#cleave.api.plant.Actuator.get_actuation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the next value for the actuation processed governed by this
+actuator. This method should be implemented by extending classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A value for the actuated property.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>PhyPropType</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.SimpleConstantActuator">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">SimpleConstantActuator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">start_value</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.SimpleConstantActuator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.api.plant.Actuator" title="cleave.api.plant.Actuator"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.api.plant.Actuator</span></code></a></p>
+<p>Implementation of a perfect actuator which keeps its value after being
+read (i.e. can be thought of as applying a constant force/actuation on
+the target variable).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prop_name</strong> – Name of the property actuated upon by this actuator.</p></li>
+<li><p><strong>start_value</strong> – Starting value this actuator outputs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="cleave.api.plant.SimpleConstantActuator.set_value">
+<code class="sig-name descname">set_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">desired_value</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.api.plant.SimpleConstantActuator.set_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the value of the actuated property governed by this actuator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>desired_value</strong> – The value of the actuated property.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.api.plant.SimpleConstantActuator.get_actuation">
+<code class="sig-name descname">get_actuation</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><a class="headerlink" href="#cleave.api.plant.SimpleConstantActuator.get_actuation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The current value of the actuated property.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>PhyPropType</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.SimpleImpulseActuator">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">SimpleImpulseActuator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">default_value</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.SimpleImpulseActuator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.api.plant.Actuator" title="cleave.api.plant.Actuator"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.api.plant.Actuator</span></code></a></p>
+<p>Implementation if a perfect actuator which resets its value after being
+read (i.e. can be thought as an actuator which applies impulses to the
+target variable).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prop_name</strong> – Name of the property actuated upon by this actuator.</p></li>
+<li><p><strong>start_value</strong> – Starting value this actuator outputs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="cleave.api.plant.SimpleImpulseActuator.set_value">
+<code class="sig-name descname">set_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">desired_value</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.api.plant.SimpleImpulseActuator.set_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the next value returned by this actuator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>desired_value</strong> – Value returned in the next call to get_actuation().</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.api.plant.SimpleImpulseActuator.get_actuation">
+<code class="sig-name descname">get_actuation</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><a class="headerlink" href="#cleave.api.plant.SimpleImpulseActuator.get_actuation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the internally stored value, and then resets it to the
+default value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The actuation value.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>PhyPropType</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.api.plant.GaussianConstantActuator">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.api.plant.</code><code class="sig-name descname">GaussianConstantActuator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">g_mean</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">g_std</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">start_value</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">prealloc_size</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">1000000</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.api.plant.GaussianConstantActuator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.api.plant.SimpleConstantActuator" title="cleave.api.plant.SimpleConstantActuator"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.api.plant.SimpleConstantActuator</span></code></a></p>
+<p>Implementation of an actuator with Gaussian noise in its output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prop_name</strong> – Name of the property actuated upon by this actuator.</p></li>
+<li><p><strong>start_value</strong> – Starting value this actuator outputs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="cleave.api.plant.GaussianConstantActuator.set_value">
+<code class="sig-name descname">set_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">desired_value</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.api.plant.GaussianConstantActuator.set_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the value of the actuated property governed by this actuator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>desired_value</strong> – The value of the actuated property.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.api.util">
+<span id="cleave-api-util-module"></span><h2>cleave.api.util module<a class="headerlink" href="#module-cleave.api.util" title="Permalink to this headline">¶</a></h2>
+<dl class="py data">
+<dt id="cleave.api.util.PhyPropType">
+<code class="sig-prename descclassname">cleave.api.util.</code><code class="sig-name descname">PhyPropType</code><a class="headerlink" href="#cleave.api.util.PhyPropType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of properties that can be handled by sensors and actuators.</p>
+<p>alias of Union[int, float, bool]</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="index.html"
+       title="previous chapter">← Welcome to the CLEAVE project documentation!</a>
+  </li>
+  <li class="next">
+    <a href="cleave.html"
+       title="next chapter">cleave package →</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, KTH Royal Institute of Technology.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.2 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a>.
+</div>
+            </div>
+          </div>
+      </page>
+    </div>
+    
+    
+  </body>
+</html>

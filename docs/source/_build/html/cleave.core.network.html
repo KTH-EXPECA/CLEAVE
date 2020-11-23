@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>cleave.core.network package</title>
+    
+      <link rel="stylesheet" href="_static/pygments.css">
+      <link rel="stylesheet" href="_static/theme.css">
+      <link rel="stylesheet" href="_static/sphinx_press_theme.css">
+      
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+
+      <!-- sphinx script_files -->
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+
+      
+      <script src="_static/theme-vendors.js"></script>
+      <script src="_static/theme.js" defer></script>
+    
+  <link rel="index" title="Index" href="genindex.html" />
+  <link rel="search" title="Search" href="search.html" />
+  <link rel="next" title="cleave.impl package" href="cleave.impl.html" />
+  <link rel="prev" title="cleave.core.client package" href="cleave.core.client.html" /> 
+  </head>
+
+  <body>
+    <div id="app" class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <span class="site-name">CLEAVE</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link ">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link ">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">Quick search</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="Search" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#installation-instructions">Main CLEAVE API:</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="cleave.html#subpackages">subpackages</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.core.html" class="reference internal ">cleave.core package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.impl.html" class="reference internal ">cleave.impl package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+      <li><a href="cleave.html">cleave package</a> &raquo;</li>
+    
+      <li><a href="cleave.core.html">cleave.core package</a> &raquo;</li>
+    
+    <li>cleave.core.network package</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="cleave.core.client.html"
+       title="previous chapter">← cleave.core.client package</a>
+  </li>
+  <li class="next">
+    <a href="cleave.impl.html"
+       title="next chapter">cleave.impl package →</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main">
+            
+  <div class="section" id="module-cleave.core.network">
+<span id="cleave-core-network-package"></span><h1>cleave.core.network package<a class="headerlink" href="#module-cleave.core.network" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-cleave.core.network.backend">
+<span id="cleave-core-network-backend-module"></span><h2>cleave.core.network.backend module<a class="headerlink" href="#module-cleave.core.network.backend" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.network.backend.UDPControllerService">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.network.backend.</code><code class="sig-name descname">UDPControllerService</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">port</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">controller</span><span class="p">:</span> <span class="n"><a class="reference internal" href="cleave.api.html#cleave.api.controller.Controller" title="cleave.api.controller.Controller">cleave.api.controller.Controller</a></span></em>, <em class="sig-param"><span class="n">reactor</span><span class="p">:</span> <span class="n">twisted.internet.posixbase.PosixReactorBase</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.network.backend.UDPControllerService" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.core.html#cleave.core.recordable.Recordable" title="cleave.core.recordable.Recordable"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.recordable.Recordable</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">twisted.internet.protocol.DatagramProtocol</span></code></p>
+<p>UDP implementation of a controller service. Receives sensor samples over
+UDP and pushes them to the controller for processing.</p>
+<dl class="py method">
+<dt id="cleave.core.network.backend.UDPControllerService.serve">
+<code class="sig-name descname">serve</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.network.backend.UDPControllerService.serve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts listening for and serving control requests.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.network.backend.UDPControllerService.stopProtocol">
+<code class="sig-name descname">stopProtocol</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.network.backend.UDPControllerService.stopProtocol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executed during shutdown.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.network.backend.UDPControllerService.datagramReceived">
+<code class="sig-name descname">datagramReceived</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_dgram</span><span class="p">:</span> <span class="n">bytes</span></em>, <em class="sig-param"><span class="n">addr</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>str<span class="p">, </span>int<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.network.backend.UDPControllerService.datagramReceived" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executed on each datagram received.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.network.client">
+<span id="cleave-core-network-client-module"></span><h2>cleave.core.network.client module<a class="headerlink" href="#module-cleave.core.network.client" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.network.client.BaseControllerInterface">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.network.client.</code><code class="sig-name descname">BaseControllerInterface</code><a class="headerlink" href="#cleave.core.network.client.BaseControllerInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="cleave.core.html#cleave.core.recordable.Recordable" title="cleave.core.recordable.Recordable"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.recordable.Recordable</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Defines the core interface for interacting with controllers.</p>
+<dl class="py method">
+<dt id="cleave.core.network.client.BaseControllerInterface.put_sensor_values">
+<em class="property">abstract </em><code class="sig-name descname">put_sensor_values</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_values</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.network.client.BaseControllerInterface.put_sensor_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a sample of sensor values to the controller.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>prop_values</strong> – Mapping from property names to sensor values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.network.client.BaseControllerInterface.get_actuator_values">
+<em class="property">abstract </em><code class="sig-name descname">get_actuator_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span><a class="headerlink" href="#cleave.core.network.client.BaseControllerInterface.get_actuator_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Waits for incoming data from the controller and returns a mapping
+from actuated property names to values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Mapping from actuated property names to values.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Mapping</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.network.client.BaseControllerInterface.register_with_reactor">
+<em class="property">abstract </em><code class="sig-name descname">register_with_reactor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reactor</span><span class="p">:</span> <span class="n">twisted.internet.posixbase.PosixReactorBase</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.network.client.BaseControllerInterface.register_with_reactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers this ControllerInterface with the event loop reactor.
+:param reactor:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.network.client.UDPControllerInterface">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.network.client.</code><code class="sig-name descname">UDPControllerInterface</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">controller_addr</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>str<span class="p">, </span>int<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.network.client.UDPControllerInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">twisted.internet.protocol.DatagramProtocol</span></code>, <a class="reference internal" href="#cleave.core.network.client.BaseControllerInterface" title="cleave.core.network.client.BaseControllerInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.network.client.BaseControllerInterface</span></code></a></p>
+<p>Controller interface which abstracts over-the-network interaction with a
+controller over UDP.</p>
+<dl class="py method">
+<dt id="cleave.core.network.client.UDPControllerInterface.startProtocol">
+<code class="sig-name descname">startProtocol</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.network.client.UDPControllerInterface.startProtocol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when a transport is connected to this protocol.</p>
+<p>Will only be called once, even if multiple ports are connected.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.network.client.UDPControllerInterface.stopProtocol">
+<code class="sig-name descname">stopProtocol</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.network.client.UDPControllerInterface.stopProtocol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when the transport is disconnected.</p>
+<p>Will only be called once, after all ports are disconnected.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.network.client.UDPControllerInterface.put_sensor_values">
+<code class="sig-name descname">put_sensor_values</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">prop_values</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.core.network.client.UDPControllerInterface.put_sensor_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a sample of sensor values to the controller.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>prop_values</strong> – Mapping from property names to sensor values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.network.client.UDPControllerInterface.get_actuator_values">
+<code class="sig-name descname">get_actuator_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Mapping<span class="p">[</span>str<span class="p">, </span>Union<span class="p">[</span>int<span class="p">, </span>float<span class="p">, </span>bool<span class="p">]</span><span class="p">]</span><a class="headerlink" href="#cleave.core.network.client.UDPControllerInterface.get_actuator_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Waits for incoming data from the controller and returns a mapping
+from actuated property names to values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Mapping from actuated property names to values.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Mapping</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.network.client.UDPControllerInterface.datagramReceived">
+<code class="sig-name descname">datagramReceived</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">datagram</span><span class="p">:</span> <span class="n">bytes</span></em>, <em class="sig-param"><span class="n">addr</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>str<span class="p">, </span>int<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.network.client.UDPControllerInterface.datagramReceived" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when a datagram is received.</p>
+<p>&#64;param datagram: the string received from the transport.
+&#64;param addr: tuple of source of datagram.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cleave.core.network.client.UDPControllerInterface.register_with_reactor">
+<code class="sig-name descname">register_with_reactor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">reactor</span><span class="p">:</span> <span class="n">twisted.internet.posixbase.PosixReactorBase</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.network.client.UDPControllerInterface.register_with_reactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers this ControllerInterface with the event loop reactor.
+:param reactor:</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cleave.core.network.protocol">
+<span id="cleave-core-network-protocol-module"></span><h2>cleave.core.network.protocol module<a class="headerlink" href="#module-cleave.core.network.protocol" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cleave.core.network.protocol.ControlMsgType">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.network.protocol.</code><code class="sig-name descname">ControlMsgType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.network.protocol.ControlMsgType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>An enumeration.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.network.protocol.ControlMessage">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.network.protocol.</code><code class="sig-name descname">ControlMessage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg_type</span><span class="p">:</span> <span class="n">‘ControlMsgType’</span></em>, <em class="sig-param"><span class="n">seq</span><span class="p">:</span> <span class="n">‘int’</span></em>, <em class="sig-param"><span class="n">timestamp</span><span class="p">:</span> <span class="n">‘float’</span></em>, <em class="sig-param"><span class="n">payload</span><span class="p">:</span> <span class="n">‘Any’</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.network.protocol.ControlMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="cleave.core.network.protocol.NoMessage">
+<em class="property">exception </em><code class="sig-prename descclassname">cleave.core.network.protocol.</code><code class="sig-name descname">NoMessage</code><a class="headerlink" href="#cleave.core.network.protocol.NoMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="cleave.core.client.html"
+       title="previous chapter">← cleave.core.client package</a>
+  </li>
+  <li class="next">
+    <a href="cleave.impl.html"
+       title="next chapter">cleave.impl package →</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, KTH Royal Institute of Technology.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.2 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a>.
+</div>
+            </div>
+          </div>
+      </page>
+    </div>
+    
+    
+  </body>
+</html>

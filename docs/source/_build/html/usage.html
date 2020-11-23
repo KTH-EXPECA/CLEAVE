@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Usage</title>
+    
+      <link rel="stylesheet" href="_static/pygments.css">
+      <link rel="stylesheet" href="_static/theme.css">
+      <link rel="stylesheet" href="_static/sphinx_press_theme.css">
+      
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+
+      <!-- sphinx script_files -->
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+
+      
+      <script src="_static/theme-vendors.js"></script>
+      <script src="_static/theme.js" defer></script>
+    
+  <link rel="index" title="Index" href="genindex.html" />
+  <link rel="search" title="Search" href="search.html" /> 
+  </head>
+
+  <body>
+    <div id="app" class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <span class="site-name">CLEAVE</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link ">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+  
+    <div class="nav-item">
+      <a href="index.html#installation-instructions"
+         class="nav-link ">
+         Main CLEAVE API:
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="cleave.html#subpackages"
+         class="nav-link ">
+         subpackages
+      </a>
+    </div>
+  
+
+
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">Quick search</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="Search" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#installation-instructions">Main CLEAVE API:</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="cleave.html#subpackages">subpackages</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.core.html" class="reference internal ">cleave.core package</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="cleave.impl.html" class="reference internal ">cleave.impl package</a>
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+    <li>Usage</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main">
+            
+  <div class="section" id="usage">
+<span id="id1"></span><h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<p>Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controllers. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controllers are the computational elements which perform the necessary computations for the controlling of Plants.</p>
+<p>In the context of CLEAVE emulations, the definition of Plants and Controllers are done through configuration files written in pure Python, which are then executed through the <code class="code docutils literal notranslate"><span class="pre">cleave.py</span></code> launcher script. A couple of examples of such configuration files can be found under the <code class="code docutils literal notranslate"><span class="pre">examples/</span></code> directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>// To run a plant configuration
+<span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-plant examples/plant_config.py
+
+// To run a controller configuration
+<span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-controller examples/controller_config.py
+</pre></div>
+</div>
+<p>Check <code class="code docutils literal notranslate"><span class="pre">cleave.py</span> <span class="pre">--help</span></code> for more details and additional options.</p>
+<p>In the following sections we will explain how to set up NCS emulations in CLEAVE by developing and configuring Plants and Controllers from scratch and connecting them.</p>
+<div class="section" id="plants">
+<h2>Plants<a class="headerlink" href="#plants" title="Permalink to this headline">¶</a></h2>
+<p>These are the representations of the physical systems wich we want to control. Plants in CLEAVE are usually physical simulations of some system we wish to monitor and act upon. Correspondingly, a Plant is composed of three subcomponents:</p>
+<ul class="simple">
+<li><p>A <code class="code docutils literal notranslate"><span class="pre">State</span></code>, which implements the discrete-time behavior of the simulated system.</p></li>
+<li><p>A collection of <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> objects, which measure specific properties of the <code class="code docutils literal notranslate"><span class="pre">State</span></code>, potentially transforming them, and send them to the Controller.</p></li>
+<li><p>A collection of <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> objects, which receive inputs from the Controller, potentially transform or distort them, and finally act upon specific properties of the <code class="code docutils literal notranslate"><span class="pre">State</span></code>.</p></li>
+</ul>
+<div class="section" id="state">
+<h3>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h3>
+<p><code class="code docutils literal notranslate"><span class="pre">State</span></code> objects in CLEAVE are simply instances of classes which extend from the abstract base class <cite>cleave.api.plant.State</cite>. This base class defines a single required method as well as two optional ones:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">State</span><span class="p">:</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">advance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>The <code class="code docutils literal notranslate"><span class="pre">advance(self,</span> <span class="pre">dt:</span> <span class="pre">float)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> method is required. It is called by the framework on every iteration of the simulation, and thus users should implement their discrete-time plant logic here. The parameter <code class="code docutils literal notranslate"><span class="pre">dt</span></code> corresponds to the number of seconds elapsed since the last invocation of the method.</p>
+<p>Methods <code class="code docutils literal notranslate"><span class="pre">def</span> <span class="pre">initialize(self)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> and <code class="code docutils literal notranslate"><span class="pre">def</span> <span class="pre">shutdown(self)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> are optional. They are called by the framework at the very beginning of the Plant execution and right before shutdown, respectively. It is in these methods users should put their initialization and shutdown logic.</p>
+<p><code class="code docutils literal notranslate"><span class="pre">State</span></code> objects also need to expose the properties which that will be provided as inputs to the Controller and the properties the Controller acts upon. This is done by defining special <em>semantic</em> variables in the constructor of the <code class="code docutils literal notranslate"><span class="pre">State</span></code>:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">cleave.api.plant.SensorVariable</span></code> objects represent properties that will be measured by sensors and subsequently pushed to the Controller.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">cleave.api.plant.ActuatorVariable</span></code> objects represent properties that will be modified by the actuation commands generated by the Controller. The values of these variables will be directly modified by the framework as commands come in.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">cleave.api.plant.ControllerParameter</span></code> objects represent parameters passed to the controller at the beginning of the emulation (WIP, not implemented yet).</p></li>
+</ul>
+<p>These objects are simply used to track the values during execution, and thus are completely transparent, allowing unrestricted access to the underlying raw values at all times. This means that after initialization, these variables can simply be used as normal “raw” values without having to consider the semantic variable object around it.</p>
+<p>Furthermore, an optional “sanity check” may be attached to each semantic variable. This simply corresponds to a callable which receives the current value of the semantic variable and returns a boolean indicating if the current value is within acceptable ranges or not. This check will be executed at each time step of the Plant simulation, and if it at any point returns <code class="code docutils literal notranslate"><span class="pre">False</span></code> the framework will record the corresponding variable and then halt the emulation.</p>
+<p>An example skeleton of a <code class="code docutils literal notranslate"><span class="pre">State</span></code> with a single input variable and a single output variable could then look something like the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ExampleState</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ExampleState</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">accel</span> <span class="o">=</span> <span class="n">ActuatorVariable</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">SensorVariable</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sanity_check</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span> <span class="o">&lt;</span> <span class="mf">200.0</span><span class="p">)</span>
+        <span class="c1"># shuts down if speed ever exceeds 200.0 m/s</span>
+
+    <span class="k">def</span> <span class="nf">advance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># To update the state, we simply read the ActuatorVariable, as it will always</span>
+        <span class="c1"># hold the latest value from the controller at the beginning of each timestep,</span>
+        <span class="c1"># and we write to the SensorVariable, as its value will automatically be sampled</span>
+        <span class="c1"># by the corresponding Sensor.</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">+=</span> <span class="n">dt</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">accel</span>
+</pre></div>
+</div>
+<p>More complex example implementations of <code class="code docutils literal notranslate"><span class="pre">State</span></code> classes representing Inverted Pendulum systems are included in the module <code class="code docutils literal notranslate"><span class="pre">cleave.impl.inverted_pendulum</span></code>.</p>
+</div>
+<div class="section" id="sensors">
+<h3>Sensors<a class="headerlink" href="#sensors" title="Permalink to this headline">¶</a></h3>
+<p>Similarly to <code class="code docutils literal notranslate"><span class="pre">State</span></code>, a <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> in CLEAVE corresponds to an object instance of a subclass of <code class="code docutils literal notranslate"><span class="pre">cleave.api.Sensor</span></code>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2020, KTH Royal Institute of Technology.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.1.2 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a>.
+</div>
+            </div>
+          </div>
+      </page>
+    </div>
+    
+    
+  </body>
+</html>
