@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #  Copyright (c) 2020 KTH Royal Institute of Technology
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
