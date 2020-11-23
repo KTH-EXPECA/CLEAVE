@@ -6,7 +6,14 @@
 Welcome to CLEAVE's documentation!
 ==================================
 
-.. mdinclude:: ../../README.md
+Installation instructions:
+--------------------------
+
+See:
+
+- :ref:`installation_gen`.
+
+- :ref:`installation_dev`.
 
 ==================================
 
