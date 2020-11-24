@@ -23,7 +23,7 @@
     
   <link rel="index" title="Index" href="genindex.html" />
   <link rel="search" title="Search" href="search.html" />
-  <link rel="next" title="cleave.api package" href="cleave.api.html" /> 
+  <link rel="next" title="Installation for general usage" href="installation.html" /> 
   </head>
 
   <body>
@@ -39,16 +39,30 @@
 
   
     <div class="nav-item">
-      <a href="#general-usage"
+      <a href="#cleave-control-benmarking-service-on-the-edge"
          class="nav-link ">
-         Main CLEAVE API
+         Installation
       </a>
     </div>
   
     <div class="nav-item">
-      <a href="cleave.html#subpackages"
+      <a href="#cleave-control-benmarking-service-on-the-edge"
          class="nav-link ">
-         subpackages
+         Usage
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="#cleave-control-benmarking-service-on-the-edge"
+         class="nav-link ">
+         Development (WIP)
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="modules.html#cleave"
+         class="nav-link ">
+         cleave
       </a>
     </div>
   
@@ -69,16 +83,30 @@
 
   
     <div class="nav-item">
-      <a href="#general-usage"
+      <a href="#cleave-control-benmarking-service-on-the-edge"
          class="nav-link ">
-         Main CLEAVE API
+         Installation
       </a>
     </div>
   
     <div class="nav-item">
-      <a href="cleave.html#subpackages"
+      <a href="#cleave-control-benmarking-service-on-the-edge"
          class="nav-link ">
-         subpackages
+         Usage
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="#cleave-control-benmarking-service-on-the-edge"
+         class="nav-link ">
+         Development (WIP)
+      </a>
+    </div>
+  
+    <div class="nav-item">
+      <a href="modules.html#cleave"
+         class="nav-link ">
+         cleave
       </a>
     </div>
   
@@ -101,11 +129,11 @@
   
     <div class="sidebar-group">
       <p class="caption">
-        <span class="caption-text"><a href="#general-usage">Main CLEAVE API</a></span>
+        <span class="caption-text"><a href="#cleave-control-benmarking-service-on-the-edge">Installation</a></span>
       </p>
       <ul class="">
         
-          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+          <li class="toctree-l1 "><a href="installation.html" class="reference internal ">Installation for general usage</a>
 
             
           </li>
@@ -116,23 +144,41 @@
   
     <div class="sidebar-group">
       <p class="caption">
-        <span class="caption-text"><a href="cleave.html#subpackages">subpackages</a></span>
+        <span class="caption-text"><a href="#cleave-control-benmarking-service-on-the-edge">Usage</a></span>
       </p>
       <ul class="">
         
-          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+          <li class="toctree-l1 "><a href="usage.html" class="reference internal ">Tutorial: general usage</a>
 
             
           </li>
 
         
-          <li class="toctree-l1 "><a href="cleave.core.html" class="reference internal ">cleave.core package</a>
+      </ul>
+    </div>
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="#cleave-control-benmarking-service-on-the-edge">Development (WIP)</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="codestyle.html" class="reference internal ">Code style and standards</a>
 
             
           </li>
 
         
-          <li class="toctree-l1 "><a href="cleave.impl.html" class="reference internal ">cleave.impl package</a>
+      </ul>
+    </div>
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="modules.html#cleave">cleave</a></span>
+      </p>
+      <ul class="">
+        
+          <li class="toctree-l1 "><a href="cleave.html" class="reference internal ">cleave package</a>
 
             
           </li>
@@ -156,8 +202,8 @@
 
   <ul class="page-nav">
   <li class="next">
-    <a href="cleave.api.html"
-       title="next chapter">cleave.api package →</a>
+    <a href="installation.html"
+       title="next chapter">Installation for general usage →</a>
   </li>
 </ul>
   
@@ -172,69 +218,97 @@
 <p>A framework for testing, benchmarking and evaluating control loop applications on the Edge, written in Python 3.8+.</p>
 <p><em>Note: This project is in early stages of development.</em></p>
 <p>CLEAVE is part of the <a class="reference external" href="https://www.jamesgross.org/research/expeca/">ExPECA</a> research project at <a class="reference external" href="https://kth.se">KTH Royal Institute of Technology</a>. It aims at providing a powerful and flexible platform for the study of networked control systems, particularly on Edge Computing architectures.</p>
-</div>
-<div class="section" id="installation-instructions">
-<h2>Installation instructions:<a class="headerlink" href="#installation-instructions" title="Permalink to this headline">¶</a></h2>
-<p>See:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="installation.html#installation-gen"><span class="std std-ref">Installation for general usage</span></a>.</p></li>
-<li><p><a class="reference internal" href="installation.html#installation-dev"><span class="std std-ref">Installation for development</span></a>.</p></li>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation for general usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-pypi">From PyPI:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-the-repository">From the repository</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#installation-for-development">Installation for development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#optional-set-up-the-sphinx-documentation-environment">(Optional) Set up the Sphinx documentation environment</a></li>
+</ul>
+</li>
 </ul>
 </div>
-<div class="section" id="general-usage">
-<h2>General Usage:<a class="headerlink" href="#general-usage" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="usage.html#usage"><span class="std std-ref">Tutorial: general usage</span></a>.</p></li>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Tutorial: general usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#plants">Plants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#controller-services">Controller Services</a></li>
 </ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Development (WIP)</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="codestyle.html">Code style and standards</a></li>
+</ul>
+</div>
 <hr class="docutils" />
 <div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Main CLEAVE API</span></p>
+<p class="caption"><span class="caption-text">Full documentation:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="cleave.api.html">cleave.api package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cleave.api.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cleave.api.html#module-cleave.api.controller">cleave.api.controller module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cleave.api.html#module-cleave.api.plant">cleave.api.plant module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cleave.api.html#module-cleave.api.util">cleave.api.util module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">CLEAVE</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cleave.html">cleave package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cleave.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cleave.api.html">cleave.api package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="cleave.api.html#submodules">Submodules</a></li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.api.html#module-cleave.api.controller">cleave.api.controller module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.api.html#module-cleave.api.plant">cleave.api.plant module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.api.html#module-cleave.api.util">cleave.api.util module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="cleave.core.html">cleave.core package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="cleave.core.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="cleave.core.backend.html">cleave.core.backend package</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.backend.html#submodules">Submodules</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.backend.html#module-cleave.core.backend.controller">cleave.core.backend.controller module</a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="cleave.core.client.html">cleave.core.client package</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.client.html#submodules">Submodules</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.actuator">cleave.core.client.actuator module</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.physicalsim">cleave.core.client.physicalsim module</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.plant">cleave.core.client.plant module</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.sensor">cleave.core.client.sensor module</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.statebase">cleave.core.client.statebase module</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.client.html#module-cleave.core.client.timing">cleave.core.client.timing module</a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="cleave.core.network.html">cleave.core.network package</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.network.html#submodules">Submodules</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.network.html#module-cleave.core.network.backend">cleave.core.network.backend module</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.network.html#module-cleave.core.network.client">cleave.core.network.client module</a></li>
+<li class="toctree-l7"><a class="reference internal" href="cleave.core.network.html#module-cleave.core.network.protocol">cleave.core.network.protocol module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.core.html#submodules">Submodules</a></li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.core.html#module-cleave.core.config">cleave.core.config module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.core.html#module-cleave.core.eventloop">cleave.core.eventloop module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.core.html#module-cleave.core.logging">cleave.core.logging module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.core.html#module-cleave.core.recordable">cleave.core.recordable module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.core.html#module-cleave.core.util">cleave.core.util module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="cleave.impl.html">cleave.impl package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="cleave.impl.html#submodules">Submodules</a></li>
+<li class="toctree-l5"><a class="reference internal" href="cleave.impl.html#module-cleave.impl.inverted_pendulum">cleave.impl.inverted_pendulum module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
-</div>
-<hr class="docutils" />
-<div class="section" id="cleave">
-<h1>CLEAVE<a class="headerlink" href="#cleave" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="cleave.html">cleave package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cleave.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="cleave.api.html">cleave.api package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="cleave.api.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.api.html#module-cleave.api.controller">cleave.api.controller module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.api.html#module-cleave.api.plant">cleave.api.plant module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.api.html#module-cleave.api.util">cleave.api.util module</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="cleave.core.html">cleave.core package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="cleave.core.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.core.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.core.html#module-cleave.core.config">cleave.core.config module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.core.html#module-cleave.core.eventloop">cleave.core.eventloop module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.core.html#module-cleave.core.logging">cleave.core.logging module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.core.html#module-cleave.core.recordable">cleave.core.recordable module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.core.html#module-cleave.core.util">cleave.core.util module</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="cleave.impl.html">cleave.impl package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="cleave.impl.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cleave.impl.html#module-cleave.impl.inverted_pendulum">cleave.impl.inverted_pendulum module</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
 </div>
 </div>
 <div class="section" id="indices-and-tables">
@@ -245,14 +319,21 @@
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
 </div>
+<hr class="docutils" />
+<div class="section" id="license">
+<h1>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h1>
+<p>Copyright 2020 KTH Royal Institute of Technology</p>
+<p>Licensed under the Apache License, Version 2.0 (the “License”); you may not use this project except in compliance with the License. A copy of the license is included in the <a class="reference external" href="https://github.com/KTH-EXPECA/CLEAVE/blob/master/LICENSE">LICENSE</a> file.</p>
+<p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p>
+</div>
 
 
           </div>
           <div class="page-nav">
             <div class="inner"><ul class="page-nav">
   <li class="next">
-    <a href="cleave.api.html"
-       title="next chapter">cleave.api package →</a>
+    <a href="installation.html"
+       title="next chapter">Installation for general usage →</a>
   </li>
 </ul><div class="footer" role="contentinfo">
       &#169; Copyright 2020, KTH Royal Institute of Technology.

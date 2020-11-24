@@ -17,31 +17,30 @@ A framework for testing, benchmarking and evaluating control loop applications o
 CLEAVE is part of the `ExPECA <https://www.jamesgross.org/research/expeca/>`_ research project at `KTH Royal Institute of Technology <https://kth.se>`_. It aims at providing a powerful and flexible platform for the study of networked control systems, particularly on Edge Computing architectures.
 
 
-Installation instructions:
---------------------------
+.. toctree::
+   :maxdepth: 2
+   :caption: Installation
 
-See:
+   installation
+   
+.. toctree::
+   :maxdepth: 2
+   :caption: Usage
 
-- :ref:`installation_gen`.
+   usage
 
-- :ref:`installation_dev`.
+.. toctree::
+   :maxdepth: 2
+   :caption: Development (WIP)
 
-General Usage:
---------------
-
-- :ref:`usage`.
+   codestyle
 
 ==================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Main CLEAVE API
+   :caption: Full documentation:
 
-   cleave.api
-
-==================================
-
-.. include:: modules.rst
+   modules
 
 
 Indices and tables
@@ -50,3 +49,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+==================================
+
+.. include:: license.rst
