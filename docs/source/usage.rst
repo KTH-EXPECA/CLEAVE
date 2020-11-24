@@ -150,7 +150,7 @@ Again, the :code:`prop_name` parameter in the constructor corresponds to the nam
 
 - :code:`get_actuation(self) -> PhyPropType` will be called by the framework at the beginning of each simulation time step. 
 
-Note that due to the fact that commands from the Controller are received asynchronously, there is no guarantee when it comes to the order in which :code:`set_value()` and :code:`get_actuation()` will be called with respect to each other. In fact, depending on the frequency of the plant simulation updates, the sensor sampling rates, network latency, and/or the time the Controller takes to process each input, either of these methods may be called *multiple* repeated times before the other. Users need to account for this when implementing new :code:`Actuator` classes.
+Note that due to the fact that commands from the Controller are received asynchronously, there are no guarantees regarding the order in which :code:`set_value()` and :code:`get_actuation()` are called with respect to each other. In fact, depending on the frequency of the plant simulation updates, the sensor sampling rates, network latency, and/or the time the Controller takes to process each input, either of these methods may be called *multiple* repeated times before the other. Users need to account for this when implementing new :code:`Actuator` classes.
 
 CLEAVE includes implementations for a number of different :code:`Actuator` subclasses. For example, :code:`cleave.api.plant.SimpleConstantActuator` implements an :code:`Actuator` which remembers the last value set by the Controller and applies it on every simulation time step. This can be thought of as, for instance, an electrical motor maintaining a specific RPM until explicitly changed:
 
