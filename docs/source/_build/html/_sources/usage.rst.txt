@@ -176,8 +176,8 @@ CLEAVE includes implementations for a number of different |Actuator| subclasses.
         def get_actuation(self) -> PhyPropType:
             return self._value
 
-Putting it all together
-^^^^^^^^^^^^^^^^^^^^^^^
+Configuring the Plant
+^^^^^^^^^^^^^^^^^^^^^
 
 As discussed before, setting up Plants in CLEAVE is done through the use of configuration files written in pure Python. These configuration files may contain any valid Python code, be split up into multiple files, and even use external libraries. The only requirement is that the following top-level variables are defined:
 
@@ -207,4 +207,54 @@ Simulation of the Plant can then be initialized using the :code:`cleave.py` laun
 .. code-block:: bash
 
     (venv) $ python cleave.py run-plant dummy_plant_config.py
+    ...
+    
+
+Controller Services
+-------------------
+
+As discussed previously, a Controller Service correspond to the element in the NCS emulation which implements the necessary logic and computations to achieve the desired control of the Plant. In CLEAVE, Controller Services are implemented as stateful microservices paired with a specific Plant that receive samples of the Plant |State| semantic sensor variables over a UDP socket and return new values for the |State| semantic actuator variables over the same socket. Controller Services currently have a single user-defined component: a |Controller| which implements the control strategy. 
+
+Controllers
+^^^^^^^^^^^
+
+In practical terms, |Controller| objects are instances of subclasses of :code:`cleave.api.controller.Controller`:
+
+.. code-block:: python
+    
+    class Controller:
+        @abstractmethod
+        def process(self, sensor_values: PhyPropMapping) -> PhyPropMapping:
+            ...
+
+As seen above, this abstract base class defines a single required :code:`process(self, sensor_values: PhyPropMapping) -> PhyPropMapping` method subclasses must implement. This method takes as argument a :code:`Mapping` from sensor variable names to values, as is invoked whenever a new sample is received from the Plant. In turn, it must return a :code:`Mapping` of actuator variable names to new values, which will subsequently be sent to the Plant.
+
+Below we present an example |Controller| for our example Plant that operates on the :code:`speed` and :code:`accel` variables:
+
+.. literalinclude:: ../../examples/dummy_controller.py
+    :language: python
+    :lines: 19-34
+    
+
+Configuring the Controller Service
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Controller Service config files work the same way as Plant config files, the only difference being in the required top-level variables:
+
+- :code:`port`: Integer defining the UDP port on which the Controller Service listens.
+
+- :code:`controller`: Variable pointing to a valid |Controller| instance.
+
+The full example configuration file for our dummy Controller Service would then be:
+
+.. literalinclude:: ../../examples/dummy_controller.py
+    :caption: dummy_controller_config.py
+    :language: python
+    :lines: 15-
+
+Use :code:`cleave.py` launcher script together with the config file to start listening for samples:
+
+.. code-block:: bash
+
+    (venv) $ python cleave.py run-controller dummy_controller_config.py
     ...

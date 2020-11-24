@@ -292,8 +292,8 @@
 </pre></div>
 </div>
 </div>
-<div class="section" id="putting-it-all-together">
-<h3>Putting it all together<a class="headerlink" href="#putting-it-all-together" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="configuring-the-plant">
+<h3>Configuring the Plant<a class="headerlink" href="#configuring-the-plant" title="Permalink to this headline">¶</a></h3>
 <p>As discussed before, setting up Plants in CLEAVE is done through the use of configuration files written in pure Python. These configuration files may contain any valid Python code, be split up into multiple files, and even use external libraries. The only requirement is that the following top-level variables are defined:</p>
 <ul class="simple">
 <li><p><code class="code docutils literal notranslate"><span class="pre">host</span></code>: String containing the IP address of the Controller Service.</p></li>
@@ -345,6 +345,83 @@
 </div>
 <p>Simulation of the Plant can then be initialized using the <code class="code docutils literal notranslate"><span class="pre">cleave.py</span></code> launcher script:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-plant dummy_plant_config.py
+...
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="controller-services">
+<h2>Controller Services<a class="headerlink" href="#controller-services" title="Permalink to this headline">¶</a></h2>
+<p>As discussed previously, a Controller Service correspond to the element in the NCS emulation which implements the necessary logic and computations to achieve the desired control of the Plant. In CLEAVE, Controller Services are implemented as stateful microservices paired with a specific Plant that receive samples of the Plant <code class="code docutils literal notranslate"><span class="pre">State</span></code> semantic sensor variables over a UDP socket and return new values for the <code class="code docutils literal notranslate"><span class="pre">State</span></code> semantic actuator variables over the same socket. Controller Services currently have a single user-defined component: a <code class="code docutils literal notranslate"><span class="pre">Controller</span></code> which implements the control strategy.</p>
+<div class="section" id="controllers">
+<h3>Controllers<a class="headerlink" href="#controllers" title="Permalink to this headline">¶</a></h3>
+<p>In practical terms, <code class="code docutils literal notranslate"><span class="pre">Controller</span></code> objects are instances of subclasses of <code class="code docutils literal notranslate"><span class="pre">cleave.api.controller.Controller</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Controller</span><span class="p">:</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sensor_values</span><span class="p">:</span> <span class="n">PhyPropMapping</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhyPropMapping</span><span class="p">:</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>As seen above, this abstract base class defines a single required <code class="code docutils literal notranslate"><span class="pre">process(self,</span> <span class="pre">sensor_values:</span> <span class="pre">PhyPropMapping)</span> <span class="pre">-&gt;</span> <span class="pre">PhyPropMapping</span></code> method subclasses must implement. This method takes as argument a <code class="code docutils literal notranslate"><span class="pre">Mapping</span></code> from sensor variable names to values, as is invoked whenever a new sample is received from the Plant. In turn, it must return a <code class="code docutils literal notranslate"><span class="pre">Mapping</span></code> of actuator variable names to new values, which will subsequently be sent to the Plant.</p>
+<p>Below we present an example <code class="code docutils literal notranslate"><span class="pre">Controller</span></code> for our example Plant that operates on the <code class="code docutils literal notranslate"><span class="pre">speed</span></code> and <code class="code docutils literal notranslate"><span class="pre">accel</span></code> variables:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">DummyController</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sensor_values</span><span class="p">:</span> <span class="n">PhyPropMapping</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhyPropMapping</span><span class="p">:</span>
+        <span class="c1"># get the speed</span>
+        <span class="n">speed</span> <span class="o">=</span> <span class="n">sensor_values</span><span class="p">[</span><span class="s1">&#39;speed&#39;</span><span class="p">]</span>
+
+        <span class="c1"># if speed is above 15 m/s, brake</span>
+        <span class="c1"># if below 5 m/s, accelerate</span>
+        <span class="c1"># otherwise do nothing</span>
+        <span class="k">if</span> <span class="n">speed</span> <span class="o">&gt;</span> <span class="mf">15.0</span><span class="p">:</span>
+            <span class="n">accel</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="n">speed</span> <span class="o">&lt;</span> <span class="mf">5.0</span><span class="p">:</span>
+            <span class="n">accel</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">accel</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;accel&#39;</span><span class="p">:</span> <span class="n">accel</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuring-the-controller-service">
+<h3>Configuring the Controller Service<a class="headerlink" href="#configuring-the-controller-service" title="Permalink to this headline">¶</a></h3>
+<p>Controller Service config files work the same way as Plant config files, the only difference being in the required top-level variables:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">port</span></code>: Integer defining the UDP port on which the Controller Service listens.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">controller</span></code>: Variable pointing to a valid <code class="code docutils literal notranslate"><span class="pre">Controller</span></code> instance.</p></li>
+</ul>
+<p>The full example configuration file for our dummy Controller Service would then be:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">dummy_controller_config.py</span><a class="headerlink" href="#id2" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cleave.api.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">cleave.api.util</span> <span class="kn">import</span> <span class="n">PhyPropMapping</span>
+
+
+<span class="k">class</span> <span class="nc">DummyController</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sensor_values</span><span class="p">:</span> <span class="n">PhyPropMapping</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhyPropMapping</span><span class="p">:</span>
+        <span class="c1"># get the speed</span>
+        <span class="n">speed</span> <span class="o">=</span> <span class="n">sensor_values</span><span class="p">[</span><span class="s1">&#39;speed&#39;</span><span class="p">]</span>
+
+        <span class="c1"># if speed is above 15 m/s, brake</span>
+        <span class="c1"># if below 5 m/s, accelerate</span>
+        <span class="c1"># otherwise do nothing</span>
+        <span class="k">if</span> <span class="n">speed</span> <span class="o">&gt;</span> <span class="mf">15.0</span><span class="p">:</span>
+            <span class="n">accel</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="n">speed</span> <span class="o">&lt;</span> <span class="mf">5.0</span><span class="p">:</span>
+            <span class="n">accel</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">accel</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;accel&#39;</span><span class="p">:</span> <span class="n">accel</span><span class="p">}</span>
+
+
+<span class="n">port</span> <span class="o">=</span> <span class="mi">50000</span>
+<span class="n">controller</span> <span class="o">=</span> <span class="n">DummyController</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>Use <code class="code docutils literal notranslate"><span class="pre">cleave.py</span></code> launcher script together with the config file to start listening for samples:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-controller dummy_controller_config.py
 ...
 </pre></div>
 </div>
