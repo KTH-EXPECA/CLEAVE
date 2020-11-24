@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>Usage</title>
+      <title>Tutorial: general usage</title>
     
       <link rel="stylesheet" href="_static/pygments.css">
       <link rel="stylesheet" href="_static/theme.css">
@@ -38,9 +38,9 @@
 
   
     <div class="nav-item">
-      <a href="index.html#installation-instructions"
+      <a href="index.html#general-usage"
          class="nav-link ">
-         Main CLEAVE API:
+         Main CLEAVE API
       </a>
     </div>
   
@@ -68,9 +68,9 @@
 
   
     <div class="nav-item">
-      <a href="index.html#installation-instructions"
+      <a href="index.html#general-usage"
          class="nav-link ">
-         Main CLEAVE API:
+         Main CLEAVE API
       </a>
     </div>
   
@@ -100,7 +100,7 @@
   
     <div class="sidebar-group">
       <p class="caption">
-        <span class="caption-text"><a href="index.html#installation-instructions">Main CLEAVE API:</a></span>
+        <span class="caption-text"><a href="index.html#general-usage">Main CLEAVE API</a></span>
       </p>
       <ul class="">
         
@@ -149,7 +149,7 @@
   <ul class="breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
     
-    <li>Usage</li>
+    <li>Tutorial: general usage</li>
   </ul>
   
 
@@ -160,8 +160,8 @@
 <hr>
           <div class="content" role="main">
             
-  <div class="section" id="usage">
-<span id="id1"></span><h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="tutorial-general-usage">
+<span id="usage"></span><h1>Tutorial: general usage<a class="headerlink" href="#tutorial-general-usage" title="Permalink to this headline">¶</a></h1>
 <p>Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controllers. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controllers are the computational elements which perform the necessary computations for the controlling of Plants.</p>
 <p>In the context of CLEAVE emulations, the definition of Plants and Controllers are done through configuration files written in pure Python, which are then executed through the <code class="code docutils literal notranslate"><span class="pre">cleave.py</span></code> launcher script. A couple of examples of such configuration files can be found under the <code class="code docutils literal notranslate"><span class="pre">examples/</span></code> directory:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>// To run a plant configuration
@@ -188,8 +188,10 @@
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">advance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="o">...</span>
+
     <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="o">...</span>
+
     <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="o">...</span>
 </pre></div>
@@ -226,7 +228,69 @@
 </div>
 <div class="section" id="sensors">
 <h3>Sensors<a class="headerlink" href="#sensors" title="Permalink to this headline">¶</a></h3>
-<p>Similarly to <code class="code docutils literal notranslate"><span class="pre">State</span></code>, a <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> in CLEAVE corresponds to an object instance of a subclass of <code class="code docutils literal notranslate"><span class="pre">cleave.api.Sensor</span></code>.</p>
+<p>Similarly to <code class="code docutils literal notranslate"><span class="pre">State</span></code>, a <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> in CLEAVE corresponds to an object instance of a subclass of <code class="code docutils literal notranslate"><span class="pre">cleave.api.Sensor</span></code> implementing the required method <code class="code docutils literal notranslate"><span class="pre">process_sample(self,</span> <span class="pre">value:</span> <span class="pre">PhyPropType)</span> <span class="pre">-&gt;</span> <span class="pre">PhyPropType</span></code>. The <code class="code docutils literal notranslate"><span class="pre">PhyPropType</span></code> typing variable in the signature simply represents the type of variables that can be measured in a Plant, currently <code class="code docutils literal notranslate"><span class="pre">int</span></code>, <code class="code docutils literal notranslate"><span class="pre">float</span></code>, <code class="code docutils literal notranslate"><span class="pre">bool</span></code> and <code class="code docutils literal notranslate"><span class="pre">bytes</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Sensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sample_freq</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">process_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">PhyPropType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhyPropType</span><span class="p">:</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>As can be observed above, the <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> base class constructor takes two parameters:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">prop_name</span></code>: Corresponds to a string holding the name of the semantic variable the <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> samples from.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">sample_freq</span></code>: An integer representing the sampling frequency of this <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> in Hz.</p></li>
+</ul>
+<p><code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> objects in the framework can be conceptualized as attaching to a semantic variable defined in the <code class="code docutils literal notranslate"><span class="pre">State</span></code>. Whenever it is time for the <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> to sample the value of this variable, <code class="code docutils literal notranslate"><span class="pre">process_sample(value)</span></code> is called with its latest value, and whatever is returned is passed on to the Controller. Thus, users should extend <code class="code docutils literal notranslate"><span class="pre">process_sample(value)</span></code> with any procedure to add noise or distortion to the measured variable they desire.</p>
+<p>An example simple <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> class which simply adds a bias to the measured value could be implemented as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">BiasSensor</span><span class="p">(</span><span class="n">Sensor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sample_freq</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BiasSensor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">prop_name</span><span class="p">,</span> <span class="n">sample_freq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bias</span> <span class="o">=</span> <span class="n">bias</span>
+
+    <span class="k">def</span> <span class="nf">process_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">PhyPropType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhyPropType</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bias</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="actuators">
+<h3>Actuators<a class="headerlink" href="#actuators" title="Permalink to this headline">¶</a></h3>
+<p><code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> objects follow a similar logic as <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> objects, in the sense that they “attach” to a semantic variable in the <code class="code docutils literal notranslate"><span class="pre">State</span></code> and modify its value at each iteration following commands from the Controller.</p>
+<p>In practical terms, <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> objects correspond to instances of subclasses of <code class="code docutils literal notranslate"><span class="pre">cleave.api.Actuator</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Actuator</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">desired_value</span><span class="p">:</span> <span class="n">PhyPropType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_actuation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhyPropType</span><span class="p">:</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>Again, the <code class="code docutils literal notranslate"><span class="pre">prop_name</span></code> parameter in the constructor corresponds to the name of the semantic variable the <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> attaches to. The <code class="code docutils literal notranslate"><span class="pre">set_value(self,</span> <span class="pre">desired_value:</span> <span class="pre">PhyPropType)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> and <code class="code docutils literal notranslate"><span class="pre">get_actuation(self)</span> <span class="pre">-&gt;</span> <span class="pre">PhyPropType</span></code> methods correspond to the required methods users should implement:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">set_value(self,</span> <span class="pre">desired_value:</span> <span class="pre">PhyPropType)</span></code> will be called by the framework whenever a new value for the actuated semantic variable is received from the Controller.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">get_actuation(self)</span> <span class="pre">-&gt;</span> <span class="pre">PhyPropType</span></code> will be called by the framework at the beginning of each simulation time step.</p></li>
+</ul>
+<p>Note that due to the fact that commands from the Controller are received asynchronously, there is no guarantee when it comes to the order in which <code class="code docutils literal notranslate"><span class="pre">set_value()</span></code> and <code class="code docutils literal notranslate"><span class="pre">get_actuation()</span></code> will be called with respect to each other. In fact, depending on the frequency of the plant simulation updates, the sensor sampling rates, network latency, and/or the time the Controller takes to process each input, either of these methods may be called <em>multiple</em> repeated times before the other. Users need to account for this when implementing new <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> classes.</p>
+<p>CLEAVE includes implementations for a number of different <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> subclasses. For example, <code class="code docutils literal notranslate"><span class="pre">cleave.api.plant.SimpleConstantActuator</span></code> implements an <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> which remembers the last value set by the Controller and applies it on every simulation time step. This can be thought of as, for instance, an electrical motor maintaining a specific RPM until explicitly changed:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">SimpleConstantActuator</span><span class="p">(</span><span class="n">Actuator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_value</span><span class="p">:</span> <span class="n">PhyPropType</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SimpleConstantActuator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">prop_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">initial_value</span>
+
+    <span class="k">def</span> <span class="nf">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">desired_value</span><span class="p">:</span> <span class="n">PhyPropType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">desired_value</span>
+
+    <span class="k">def</span> <span class="nf">get_actuation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhyPropType</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>

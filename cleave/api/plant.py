@@ -130,6 +130,8 @@ class Sensor(ABC):
     logic.
     """
 
+    # TODO: make Sensors and Actuators share a base class?
+
     def __init__(self, prop_name: str, sample_freq: int):
         """
         Parameters
@@ -205,20 +207,15 @@ class Actuator(ABC):
     set_value() and get_actuation() methods with their logic.
     """
 
-    def __init__(self,
-                 prop_name: str,
-                 start_value: Optional[PhyPropType] = None):
+    def __init__(self, prop_name: str):
         """
         Parameters
         ----------
         prop_name
             Name of the property actuated upon by this actuator.
-        start_value
-            Starting value this actuator outputs.
         """
         super(Actuator, self).__init__()
         self._prop_name = prop_name
-        self._value = start_value
 
     @property
     def actuated_property_name(self) -> str:
@@ -270,6 +267,10 @@ class SimpleConstantActuator(Actuator):
     the target variable).
     """
 
+    def __init__(self, initial_value: PhyPropType, prop_name: str):
+        super(SimpleConstantActuator, self).__init__(prop_name)
+        self._value = initial_value
+
     def set_value(self, desired_value: PhyPropType) -> None:
         """
         Sets the value of the actuated property governed by this actuator.
@@ -305,9 +306,9 @@ class SimpleImpulseActuator(Actuator):
     def __init__(self,
                  prop_name: str,
                  default_value: PhyPropType):
-        super(SimpleImpulseActuator, self).__init__(prop_name=prop_name,
-                                                    start_value=default_value)
+        super(SimpleImpulseActuator, self).__init__(prop_name=prop_name)
         self._default_value = default_value
+        self._value = default_value
 
     def set_value(self, desired_value: PhyPropType) -> None:
         """
@@ -350,14 +351,13 @@ class GaussianConstantActuator(SimpleConstantActuator):
                  g_std: float,
                  start_value: Optional[PhyPropType] = None,
                  prealloc_size: int = int(1e6)):
-        super(GaussianConstantActuator, self).__init__(
-            prop_name=prop_name, start_value=start_value
-        )
+        super(GaussianConstantActuator, self).__init__(prop_name=prop_name)
         import numpy
         self._random = numpy.random.default_rng()
         self._noise_mean = g_mean
         self._noise_std = g_std
         self._noise_prealloc = prealloc_size
+        self._value = start_value
 
         # preallocate values for efficiency
         self._noise = deque(self._random.normal(

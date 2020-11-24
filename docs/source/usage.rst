@@ -1,7 +1,7 @@
 .. _usage:
 
-Usage
-=====
+Tutorial: general usage
+=======================
 
 Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controllers. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controllers are the computational elements which perform the necessary computations for the controlling of Plants.
 
@@ -35,14 +35,16 @@ State
 
 :code:`State` objects in CLEAVE are simply instances of classes which extend from the abstract base class `cleave.api.plant.State`. This base class defines a single required method as well as two optional ones:
 
-.. code:: python
+.. code-block:: python
 
     class State:
         @abstractmethod
         def advance(self, dt: float) -> None:
             ...
+
         def initialize(self) -> None:
             ...  
+
         def shutdown(self) -> None:
             ...
 
@@ -65,7 +67,7 @@ Furthermore, an optional "sanity check" may be attached to each semantic variabl
 
 An example skeleton of a :code:`State` with a single input variable and a single output variable could then look something like the following:
 
-.. code:: python
+.. code-block:: python
 
     class ExampleState(State):
         def __init__(self):
@@ -88,4 +90,79 @@ More complex example implementations of :code:`State` classes representing Inver
 Sensors
 ^^^^^^^
 
-Similarly to :code:`State`, a :code:`Sensor` in CLEAVE corresponds to an object instance of a subclass of :code:`cleave.api.Sensor`.
+Similarly to :code:`State`, a :code:`Sensor` in CLEAVE corresponds to an object instance of a subclass of :code:`cleave.api.Sensor` implementing the required method :code:`process_sample(self, value: PhyPropType) -> PhyPropType`. The :code:`PhyPropType` typing variable in the signature simply represents the type of variables that can be measured in a Plant, currently :code:`int`, :code:`float`, :code:`bool` and :code:`bytes`.
+
+.. code-block:: python
+
+    class Sensor:
+        def __init__(self, prop_name: str, sample_freq: int):
+            ...
+
+        @abstractmethod
+        def process_sample(self, value: PhyPropType) -> PhyPropType:
+            ...
+
+As can be observed above, the :code:`Sensor` base class constructor takes two parameters: 
+
+- :code:`prop_name`: Corresponds to a string holding the name of the semantic variable the :code:`Sensor` samples from.
+
+- :code:`sample_freq`: An integer representing the sampling frequency of this :code:`Sensor` in Hz.
+
+:code:`Sensor` objects in the framework can be conceptualized as attaching to a semantic variable defined in the :code:`State`. Whenever it is time for the :code:`Sensor` to sample the value of this variable, :code:`process_sample(value)` is called with its latest value, and whatever is returned is passed on to the Controller. Thus, users should extend :code:`process_sample(value)` with any procedure to add noise or distortion to the measured variable they desire.
+
+An example simple :code:`Sensor` class which simply adds a bias to the measured value could be implemented as follows:
+
+.. code-block:: python
+
+    class BiasSensor(Sensor):
+        def __init__(self, bias: float, prop_name: str, sample_freq: int):
+            super(BiasSensor, self).__init__(prop_name, sample_freq)
+            self._bias = bias
+            
+        def process_sample(self, value: PhyPropType) -> PhyPropType:
+            return value + self._bias
+
+
+Actuators
+^^^^^^^^^
+
+:code:`Actuator` objects follow a similar logic as :code:`Sensor` objects, in the sense that they "attach" to a semantic variable in the :code:`State` and modify its value at each iteration following commands from the Controller.
+
+In practical terms, :code:`Actuator` objects correspond to instances of subclasses of :code:`cleave.api.Actuator`:
+
+.. code-block:: python
+
+    class Actuator:
+        def __init__(self, prop_name: str):
+            ...
+
+        @abstractmethod
+        def set_value(self, desired_value: PhyPropType) -> None:
+            ...
+
+        @abstractmethod
+        def get_actuation(self) -> PhyPropType:
+            ...
+
+Again, the :code:`prop_name` parameter in the constructor corresponds to the name of the semantic variable the :code:`Actuator` attaches to. The :code:`set_value(self, desired_value: PhyPropType) -> None` and :code:`get_actuation(self) -> PhyPropType` methods correspond to the required methods users should implement:
+
+- :code:`set_value(self, desired_value: PhyPropType)` will be called by the framework whenever a new value for the actuated semantic variable is received from the Controller. 
+
+- :code:`get_actuation(self) -> PhyPropType` will be called by the framework at the beginning of each simulation time step. 
+
+Note that due to the fact that commands from the Controller are received asynchronously, there is no guarantee when it comes to the order in which :code:`set_value()` and :code:`get_actuation()` will be called with respect to each other. In fact, depending on the frequency of the plant simulation updates, the sensor sampling rates, network latency, and/or the time the Controller takes to process each input, either of these methods may be called *multiple* repeated times before the other. Users need to account for this when implementing new :code:`Actuator` classes.
+
+CLEAVE includes implementations for a number of different :code:`Actuator` subclasses. For example, :code:`cleave.api.plant.SimpleConstantActuator` implements an :code:`Actuator` which remembers the last value set by the Controller and applies it on every simulation time step. This can be thought of as, for instance, an electrical motor maintaining a specific RPM until explicitly changed:
+
+.. code-block:: python
+    
+    class SimpleConstantActuator(Actuator):
+        def __init__(self, initial_value: PhyPropType, prop_name: str):
+            super(SimpleConstantActuator, self).__init__(prop_name)
+            self._value = initial_value
+
+        def set_value(self, desired_value: PhyPropType) -> None:
+            self._value = desired_value
+
+        def get_actuation(self) -> PhyPropType:
+            return self._value

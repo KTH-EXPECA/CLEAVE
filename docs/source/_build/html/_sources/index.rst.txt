@@ -35,7 +35,7 @@ General Usage:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Main CLEAVE API:
+   :caption: Main CLEAVE API
 
    cleave.api
 
