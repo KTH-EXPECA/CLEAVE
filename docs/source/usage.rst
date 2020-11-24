@@ -1,11 +1,20 @@
 .. _usage:
 
+.. |State| replace:: :code:`State`
+
+.. |Actuator| replace:: :code:`Actuator`
+
+.. |Sensor| replace:: :code:`Sensor`
+
+.. |Controller| replace:: :code:`Controller` 
+
+
 Tutorial: general usage
 =======================
 
-Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controllers. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controllers are the computational elements which perform the necessary computations for the controlling of Plants.
+Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controller Services. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controller Services are the computational elements which perform the necessary computations for the controlling of Plants.
 
-In the context of CLEAVE emulations, the definition of Plants and Controllers are done through configuration files written in pure Python, which are then executed through the :code:`cleave.py` launcher script. A couple of examples of such configuration files can be found under the :code:`examples/` directory:
+In the context of CLEAVE emulations, the definition of Plants and Controller Services are done through configuration files written in pure Python, which are then executed through the :code:`cleave.py` launcher script. A couple of examples of such configuration files can be found under the :code:`examples/` directory:
 
 .. code-block:: bash
 
@@ -17,23 +26,23 @@ In the context of CLEAVE emulations, the definition of Plants and Controllers ar
 
 Check :code:`cleave.py --help` for more details and additional options.
 
-In the following sections we will explain how to set up NCS emulations in CLEAVE by developing and configuring Plants and Controllers from scratch and connecting them.
+In the following sections we will explain how to set up NCS emulations in CLEAVE by developing and configuring Plants and Controller Services from scratch and connecting them.
 
 Plants
 ------
 
-These are the representations of the physical systems wich we want to control. Plants in CLEAVE are usually physical simulations of some system we wish to monitor and act upon. Correspondingly, a Plant is composed of three subcomponents:
+These are the representations of the physical systems wich we want to control. Plants in CLEAVE are usually physical simulations of some system we wish to monitor and act upon. Correspondingly, a Plant is composed of three sub-components:
 
-- A :code:`State`, which implements the discrete-time behavior of the simulated system.
+- A |State|, which implements the discrete-time behavior of the simulated system.
 
-- A collection of :code:`Sensor` objects, which measure specific properties of the :code:`State`, potentially transforming them, and send them to the Controller.
+- A collection of |Sensor| objects, which measure specific properties of the |State|, potentially transforming them, and send them to the Controller Service.
 
-- A collection of :code:`Actuator` objects, which receive inputs from the Controller, potentially transform or distort them, and finally act upon specific properties of the :code:`State`.
+- A collection of |Actuator| objects, which receive inputs from the Controller Service, potentially transform or distort them, and finally act upon specific properties of the |State|.
 
 State
 ^^^^^
 
-:code:`State` objects in CLEAVE are simply instances of classes which extend from the abstract base class `cleave.api.plant.State`. This base class defines a single required method as well as two optional ones:
+|State| objects in CLEAVE are simply instances of classes which extend from the abstract base class `cleave.api.plant.State`. This base class defines a single required method as well as two optional ones:
 
 .. code-block:: python
 
@@ -53,19 +62,19 @@ The :code:`advance(self, dt: float) -> None` method is required. It is called by
 
 Methods :code:`def initialize(self) -> None` and :code:`def shutdown(self) -> None` are optional. They are called by the framework at the very beginning of the Plant execution and right before shutdown, respectively. It is in these methods users should put their initialization and shutdown logic.
 
-:code:`State` objects also need to expose the properties which that will be provided as inputs to the Controller and the properties the Controller acts upon. This is done by defining special *semantic* variables in the constructor of the :code:`State`:
+|State| objects also need to expose the properties which that will be provided as inputs to the Controller and the properties the Controller acts upon. This is done by defining special *semantic* variables in the constructor of the |State|:
 
-- :code:`cleave.api.plant.SensorVariable` objects represent properties that will be measured by sensors and subsequently pushed to the Controller.
+- :code:`cleave.api.plant.SensorVariable` objects represent properties that will be measured by sensors and subsequently pushed to the Controller Service.
 
-- :code:`cleave.api.plant.ActuatorVariable` objects represent properties that will be modified by the actuation commands generated by the Controller. The values of these variables will be directly modified by the framework as commands come in.
+- :code:`cleave.api.plant.ActuatorVariable` objects represent properties that will be modified by the actuation commands generated by the Controller Service. The values of these variables will be directly modified by the framework as commands come in.
 
-- :code:`cleave.api.plant.ControllerParameter` objects represent parameters passed to the controller at the beginning of the emulation (WIP, not implemented yet).
+- :code:`cleave.api.plant.ControllerParameter` objects represent parameters passed to the Controller Service at the beginning of the emulation **(WIP, not implemented yet)**.
 
 These objects are simply used to track the values during execution, and thus are completely transparent, allowing unrestricted access to the underlying raw values at all times. This means that after initialization, these variables can simply be used as normal "raw" values without having to consider the semantic variable object around it.
 
 Furthermore, an optional "sanity check" may be attached to each semantic variable. This simply corresponds to a callable which receives the current value of the semantic variable and returns a boolean indicating if the current value is within acceptable ranges or not. This check will be executed at each time step of the Plant simulation, and if it at any point returns :code:`False` the framework will record the corresponding variable and then halt the emulation. 
 
-An example skeleton of a :code:`State` with a single input variable and a single output variable could then look something like the following:
+An example skeleton of a |State| with a single input variable and a single output variable could then look something like the following:
 
 .. code-block:: python
 
@@ -85,12 +94,12 @@ An example skeleton of a :code:`State` with a single input variable and a single
 
             self.speed += dt * self.accel
 
-More complex example implementations of :code:`State` classes representing Inverted Pendulum systems are included in the module :code:`cleave.impl.inverted_pendulum`.
+More complex example implementations of |State| classes representing Inverted Pendulum systems are included in the module :code:`cleave.impl.inverted_pendulum`.
 
 Sensors
 ^^^^^^^
 
-Similarly to :code:`State`, a :code:`Sensor` in CLEAVE corresponds to an object instance of a subclass of :code:`cleave.api.Sensor` implementing the required method :code:`process_sample(self, value: PhyPropType) -> PhyPropType`. The :code:`PhyPropType` typing variable in the signature simply represents the type of variables that can be measured in a Plant, currently :code:`int`, :code:`float`, :code:`bool` and :code:`bytes`.
+Similarly to |State|, a |Sensor| in CLEAVE corresponds to an object instance of a subclass of :code:`cleave.api.Sensor` implementing the required method :code:`process_sample(self, value: PhyPropType) -> PhyPropType`. The :code:`PhyPropType` typing variable in the signature simply represents the type of variables that can be measured in a Plant, currently :code:`int`, :code:`float`, :code:`bool` and :code:`bytes`.
 
 .. code-block:: python
 
@@ -102,15 +111,15 @@ Similarly to :code:`State`, a :code:`Sensor` in CLEAVE corresponds to an object 
         def process_sample(self, value: PhyPropType) -> PhyPropType:
             ...
 
-As can be observed above, the :code:`Sensor` base class constructor takes two parameters: 
+As can be observed above, the |Sensor| base class constructor takes two parameters: 
 
-- :code:`prop_name`: Corresponds to a string holding the name of the semantic variable the :code:`Sensor` samples from.
+- :code:`prop_name`: Corresponds to a string holding the name of the semantic variable the |Sensor| samples from.
 
-- :code:`sample_freq`: An integer representing the sampling frequency of this :code:`Sensor` in Hz.
+- :code:`sample_freq`: An integer representing the sampling frequency of this |Sensor| in Hz.
 
-:code:`Sensor` objects in the framework can be conceptualized as attaching to a semantic variable defined in the :code:`State`. Whenever it is time for the :code:`Sensor` to sample the value of this variable, :code:`process_sample(value)` is called with its latest value, and whatever is returned is passed on to the Controller. Thus, users should extend :code:`process_sample(value)` with any procedure to add noise or distortion to the measured variable they desire.
+|Sensor| objects in the framework can be conceptualized as attaching to a semantic variable defined in the |State|. Whenever it is time for the |Sensor| to sample the value of this variable, :code:`process_sample(value)` is called with its latest value, and whatever is returned is passed on to the Controller Service. Thus, users should extend :code:`process_sample(value)` with any procedure to add noise or distortion to the measured variable they desire.
 
-An example simple :code:`Sensor` class which simply adds a bias to the measured value could be implemented as follows:
+An example simple |Sensor| class which simply adds a bias to the measured value could be implemented as follows:
 
 .. code-block:: python
 
@@ -126,9 +135,9 @@ An example simple :code:`Sensor` class which simply adds a bias to the measured 
 Actuators
 ^^^^^^^^^
 
-:code:`Actuator` objects follow a similar logic as :code:`Sensor` objects, in the sense that they "attach" to a semantic variable in the :code:`State` and modify its value at each iteration following commands from the Controller.
+|Actuator| objects follow a similar logic as |Sensor| objects, in the sense that they "attach" to a semantic variable in the |State| and modify its value at each iteration following commands from the Controller Service.
 
-In practical terms, :code:`Actuator` objects correspond to instances of subclasses of :code:`cleave.api.Actuator`:
+In practical terms, |Actuator| objects correspond to instances of subclasses of :code:`cleave.api.Actuator`:
 
 .. code-block:: python
 
@@ -144,15 +153,15 @@ In practical terms, :code:`Actuator` objects correspond to instances of subclass
         def get_actuation(self) -> PhyPropType:
             ...
 
-Again, the :code:`prop_name` parameter in the constructor corresponds to the name of the semantic variable the :code:`Actuator` attaches to. The :code:`set_value(self, desired_value: PhyPropType) -> None` and :code:`get_actuation(self) -> PhyPropType` methods correspond to the required methods users should implement:
+Again, the :code:`prop_name` parameter in the constructor corresponds to the name of the semantic variable the |Actuator| attaches to. The :code:`set_value(self, desired_value: PhyPropType) -> None` and :code:`get_actuation(self) -> PhyPropType` methods correspond to the required methods users should implement:
 
 - :code:`set_value(self, desired_value: PhyPropType)` will be called by the framework whenever a new value for the actuated semantic variable is received from the Controller. 
 
 - :code:`get_actuation(self) -> PhyPropType` will be called by the framework at the beginning of each simulation time step. 
 
-Note that due to the fact that commands from the Controller are received asynchronously, there are no guarantees regarding the order in which :code:`set_value()` and :code:`get_actuation()` are called with respect to each other. In fact, depending on the frequency of the plant simulation updates, the sensor sampling rates, network latency, and/or the time the Controller takes to process each input, either of these methods may be called *multiple* repeated times before the other. Users need to account for this when implementing new :code:`Actuator` classes.
+Note that due to the fact that commands from the Controller Service are received asynchronously, there are no guarantees regarding the order in which :code:`set_value()` and :code:`get_actuation()` are called with respect to each other. In fact, depending on the frequency of the plant simulation updates, the sensor sampling rates, network latency, and/or the time the Controller takes to process each input, either of these methods may be called *multiple* repeated times before the other. Users need to account for this when implementing new |Actuator| classes.
 
-CLEAVE includes implementations for a number of different :code:`Actuator` subclasses. For example, :code:`cleave.api.plant.SimpleConstantActuator` implements an :code:`Actuator` which remembers the last value set by the Controller and applies it on every simulation time step. This can be thought of as, for instance, an electrical motor maintaining a specific RPM until explicitly changed:
+CLEAVE includes implementations for a number of different |Actuator| subclasses. For example, :code:`cleave.api.plant.SimpleConstantActuator` implements an |Actuator| which remembers the last value set by the Controller Service and applies it on every simulation time step. This can be thought of as, for instance, an electrical motor maintaining a specific RPM until explicitly changed:
 
 .. code-block:: python
     
@@ -172,17 +181,17 @@ Putting it all together
 
 As discussed before, setting up Plants in CLEAVE is done through the use of configuration files written in pure Python. These configuration files may contain any valid Python code, be split up into multiple files, and even use external libraries. The only requirement is that the following top-level variables are defined:
 
-- :code:`host`: String containing the IP address of the Controller.
+- :code:`host`: String containing the IP address of the Controller Service.
 
-- :code:`port`: Integer representing the UDP port on which the Controller is listening.
+- :code:`port`: Integer representing the UDP port on which the Controller Service is listening.
 
-- :code:`tick_rate`: Integer representing the update frequency of the Plant in Hertz. In other words, this number represents the number of iterations per second of the discrete-time simulation involving the :code:`State`.
+- :code:`tick_rate`: Integer representing the update frequency of the Plant in Hertz. In other words, this number represents the number of iterations per second of the discrete-time simulation involving the |State|.
 
-- :code:`state`: A variable pointing to a valid instance of a subclass of :code:`State`.
+- |State|: A variable pointing to a valid instance of a subclass of |State|.
 
-- :code:`sensors`: A collection (list, tuple, set, etc) of instances of subclasses of :code:`Sensor`.
+- :code:`sensors`: A collection (list, tuple, set, etc) of instances of subclasses of |Sensor|.
 
-- :code:`actuators`: A collection of instances of subclasses of :code:`Actuator`.
+- :code:`actuators`: A collection of instances of subclasses of |Actuator|.
 
 Putting together our examples from the previous subsections, an example configuration file for the simple dummy :code:`ExampleState` discussed previously would look something like the following:
 
