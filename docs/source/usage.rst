@@ -166,3 +166,36 @@ CLEAVE includes implementations for a number of different :code:`Actuator` subcl
 
         def get_actuation(self) -> PhyPropType:
             return self._value
+
+Putting it all together
+^^^^^^^^^^^^^^^^^^^^^^^
+
+As discussed before, setting up Plants in CLEAVE is done through the use of configuration files written in pure Python. These configuration files may contain any valid Python code, be split up into multiple files, and even use external libraries. The only requirement is that the following top-level variables are defined:
+
+- :code:`host`: String containing the IP address of the Controller.
+
+- :code:`port`: Integer representing the UDP port on which the Controller is listening.
+
+- :code:`tick_rate`: Integer representing the update frequency of the Plant in Hertz. In other words, this number represents the number of iterations per second of the discrete-time simulation involving the :code:`State`.
+
+- :code:`state`: A variable pointing to a valid instance of a subclass of :code:`State`.
+
+- :code:`sensors`: A collection (list, tuple, set, etc) of instances of subclasses of :code:`Sensor`.
+
+- :code:`actuators`: A collection of instances of subclasses of :code:`Actuator`.
+
+Putting together our examples from the previous subsections, an example configuration file for the simple dummy :code:`ExampleState` discussed previously would look something like the following:
+
+.. literalinclude:: ../../examples/dummy_plant.py
+    :caption: dummy_plant_config.py
+    :language: python
+    :emphasize-lines: 41-48
+    :lines: 15-
+    
+
+Simulation of the Plant can then be initialized using the :code:`cleave.py` launcher script:
+
+.. code-block:: bash
+
+    (venv) $ python cleave.py run-plant dummy_plant_config.py
+    ...

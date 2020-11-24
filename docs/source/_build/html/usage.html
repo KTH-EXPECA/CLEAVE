@@ -292,6 +292,63 @@
 </pre></div>
 </div>
 </div>
+<div class="section" id="putting-it-all-together">
+<h3>Putting it all together<a class="headerlink" href="#putting-it-all-together" title="Permalink to this headline">¶</a></h3>
+<p>As discussed before, setting up Plants in CLEAVE is done through the use of configuration files written in pure Python. These configuration files may contain any valid Python code, be split up into multiple files, and even use external libraries. The only requirement is that the following top-level variables are defined:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">host</span></code>: String containing the IP address of the Controller.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">port</span></code>: Integer representing the UDP port on which the Controller is listening.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">tick_rate</span></code>: Integer representing the update frequency of the Plant in Hertz. In other words, this number represents the number of iterations per second of the discrete-time simulation involving the <code class="code docutils literal notranslate"><span class="pre">State</span></code>.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">state</span></code>: A variable pointing to a valid instance of a subclass of <code class="code docutils literal notranslate"><span class="pre">State</span></code>.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">sensors</span></code>: A collection (list, tuple, set, etc) of instances of subclasses of <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code>.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">actuators</span></code>: A collection of instances of subclasses of <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code>.</p></li>
+</ul>
+<p>Putting together our examples from the previous subsections, an example configuration file for the simple dummy <code class="code docutils literal notranslate"><span class="pre">ExampleState</span></code> discussed previously would look something like the following:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">dummy_plant_config.py</span><a class="headerlink" href="#id1" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">cleave.api.plant</span> <span class="kn">import</span> <span class="n">ActuatorVariable</span><span class="p">,</span> <span class="n">Sensor</span><span class="p">,</span> <span class="n">SensorVariable</span><span class="p">,</span> \
+    <span class="n">SimpleConstantActuator</span><span class="p">,</span> <span class="n">State</span>
+<span class="kn">from</span> <span class="nn">cleave.api.util</span> <span class="kn">import</span> <span class="n">PhyPropType</span>
+
+
+<span class="k">class</span> <span class="nc">ExampleState</span><span class="p">(</span><span class="n">State</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ExampleState</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">accel</span> <span class="o">=</span> <span class="n">ActuatorVariable</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">SensorVariable</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sanity_check</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span> <span class="o">&lt;</span> <span class="mf">200.0</span><span class="p">)</span>
+        <span class="c1"># shuts down if speed ever exceeds 200.0 m/s</span>
+
+    <span class="k">def</span> <span class="nf">advance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">+=</span> <span class="n">dt</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">accel</span>
+
+
+<span class="k">class</span> <span class="nc">BiasSensor</span><span class="p">(</span><span class="n">Sensor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sample_freq</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BiasSensor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">prop_name</span><span class="p">,</span> <span class="n">sample_freq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bias</span> <span class="o">=</span> <span class="n">bias</span>
+
+    <span class="k">def</span> <span class="nf">process_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">PhyPropType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhyPropType</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bias</span>
+
+
+<span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span>
+<span class="n">port</span> <span class="o">=</span> <span class="mi">50000</span>
+
+<span class="n">tick_rate</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">ExampleState</span><span class="p">()</span>
+
+<span class="n">sensors</span> <span class="o">=</span> <span class="p">[</span><span class="n">BiasSensor</span><span class="p">(</span><span class="n">bias</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">prop_name</span><span class="o">=</span><span class="s1">&#39;speed&#39;</span><span class="p">,</span> <span class="n">sample_freq</span><span class="o">=</span><span class="mi">50</span><span class="p">)]</span>
+<span class="n">actuators</span> <span class="o">=</span> <span class="p">[</span><span class="n">SimpleConstantActuator</span><span class="p">(</span><span class="n">initial_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">prop_name</span><span class="o">=</span><span class="s1">&#39;accel&#39;</span><span class="p">)]</span>
+</pre></div>
+</div>
+</div>
+<p>Simulation of the Plant can then be initialized using the <code class="code docutils literal notranslate"><span class="pre">cleave.py</span></code> launcher script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-plant dummy_plant_config.py
+...
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 
