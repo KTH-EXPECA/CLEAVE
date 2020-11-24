@@ -5,7 +5,7 @@ Installation for general usage
 
 **NOTE: Although these instructions will eventually be the recommended way of downloading and installing the framework, they are currently a work-in-progress, and do not work yet. For failsafe ways to install the framework, see section** :ref:`installation_dev` **below.**
 
-From PyPI:
+From PyPI
 ----------
 
 1. Set up a Python :code:`virtualenv` and activate it:
