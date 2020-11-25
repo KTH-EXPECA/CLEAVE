@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>Tutorial: Emulating a NCS</title>
+      <title>Emulating a Networked Control System</title>
     
       <link rel="stylesheet" href="_static/pygments.css">
       <link rel="stylesheet" href="_static/theme.css">
@@ -23,7 +23,7 @@
     
   <link rel="index" title="Index" href="genindex.html" />
   <link rel="search" title="Search" href="search.html" />
-  <link rel="next" title="Code style and standards" href="contributing.html" />
+  <link rel="next" title="Contributing (WIP)" href="contributing.html" />
   <link rel="prev" title="Installation" href="installation.html" /> 
   </head>
 
@@ -112,21 +112,21 @@
           </li>
 
         
-          <li class="toctree-l1 current"><a href="#" class="reference internal current">Tutorial: Emulating a NCS</a>
+          <li class="toctree-l1 current"><a href="#" class="reference internal current">Emulating a Networked Control System</a>
 
             
               <ul>
                 
-                  <li class="toctree-l2"><a href="#plants" class="reference internal">Plants</a></li>
+                  <li class="toctree-l2"><a href="#deploying-the-included-ncs-emulations" class="reference internal">Deploying the included NCS emulations</a></li>
                 
-                  <li class="toctree-l2"><a href="#controller-services" class="reference internal">Controller Services</a></li>
+                  <li class="toctree-l2"><a href="#building-a-ncs-emulation-from-scratch" class="reference internal">Building a NCS emulation from scratch</a></li>
                 
               </ul>
             
           </li>
 
         
-          <li class="toctree-l1 "><a href="contributing.html" class="reference internal ">Code style and standards</a>
+          <li class="toctree-l1 "><a href="contributing.html" class="reference internal ">Contributing (WIP)</a>
 
             
           </li>
@@ -159,7 +159,7 @@
   <ul class="breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
     
-    <li>Tutorial: Emulating a NCS</li>
+    <li>Emulating a Networked Control System</li>
   </ul>
   
 
@@ -170,7 +170,7 @@
   </li>
   <li class="next">
     <a href="contributing.html"
-       title="next chapter">Code style and standards →</a>
+       title="next chapter">Contributing (WIP) →</a>
   </li>
 </ul>
   
@@ -178,21 +178,50 @@
 <hr>
           <div class="content" role="main">
             
-  <div class="section" id="tutorial-emulating-a-ncs">
-<span id="usage"></span><h1>Tutorial: Emulating a NCS<a class="headerlink" href="#tutorial-emulating-a-ncs" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="emulating-a-networked-control-system">
+<h1>Emulating a Networked Control System<a class="headerlink" href="#emulating-a-networked-control-system" title="Permalink to this headline">¶</a></h1>
 <p>Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controller Services. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controller Services are the computational elements which perform the necessary computations for the controlling of Plants.</p>
-<p>In the context of CLEAVE emulations, the definition of Plants and Controller Services are done through configuration files written in pure Python, which are then executed through the <code class="code docutils literal notranslate"><span class="pre">cleave.py</span></code> launcher script. A couple of examples of such configuration files can be found under the <code class="code docutils literal notranslate"><span class="pre">examples/</span></code> directory:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>// To run a plant configuration
-<span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-plant examples/plant_config.py
-
-// To run a controller configuration
-<span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-controller examples/controller_config.py
+<p>In the context of CLEAVE emulations, the definitions of Plants and Controller Services are done through configuration files written in pure Python. These are then executed using the <code class="code docutils literal notranslate"><span class="pre">cleave.py</span></code> launcher script. A couple of of such configuration files can be found under the <code class="code docutils literal notranslate"><span class="pre">examples/</span></code> directory, and we will discuss them in more detail in <a class="reference internal" href="#deploying-included-ncs"><span class="std std-ref">Deploying the included NCS emulations</span></a>.</p>
+<p>To execute a Plant, use the <code class="code docutils literal notranslate"><span class="pre">run-plant</span></code> subcommand and provide a Plant configuration file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-plant examples/plant_config.py
 </pre></div>
 </div>
-<p>Check <code class="code docutils literal notranslate"><span class="pre">cleave.py</span> <span class="pre">--help</span></code> for more details and additional options.</p>
+<p>To execute a Controller Service, use the <code class="code docutils literal notranslate"><span class="pre">run-controller</span></code> subcommand and provide a Controller Service configuration file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-controller examples/controller_config.py
+</pre></div>
+</div>
+<p>Check <code class="code docutils literal notranslate"><span class="pre">cleave.py</span> <span class="pre">--help</span></code> for more details and additional options. In particular, the <code class="code docutils literal notranslate"><span class="pre">-v|--verbose</span></code> flag is very useful; it increases the verbosity of the logged output, and can be specified multiple times. Examples:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-plant examples/plant_config.py
+...
+<span class="o">(</span>venv<span class="o">)</span> $ python cleave.py -vv run-plant examples/plant_config.py
+<span class="m">2020</span>-11-25T18:50:22.908532+0100 WARNING /mnt/data/workspace/CLEAVE/plant_metrics/simulation.csv will be overwritten with new data.
+<span class="m">2020</span>-11-25T18:50:22.909054+0100 WARNING /mnt/data/workspace/CLEAVE/plant_metrics/client.csv will be overwritten with new data.
+<span class="m">2020</span>-11-25T18:50:22.909384+0100 WARNING /mnt/data/workspace/CLEAVE/plant_metrics/sensors.csv will be overwritten with new data.
+<span class="m">2020</span>-11-25T18:50:22.909749+0100 WARNING /mnt/data/workspace/CLEAVE/plant_metrics/actuators.csv will be overwritten with new data.
+<span class="m">2020</span>-11-25T18:50:22.910301+0100 WARNING Target frequency: <span class="m">200</span> Hz
+<span class="m">2020</span>-11-25T18:50:22.910360+0100 WARNING Target <span class="nb">time</span> step: <span class="m">5</span>.0 ms
+...
+</pre></div>
+</div>
+<div class="section" id="deploying-the-included-ncs-emulations">
+<span id="deploying-included-ncs"></span><h2>Deploying the included NCS emulations<a class="headerlink" href="#deploying-the-included-ncs-emulations" title="Permalink to this headline">¶</a></h2>
+<p>CLEAVE comes with a number of pre-configured NCS emulations, composed of a Plant simulating an inverted pendulum and a number of Controller Services that interact with this Plant and control the pendulum in different ways.</p>
+<div class="section" id="inverted-pendulum-plant">
+<h3>Inverted pendulum Plant<a class="headerlink" href="#inverted-pendulum-plant" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="code docutils literal notranslate"><span class="pre">examples/inverted_pendulum/plant/</span></code> directory contains the configuration files for the inverted pendulum Plant. Currently, this directory contains two files: <code class="code docutils literal notranslate"><span class="pre">config.py</span></code> and <code class="code docutils literal notranslate"><span class="pre">config_with_viz.py</span></code>. These files define identical Plant simulations, except for the fact that the latter includes a graphical visualization of the Plant in realtime.</p>
+<p>Please refer to <a class="reference internal" href="#configuring-plant"><span class="std std-ref">Configuring the Plant</span></a> for details on customizing the Plant configurations, and to <a class="reference internal" href="cleave.impl.html#module-cleave.impl.inverted_pendulum" title="cleave.impl.inverted_pendulum"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cleave.impl.inverted_pendulum</span></code></a> for the actual implementations of the Plants.</p>
+</div>
+<div class="section" id="inverted-pendulum-controller-services">
+<h3>Inverted pendulum Controller Services<a class="headerlink" href="#inverted-pendulum-controller-services" title="Permalink to this headline">¶</a></h3>
+<p>Controller Services for the inverted pendulum NCS can be found under <code class="code docutils literal notranslate"><span class="pre">examples/inverted_pendulum/controller/</span></code>. See each file for details on each Controller Service.</p>
+<p>Please refer to <a class="reference internal" href="#configuring-controller"><span class="std std-ref">Configuring the Controller Service</span></a> for details on customizing the Controller Service configurations, and to <a class="reference internal" href="cleave.impl.html#module-cleave.impl.inverted_pendulum" title="cleave.impl.inverted_pendulum"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cleave.impl.inverted_pendulum</span></code></a> for the actual implementations of the Controllers.</p>
+</div>
+</div>
+<div class="section" id="building-a-ncs-emulation-from-scratch">
+<h2>Building a NCS emulation from scratch<a class="headerlink" href="#building-a-ncs-emulation-from-scratch" title="Permalink to this headline">¶</a></h2>
 <p>In the following sections we will explain how to set up NCS emulations in CLEAVE by developing and configuring Plants and Controller Services from scratch and connecting them.</p>
 <div class="section" id="plants">
-<h2>Plants<a class="headerlink" href="#plants" title="Permalink to this headline">¶</a></h2>
+<h3>Plants<a class="headerlink" href="#plants" title="Permalink to this headline">¶</a></h3>
 <p>These are the representations of the physical systems wich we want to control. Plants in CLEAVE are usually physical simulations of some system we wish to monitor and act upon. Correspondingly, a Plant is composed of three sub-components:</p>
 <ul class="simple">
 <li><p>A <code class="code docutils literal notranslate"><span class="pre">State</span></code>, which implements the discrete-time behavior of the simulated system.</p></li>
@@ -200,7 +229,7 @@
 <li><p>A collection of <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> objects, which receive inputs from the Controller Service, potentially transform or distort them, and finally act upon specific properties of the <code class="code docutils literal notranslate"><span class="pre">State</span></code>.</p></li>
 </ul>
 <div class="section" id="state">
-<h3>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h3>
+<h4>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h4>
 <p><code class="code docutils literal notranslate"><span class="pre">State</span></code> objects in CLEAVE are simply instances of classes which extend from the abstract base class <cite>cleave.api.plant.State</cite>. This base class defines a single required method as well as two optional ones:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">State</span><span class="p">:</span>
     <span class="nd">@abstractmethod</span>
@@ -245,7 +274,7 @@
 <p>More complex example implementations of <code class="code docutils literal notranslate"><span class="pre">State</span></code> classes representing Inverted Pendulum systems are included in the module <code class="code docutils literal notranslate"><span class="pre">cleave.impl.inverted_pendulum</span></code>.</p>
 </div>
 <div class="section" id="sensors">
-<h3>Sensors<a class="headerlink" href="#sensors" title="Permalink to this headline">¶</a></h3>
+<h4>Sensors<a class="headerlink" href="#sensors" title="Permalink to this headline">¶</a></h4>
 <p>Similarly to <code class="code docutils literal notranslate"><span class="pre">State</span></code>, a <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> in CLEAVE corresponds to an object instance of a subclass of <code class="code docutils literal notranslate"><span class="pre">cleave.api.Sensor</span></code> implementing the required method <code class="code docutils literal notranslate"><span class="pre">process_sample(self,</span> <span class="pre">value:</span> <span class="pre">PhyPropType)</span> <span class="pre">-&gt;</span> <span class="pre">PhyPropType</span></code>. The <code class="code docutils literal notranslate"><span class="pre">PhyPropType</span></code> typing variable in the signature simply represents the type of variables that can be measured in a Plant, currently <code class="code docutils literal notranslate"><span class="pre">int</span></code>, <code class="code docutils literal notranslate"><span class="pre">float</span></code>, <code class="code docutils literal notranslate"><span class="pre">bool</span></code> and <code class="code docutils literal notranslate"><span class="pre">bytes</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Sensor</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sample_freq</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -274,7 +303,7 @@
 </div>
 </div>
 <div class="section" id="actuators">
-<h3>Actuators<a class="headerlink" href="#actuators" title="Permalink to this headline">¶</a></h3>
+<h4>Actuators<a class="headerlink" href="#actuators" title="Permalink to this headline">¶</a></h4>
 <p><code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> objects follow a similar logic as <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code> objects, in the sense that they “attach” to a semantic variable in the <code class="code docutils literal notranslate"><span class="pre">State</span></code> and modify its value at each iteration following commands from the Controller Service.</p>
 <p>In practical terms, <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code> objects correspond to instances of subclasses of <code class="code docutils literal notranslate"><span class="pre">cleave.api.Actuator</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Actuator</span><span class="p">:</span>
@@ -311,7 +340,7 @@
 </div>
 </div>
 <div class="section" id="configuring-the-plant">
-<h3>Configuring the Plant<a class="headerlink" href="#configuring-the-plant" title="Permalink to this headline">¶</a></h3>
+<span id="configuring-plant"></span><h4>Configuring the Plant<a class="headerlink" href="#configuring-the-plant" title="Permalink to this headline">¶</a></h4>
 <p>As discussed before, setting up Plants in CLEAVE is done through the use of configuration files written in pure Python. These configuration files may contain any valid Python code, be split up into multiple files, and even use external libraries. The only requirement is that the following top-level variables are defined:</p>
 <ul class="simple">
 <li><p><code class="code docutils literal notranslate"><span class="pre">host</span></code>: String containing the IP address of the Controller Service.</p></li>
@@ -369,10 +398,10 @@
 </div>
 </div>
 <div class="section" id="controller-services">
-<h2>Controller Services<a class="headerlink" href="#controller-services" title="Permalink to this headline">¶</a></h2>
+<h3>Controller Services<a class="headerlink" href="#controller-services" title="Permalink to this headline">¶</a></h3>
 <p>As discussed previously, a Controller Service correspond to the element in the NCS emulation which implements the necessary logic and computations to achieve the desired control of the Plant. In CLEAVE, Controller Services are implemented as stateful microservices paired with a specific Plant that receive samples of the Plant <code class="code docutils literal notranslate"><span class="pre">State</span></code> semantic sensor variables over a UDP socket and return new values for the <code class="code docutils literal notranslate"><span class="pre">State</span></code> semantic actuator variables over the same socket. Controller Services currently have a single user-defined component: a <code class="code docutils literal notranslate"><span class="pre">Controller</span></code> which implements the control strategy.</p>
 <div class="section" id="controllers">
-<h3>Controllers<a class="headerlink" href="#controllers" title="Permalink to this headline">¶</a></h3>
+<h4>Controllers<a class="headerlink" href="#controllers" title="Permalink to this headline">¶</a></h4>
 <p>In practical terms, <code class="code docutils literal notranslate"><span class="pre">Controller</span></code> objects are instances of subclasses of <code class="code docutils literal notranslate"><span class="pre">cleave.api.controller.Controller</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Controller</span><span class="p">:</span>
     <span class="nd">@abstractmethod</span>
@@ -402,7 +431,7 @@
 </div>
 </div>
 <div class="section" id="configuring-the-controller-service">
-<h3>Configuring the Controller Service<a class="headerlink" href="#configuring-the-controller-service" title="Permalink to this headline">¶</a></h3>
+<span id="configuring-controller"></span><h4>Configuring the Controller Service<a class="headerlink" href="#configuring-the-controller-service" title="Permalink to this headline">¶</a></h4>
 <p>Controller Service config files work the same way as Plant config files, the only difference being in the required top-level variables:</p>
 <ul class="simple">
 <li><p><code class="code docutils literal notranslate"><span class="pre">port</span></code>: Integer defining the UDP port on which the Controller Service listens.</p></li>
@@ -446,6 +475,7 @@
 </div>
 </div>
 </div>
+</div>
 
 
           </div>
@@ -457,7 +487,7 @@
   </li>
   <li class="next">
     <a href="contributing.html"
-       title="next chapter">Code style and standards →</a>
+       title="next chapter">Contributing (WIP) →</a>
   </li>
 </ul><div class="footer" role="contentinfo">
       &#169; Copyright 2020, KTH Royal Institute of Technology.

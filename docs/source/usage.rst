@@ -1,5 +1,3 @@
-.. _usage:
-
 .. |State| replace:: :code:`State`
 
 .. |Actuator| replace:: :code:`Actuator`
@@ -8,28 +6,73 @@
 
 .. |Controller| replace:: :code:`Controller` 
 
-
-Tutorial: Emulating a NCS
-#########################
+Emulating a Networked Control System
+####################################
 
 Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controller Services. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controller Services are the computational elements which perform the necessary computations for the controlling of Plants.
 
-In the context of CLEAVE emulations, the definition of Plants and Controller Services are done through configuration files written in pure Python, which are then executed through the :code:`cleave.py` launcher script. A couple of examples of such configuration files can be found under the :code:`examples/` directory:
+In the context of CLEAVE emulations, the definitions of Plants and Controller Services are done through configuration files written in pure Python. These are then executed using the :code:`cleave.py` launcher script. A couple of of such configuration files can be found under the :code:`examples/` directory, and we will discuss them in more detail in :ref:`deploying_included_ncs`.
+
+To execute a Plant, use the :code:`run-plant` subcommand and provide a Plant configuration file:
 
 .. code-block:: bash
 
-    // To run a plant configuration
     (venv) $ python cleave.py run-plant examples/plant_config.py
 
-    // To run a controller configuration
+
+To execute a Controller Service, use the :code:`run-controller` subcommand and provide a Controller Service configuration file.
+    
+.. code-block:: bash
+
     (venv) $ python cleave.py run-controller examples/controller_config.py
 
-Check :code:`cleave.py --help` for more details and additional options.
+
+Check :code:`cleave.py --help` for more details and additional options. In particular, the :code:`-v|--verbose` flag is very useful; it increases the verbosity of the logged output, and can be specified multiple times. Examples:
+
+.. code-block:: bash
+
+    (venv) $ python cleave.py run-plant examples/plant_config.py
+    ...
+    (venv) $ python cleave.py -vv run-plant examples/plant_config.py
+    2020-11-25T18:50:22.908532+0100 WARNING /mnt/data/workspace/CLEAVE/plant_metrics/simulation.csv will be overwritten with new data.
+    2020-11-25T18:50:22.909054+0100 WARNING /mnt/data/workspace/CLEAVE/plant_metrics/client.csv will be overwritten with new data.
+    2020-11-25T18:50:22.909384+0100 WARNING /mnt/data/workspace/CLEAVE/plant_metrics/sensors.csv will be overwritten with new data.
+    2020-11-25T18:50:22.909749+0100 WARNING /mnt/data/workspace/CLEAVE/plant_metrics/actuators.csv will be overwritten with new data.
+    2020-11-25T18:50:22.910301+0100 WARNING Target frequency: 200 Hz
+    2020-11-25T18:50:22.910360+0100 WARNING Target time step: 5.0 ms
+    ...
+
+
+.. _deploying_included_ncs:
+
+Deploying the included NCS emulations
+=====================================
+
+CLEAVE comes with a number of pre-configured NCS emulations, composed of a Plant simulating an inverted pendulum and a number of Controller Services that interact with this Plant and control the pendulum in different ways.
+
+Inverted pendulum Plant
+-----------------------
+
+The :code:`examples/inverted_pendulum/plant/` directory contains the configuration files for the inverted pendulum Plant. Currently, this directory contains two files: :code:`config.py` and :code:`config_with_viz.py`. These files define identical Plant simulations, except for the fact that the latter includes a graphical visualization of the Plant in realtime.
+
+Please refer to :ref:`configuring_plant` for details on customizing the Plant configurations, and to :py:mod:`cleave.impl.inverted_pendulum` for the actual implementations of the Plants.
+
+
+Inverted pendulum Controller Services
+-------------------------------------
+
+Controller Services for the inverted pendulum NCS can be found under :code:`examples/inverted_pendulum/controller/`. See each file for details on each Controller Service.
+
+Please refer to :ref:`configuring_controller` for details on customizing the Controller Service configurations, and to :py:mod:`cleave.impl.inverted_pendulum` for the actual implementations of the Controllers.
+
+
+Building a NCS emulation from scratch
+=====================================
 
 In the following sections we will explain how to set up NCS emulations in CLEAVE by developing and configuring Plants and Controller Services from scratch and connecting them.
 
 Plants
-======
+------
 
 These are the representations of the physical systems wich we want to control. Plants in CLEAVE are usually physical simulations of some system we wish to monitor and act upon. Correspondingly, a Plant is composed of three sub-components:
 
@@ -40,7 +83,7 @@ These are the representations of the physical systems wich we want to control. P
 - A collection of |Actuator| objects, which receive inputs from the Controller Service, potentially transform or distort them, and finally act upon specific properties of the |State|.
 
 State
------
+^^^^^
 
 |State| objects in CLEAVE are simply instances of classes which extend from the abstract base class `cleave.api.plant.State`. This base class defines a single required method as well as two optional ones:
 
@@ -97,7 +140,7 @@ An example skeleton of a |State| with a single input variable and a single outpu
 More complex example implementations of |State| classes representing Inverted Pendulum systems are included in the module :code:`cleave.impl.inverted_pendulum`.
 
 Sensors
--------
+^^^^^^^
 
 Similarly to |State|, a |Sensor| in CLEAVE corresponds to an object instance of a subclass of :code:`cleave.api.Sensor` implementing the required method :code:`process_sample(self, value: PhyPropType) -> PhyPropType`. The :code:`PhyPropType` typing variable in the signature simply represents the type of variables that can be measured in a Plant, currently :code:`int`, :code:`float`, :code:`bool` and :code:`bytes`.
 
@@ -133,7 +176,7 @@ An example simple |Sensor| class which simply adds a bias to the measured value 
 
 
 Actuators
----------
+^^^^^^^^^
 
 |Actuator| objects follow a similar logic as |Sensor| objects, in the sense that they "attach" to a semantic variable in the |State| and modify its value at each iteration following commands from the Controller Service.
 
@@ -176,8 +219,11 @@ CLEAVE includes implementations for a number of different |Actuator| subclasses.
         def get_actuation(self) -> PhyPropType:
             return self._value
 
+
+.. _configuring_plant:
+
 Configuring the Plant
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 As discussed before, setting up Plants in CLEAVE is done through the use of configuration files written in pure Python. These configuration files may contain any valid Python code, be split up into multiple files, and even use external libraries. The only requirement is that the following top-level variables are defined:
 
@@ -211,12 +257,12 @@ Simulation of the Plant can then be initialized using the :code:`cleave.py` laun
     
 
 Controller Services
-===================
+-------------------
 
 As discussed previously, a Controller Service correspond to the element in the NCS emulation which implements the necessary logic and computations to achieve the desired control of the Plant. In CLEAVE, Controller Services are implemented as stateful microservices paired with a specific Plant that receive samples of the Plant |State| semantic sensor variables over a UDP socket and return new values for the |State| semantic actuator variables over the same socket. Controller Services currently have a single user-defined component: a |Controller| which implements the control strategy. 
 
 Controllers
------------
+^^^^^^^^^^^
 
 In practical terms, |Controller| objects are instances of subclasses of :code:`cleave.api.controller.Controller`:
 
@@ -236,8 +282,10 @@ Below we present an example |Controller| for our example Plant that operates on 
     :lines: 19-34
     
 
+.. _configuring_controller:
+
 Configuring the Controller Service
-----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Controller Service config files work the same way as Plant config files, the only difference being in the required top-level variables:
 
