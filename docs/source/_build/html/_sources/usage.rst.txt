@@ -13,7 +13,7 @@ Emulations of Networked Control Systems in CLEAVE are centered around two core c
 
 In the context of CLEAVE emulations, the definitions of Plants and Controller Services are done through configuration files written in pure Python. These are then executed using the :code:`cleave.py` launcher script. A couple of of such configuration files can be found under the :code:`examples/` directory, and we will discuss them in more detail in :ref:`deploying_included_ncs`.
 
-To execute a Plant, use the :code:`run-plant` subcommand and provide a Plant configuration file:
+To execute a Plant, use the :code:`run-plant` sub-command and provide a Plant configuration file:
 
 .. code-block:: bash
 
@@ -239,6 +239,8 @@ As discussed before, setting up Plants in CLEAVE is done through the use of conf
 
 - :code:`actuators`: A collection of instances of subclasses of |Actuator|.
 
+- *(Optional)* :code:`output_dir`: This string should contain a path to a directory where the output metrics of the Plant will be written to (see :ref:`plant_output` for details on the output files). If omitted, this variable defaults to :code:`./plant_metrics/`.
+
 Putting together our examples from the previous subsections, an example configuration file for the simple dummy :code:`ExampleState` discussed previously would look something like the following:
 
 .. literalinclude:: ../../examples/dummy_plant.py
@@ -254,6 +256,14 @@ Simulation of the Plant can then be initialized using the :code:`cleave.py` laun
 
     (venv) $ python cleave.py run-plant dummy_plant_config.py
     ...
+    
+
+.. _plant_output:
+
+Plant output files
+^^^^^^^^^^^^^^^^^^
+
+TODO
     
 
 Controller Services
@@ -293,6 +303,8 @@ Controller Service config files work the same way as Plant config files, the onl
 
 - :code:`controller`: Variable pointing to a valid |Controller| instance.
 
+- *(Optional)* :code:`output_dir`: This string should contain a path to a directory where the output metrics of the Controller will be written to (see :ref:`controller_output` for details on the output files). If omitted, this variable defaults to :code:`./controller_metrics/`.
+
 The full example configuration file for our dummy Controller Service would then be:
 
 .. literalinclude:: ../../examples/dummy_controller.py
@@ -306,3 +318,11 @@ Use :code:`cleave.py` launcher script together with the config file to start lis
 
     (venv) $ python cleave.py run-controller dummy_controller_config.py
     ...
+
+
+.. _controller_output:
+
+Controller output files
+^^^^^^^^^^^^^^^^^^^^^^^
+
+TODO

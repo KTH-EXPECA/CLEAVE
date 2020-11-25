@@ -182,7 +182,7 @@
 <h1>Emulating a Networked Control System<a class="headerlink" href="#emulating-a-networked-control-system" title="Permalink to this headline">¶</a></h1>
 <p>Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controller Services. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controller Services are the computational elements which perform the necessary computations for the controlling of Plants.</p>
 <p>In the context of CLEAVE emulations, the definitions of Plants and Controller Services are done through configuration files written in pure Python. These are then executed using the <code class="code docutils literal notranslate"><span class="pre">cleave.py</span></code> launcher script. A couple of of such configuration files can be found under the <code class="code docutils literal notranslate"><span class="pre">examples/</span></code> directory, and we will discuss them in more detail in <a class="reference internal" href="#deploying-included-ncs"><span class="std std-ref">Deploying the included NCS emulations</span></a>.</p>
-<p>To execute a Plant, use the <code class="code docutils literal notranslate"><span class="pre">run-plant</span></code> subcommand and provide a Plant configuration file:</p>
+<p>To execute a Plant, use the <code class="code docutils literal notranslate"><span class="pre">run-plant</span></code> sub-command and provide a Plant configuration file:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> $ python cleave.py run-plant examples/plant_config.py
 </pre></div>
 </div>
@@ -349,6 +349,7 @@
 <li><p><code class="code docutils literal notranslate"><span class="pre">State</span></code>: A variable pointing to a valid instance of a subclass of <code class="code docutils literal notranslate"><span class="pre">State</span></code>.</p></li>
 <li><p><code class="code docutils literal notranslate"><span class="pre">sensors</span></code>: A collection (list, tuple, set, etc) of instances of subclasses of <code class="code docutils literal notranslate"><span class="pre">Sensor</span></code>.</p></li>
 <li><p><code class="code docutils literal notranslate"><span class="pre">actuators</span></code>: A collection of instances of subclasses of <code class="code docutils literal notranslate"><span class="pre">Actuator</span></code>.</p></li>
+<li><p><em>(Optional)</em> <code class="code docutils literal notranslate"><span class="pre">output_dir</span></code>: This string should contain a path to a directory where the output metrics of the Plant will be written to (see <a class="reference internal" href="#plant-output"><span class="std std-ref">Plant output files</span></a> for details on the output files). If omitted, this variable defaults to <code class="code docutils literal notranslate"><span class="pre">./plant_metrics/</span></code>.</p></li>
 </ul>
 <p>Putting together our examples from the previous subsections, an example configuration file for the simple dummy <code class="code docutils literal notranslate"><span class="pre">ExampleState</span></code> discussed previously would look something like the following:</p>
 <div class="literal-block-wrapper docutils container" id="id1">
@@ -396,6 +397,10 @@
 </pre></div>
 </div>
 </div>
+<div class="section" id="plant-output-files">
+<span id="plant-output"></span><h4>Plant output files<a class="headerlink" href="#plant-output-files" title="Permalink to this headline">¶</a></h4>
+<p>TODO</p>
+</div>
 </div>
 <div class="section" id="controller-services">
 <h3>Controller Services<a class="headerlink" href="#controller-services" title="Permalink to this headline">¶</a></h3>
@@ -436,6 +441,7 @@
 <ul class="simple">
 <li><p><code class="code docutils literal notranslate"><span class="pre">port</span></code>: Integer defining the UDP port on which the Controller Service listens.</p></li>
 <li><p><code class="code docutils literal notranslate"><span class="pre">controller</span></code>: Variable pointing to a valid <code class="code docutils literal notranslate"><span class="pre">Controller</span></code> instance.</p></li>
+<li><p><em>(Optional)</em> <code class="code docutils literal notranslate"><span class="pre">output_dir</span></code>: This string should contain a path to a directory where the output metrics of the Controller will be written to (see <a class="reference internal" href="#controller-output"><span class="std std-ref">Controller output files</span></a> for details on the output files). If omitted, this variable defaults to <code class="code docutils literal notranslate"><span class="pre">./controller_metrics/</span></code>.</p></li>
 </ul>
 <p>The full example configuration file for our dummy Controller Service would then be:</p>
 <div class="literal-block-wrapper docutils container" id="id2">
@@ -472,6 +478,10 @@
 ...
 </pre></div>
 </div>
+</div>
+<div class="section" id="controller-output-files">
+<span id="controller-output"></span><h4>Controller output files<a class="headerlink" href="#controller-output-files" title="Permalink to this headline">¶</a></h4>
+<p>TODO</p>
 </div>
 </div>
 </div>

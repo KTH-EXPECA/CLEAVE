@@ -37,8 +37,6 @@ _control_defaults = dict(
 _plant_defaults = dict(
     controller_interface=UDPControllerInterface,
     output_dir='./plant_metrics/',
-    plant_sinks=[],
-    client_sinks=[]
 )
 
 
