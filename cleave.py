@@ -21,8 +21,8 @@ from pathlib import Path
 import click
 
 from cleave.core.client.physicalsim import PhysicalSimulation
-from cleave.core.client.plant import CSVRecordingPlant
-from cleave.core.config import ConfigWrapper
+from cleave.core.client.plant import CSVRecordingPlant, Plant
+from cleave.core.config import Config, ConfigFile
 from cleave.core.eventloop import reactor
 from cleave.core.logging import loguru
 from cleave.core.network.backend import UDPControllerService
@@ -38,6 +38,34 @@ _plant_defaults = dict(
     controller_interface=UDPControllerInterface,
     output_dir='./plant_metrics/',
 )
+
+
+def build_plant_from_config(config: Config) -> Plant:
+    """
+    Builds a Plant from a given configuration.
+
+    Parameters
+    ----------
+    config
+        Config containing the necessary parameters for the Plant.
+
+    Returns
+    -------
+        A fully assembled Plant.
+
+    """
+    host_addr = (socket.gethostbyname(config.host), config.port)
+    return CSVRecordingPlant(
+        reactor=reactor,
+        physim=PhysicalSimulation(
+            state=config.state,
+            tick_rate=config.tick_rate
+        ),
+        sensors=config.sensors,
+        actuators=config.actuators,
+        control_interface=config.controller_interface(host_addr),
+        recording_output_dir=Path(config.output_dir)
+    )
 
 
 @click.group()
@@ -62,23 +90,12 @@ def cli(verbose: int, colorize_logs: bool):
                                 file_okay=True,
                                 dir_okay=False))
 def run_plant(config_file_path: str):
-    config = ConfigWrapper(
+    config = ConfigFile(
         config_path=config_file_path,
         defaults=_plant_defaults
     )
 
-    host_addr = (socket.gethostbyname(config.host), config.port)
-    plant = CSVRecordingPlant(
-        reactor=reactor,
-        physim=PhysicalSimulation(
-            state=config.state,
-            tick_rate=config.tick_rate
-        ),
-        sensors=config.sensors,
-        actuators=config.actuators,
-        control_interface=config.controller_interface(host_addr),
-        recording_output_dir=Path(config.output_dir)
-    )
+    plant = build_plant_from_config(config)
     plant.execute()
 
 
@@ -88,7 +105,7 @@ def run_plant(config_file_path: str):
                                 file_okay=True,
                                 dir_okay=False))
 def run_controller(config_file_path: str):
-    config = ConfigWrapper(
+    config = ConfigFile(
         config_path=config_file_path,
         defaults=_control_defaults
     )

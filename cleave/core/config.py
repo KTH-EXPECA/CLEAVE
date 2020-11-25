@@ -22,48 +22,17 @@ class ConfigError(Exception):
     pass
 
 
-class ConfigWrapper:
+class Config:
+    """
+    Helper class to hold configuration variables with optional default values.
+    """
+
     def __init__(self,
-                 config_path: str,
-                 cmd_line_overrides: Mapping[str, Any] = {},
+                 config: Mapping[str, Any],
                  defaults: Mapping[str, Any] = {}):
-        """
-        Helper class to wrap access to a config.py file containing
-        configuration variables for the program.
-
-        Parameters
-        ----------
-        config_path
-            Path to the config script.
-
-        cmd_line_overrides
-            Overrides for config variables obtained from the command line.
-            Config parameters defined here will always override the config file.
-
-        defaults
-            Mapping of fallback values for missing parameters.
-        """
-        self._log = Logger()
-
-        # load the config into memory as a module to eval it
-        self._config_path = Path(config_path).resolve()
-        self._log.info(f'Loading configuration from {self._config_path}...')
-        self._module = im.SourceFileLoader('config', str(self._config_path)) \
-            .load_module('config')
-
-        # get the dictionary of variables in the config file, skipping
-        # everything that's "hidden"
-        self._config = {k: v for k, v in vars(self._module).items()
-                        if not k.startswith('_')}
-
-        for k, v in cmd_line_overrides.items():
-            self._config[k] = v
-
+        self._config = dict(config)
         self._defaults = dict(defaults)
-
-    @property
-    def config_path(self) -> str:
-        return str(self._config_path)
+        self._log = Logger()
 
     def get_parameter(self, k: str) -> Any:
         """
@@ -99,3 +68,47 @@ class ConfigWrapper:
 
     def __getattr__(self, item: str):
         return self.get_parameter(item)
+
+
+class ConfigFile(Config):
+    """
+    Helper class to wrap access to a config.py file containing configuration
+    variables for the program.
+    """
+
+    def __init__(self,
+                 config_path: str,
+                 cmd_line_overrides: Mapping[str, Any] = {},
+                 defaults: Mapping[str, Any] = {}):
+        """
+        Parameters
+        ----------
+        config_path
+            Path to the config script.
+
+        cmd_line_overrides
+            Overrides for config variables obtained from the command line.
+            Config parameters defined here will always override the config file.
+
+        defaults
+            Mapping of fallback values for missing parameters.
+        """
+        super(ConfigFile, self).__init__(config={}, defaults=defaults)
+
+        # load the config into memory as a module to eval it
+        self._config_path = Path(config_path).resolve()
+        self._log.info(f'Loading configuration from {self._config_path}...')
+        self._module = im.SourceFileLoader('config', str(self._config_path)) \
+            .load_module('config')
+
+        # get the dictionary of variables in the config file, skipping
+        # everything that's "hidden"
+        self._config = {k: v for k, v in vars(self._module).items()
+                        if not k.startswith('_')}
+
+        for k, v in cmd_line_overrides.items():
+            self._config[k] = v
+
+    @property
+    def config_path(self) -> str:
+        return str(self._config_path)
