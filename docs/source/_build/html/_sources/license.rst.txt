@@ -1,5 +1,5 @@
 License
-=======
+#######
 
 Copyright 2020 KTH Royal Institute of Technology
 

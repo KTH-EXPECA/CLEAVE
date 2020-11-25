@@ -9,8 +9,8 @@
 .. |Controller| replace:: :code:`Controller` 
 
 
-Tutorial: general usage
-=======================
+Tutorial: Emulating a NCS
+#########################
 
 Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controller Services. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controller Services are the computational elements which perform the necessary computations for the controlling of Plants.
 
@@ -29,7 +29,7 @@ Check :code:`cleave.py --help` for more details and additional options.
 In the following sections we will explain how to set up NCS emulations in CLEAVE by developing and configuring Plants and Controller Services from scratch and connecting them.
 
 Plants
-------
+======
 
 These are the representations of the physical systems wich we want to control. Plants in CLEAVE are usually physical simulations of some system we wish to monitor and act upon. Correspondingly, a Plant is composed of three sub-components:
 
@@ -40,7 +40,7 @@ These are the representations of the physical systems wich we want to control. P
 - A collection of |Actuator| objects, which receive inputs from the Controller Service, potentially transform or distort them, and finally act upon specific properties of the |State|.
 
 State
-^^^^^
+-----
 
 |State| objects in CLEAVE are simply instances of classes which extend from the abstract base class `cleave.api.plant.State`. This base class defines a single required method as well as two optional ones:
 
@@ -97,7 +97,7 @@ An example skeleton of a |State| with a single input variable and a single outpu
 More complex example implementations of |State| classes representing Inverted Pendulum systems are included in the module :code:`cleave.impl.inverted_pendulum`.
 
 Sensors
-^^^^^^^
+-------
 
 Similarly to |State|, a |Sensor| in CLEAVE corresponds to an object instance of a subclass of :code:`cleave.api.Sensor` implementing the required method :code:`process_sample(self, value: PhyPropType) -> PhyPropType`. The :code:`PhyPropType` typing variable in the signature simply represents the type of variables that can be measured in a Plant, currently :code:`int`, :code:`float`, :code:`bool` and :code:`bytes`.
 
@@ -133,7 +133,7 @@ An example simple |Sensor| class which simply adds a bias to the measured value 
 
 
 Actuators
-^^^^^^^^^
+---------
 
 |Actuator| objects follow a similar logic as |Sensor| objects, in the sense that they "attach" to a semantic variable in the |State| and modify its value at each iteration following commands from the Controller Service.
 
@@ -177,7 +177,7 @@ CLEAVE includes implementations for a number of different |Actuator| subclasses.
             return self._value
 
 Configuring the Plant
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 As discussed before, setting up Plants in CLEAVE is done through the use of configuration files written in pure Python. These configuration files may contain any valid Python code, be split up into multiple files, and even use external libraries. The only requirement is that the following top-level variables are defined:
 
@@ -211,12 +211,12 @@ Simulation of the Plant can then be initialized using the :code:`cleave.py` laun
     
 
 Controller Services
--------------------
+===================
 
 As discussed previously, a Controller Service correspond to the element in the NCS emulation which implements the necessary logic and computations to achieve the desired control of the Plant. In CLEAVE, Controller Services are implemented as stateful microservices paired with a specific Plant that receive samples of the Plant |State| semantic sensor variables over a UDP socket and return new values for the |State| semantic actuator variables over the same socket. Controller Services currently have a single user-defined component: a |Controller| which implements the control strategy. 
 
 Controllers
-^^^^^^^^^^^
+-----------
 
 In practical terms, |Controller| objects are instances of subclasses of :code:`cleave.api.controller.Controller`:
 
@@ -237,7 +237,7 @@ Below we present an example |Controller| for our example Plant that operates on 
     
 
 Configuring the Controller Service
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------
 
 Controller Service config files work the same way as Plant config files, the only difference being in the required top-level variables:
 

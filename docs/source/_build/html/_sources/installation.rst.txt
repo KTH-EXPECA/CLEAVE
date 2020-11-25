@@ -1,5 +1,8 @@
 .. _installation_gen:
 
+Installation
+############
+
 Installation for general usage
 ==============================
 

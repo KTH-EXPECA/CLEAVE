@@ -1,3 +1,8 @@
+Contributing (WIP)
+##################
+
+This section contains information on how to contribute to this project.
+
 Code style and standards
 ========================
 

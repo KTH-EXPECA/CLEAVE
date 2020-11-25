@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>Tutorial: general usage</title>
+      <title>Tutorial: Emulating a NCS</title>
     
       <link rel="stylesheet" href="_static/pygments.css">
       <link rel="stylesheet" href="_static/theme.css">
@@ -22,7 +22,9 @@
       <script src="_static/theme.js" defer></script>
     
   <link rel="index" title="Index" href="genindex.html" />
-  <link rel="search" title="Search" href="search.html" /> 
+  <link rel="search" title="Search" href="search.html" />
+  <link rel="next" title="Code style and standards" href="contributing.html" />
+  <link rel="prev" title="Installation" href="installation.html" /> 
   </head>
 
   <body>
@@ -38,16 +40,16 @@
 
   
     <div class="nav-item">
-      <a href="index.html#general-usage"
-         class="nav-link ">
-         Main CLEAVE API
+      <a href="index.html#cleave-control-benmarking-service-on-the-edge"
+         class="nav-link  router-link-active">
+         Table of Contents
       </a>
     </div>
   
     <div class="nav-item">
-      <a href="cleave.html#subpackages"
+      <a href="modules.html#cleave"
          class="nav-link ">
-         subpackages
+         cleave
       </a>
     </div>
   
@@ -68,16 +70,16 @@
 
   
     <div class="nav-item">
-      <a href="index.html#general-usage"
-         class="nav-link ">
-         Main CLEAVE API
+      <a href="index.html#cleave-control-benmarking-service-on-the-edge"
+         class="nav-link  router-link-active">
+         Table of Contents
       </a>
     </div>
   
     <div class="nav-item">
-      <a href="cleave.html#subpackages"
+      <a href="modules.html#cleave"
          class="nav-link ">
-         subpackages
+         cleave
       </a>
     </div>
   
@@ -100,11 +102,31 @@
   
     <div class="sidebar-group">
       <p class="caption">
-        <span class="caption-text"><a href="index.html#general-usage">Main CLEAVE API</a></span>
+        <span class="caption-text"><a href="index.html#cleave-control-benmarking-service-on-the-edge">Table of Contents</a></span>
       </p>
-      <ul class="">
+      <ul class="current">
         
-          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
+          <li class="toctree-l1 "><a href="installation.html" class="reference internal ">Installation</a>
+
+            
+          </li>
+
+        
+          <li class="toctree-l1 current"><a href="#" class="reference internal current">Tutorial: Emulating a NCS</a>
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#plants" class="reference internal">Plants</a></li>
+                
+                  <li class="toctree-l2"><a href="#controller-services" class="reference internal">Controller Services</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+          <li class="toctree-l1 "><a href="contributing.html" class="reference internal ">Code style and standards</a>
 
             
           </li>
@@ -115,23 +137,11 @@
   
     <div class="sidebar-group">
       <p class="caption">
-        <span class="caption-text"><a href="cleave.html#subpackages">subpackages</a></span>
+        <span class="caption-text"><a href="modules.html#cleave">cleave</a></span>
       </p>
       <ul class="">
         
-          <li class="toctree-l1 "><a href="cleave.api.html" class="reference internal ">cleave.api package</a>
-
-            
-          </li>
-
-        
-          <li class="toctree-l1 "><a href="cleave.core.html" class="reference internal ">cleave.core package</a>
-
-            
-          </li>
-
-        
-          <li class="toctree-l1 "><a href="cleave.impl.html" class="reference internal ">cleave.impl package</a>
+          <li class="toctree-l1 "><a href="cleave.html" class="reference internal ">cleave package</a>
 
             
           </li>
@@ -149,19 +159,27 @@
   <ul class="breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
     
-    <li>Tutorial: general usage</li>
+    <li>Tutorial: Emulating a NCS</li>
   </ul>
   
 
   <ul class="page-nav">
+  <li class="prev">
+    <a href="installation.html"
+       title="previous chapter">← Installation</a>
+  </li>
+  <li class="next">
+    <a href="contributing.html"
+       title="next chapter">Code style and standards →</a>
+  </li>
 </ul>
   
 </div>
 <hr>
           <div class="content" role="main">
             
-  <div class="section" id="tutorial-general-usage">
-<span id="usage"></span><h1>Tutorial: general usage<a class="headerlink" href="#tutorial-general-usage" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="tutorial-emulating-a-ncs">
+<span id="usage"></span><h1>Tutorial: Emulating a NCS<a class="headerlink" href="#tutorial-emulating-a-ncs" title="Permalink to this headline">¶</a></h1>
 <p>Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controller Services. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controller Services are the computational elements which perform the necessary computations for the controlling of Plants.</p>
 <p>In the context of CLEAVE emulations, the definition of Plants and Controller Services are done through configuration files written in pure Python, which are then executed through the <code class="code docutils literal notranslate"><span class="pre">cleave.py</span></code> launcher script. A couple of examples of such configuration files can be found under the <code class="code docutils literal notranslate"><span class="pre">examples/</span></code> directory:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>// To run a plant configuration
@@ -433,6 +451,14 @@
           </div>
           <div class="page-nav">
             <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="installation.html"
+       title="previous chapter">← Installation</a>
+  </li>
+  <li class="next">
+    <a href="contributing.html"
+       title="next chapter">Code style and standards →</a>
+  </li>
 </ul><div class="footer" role="contentinfo">
       &#169; Copyright 2020, KTH Royal Institute of Technology.
     <br>

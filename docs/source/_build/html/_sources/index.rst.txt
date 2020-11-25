@@ -4,10 +4,10 @@
    contain the root `toctree` directive.
 
 Welcome to the CLEAVE project documentation!
-============================================
+############################################
 
 CLEAVE - ControL bEnmArking serVice on the Edge
--------------------------------------------------
+===============================================
 
 A framework for testing, benchmarking and evaluating control loop applications on the Edge, written in Python 3.8+.
 
@@ -18,27 +18,19 @@ CLEAVE is part of the `ExPECA <https://www.jamesgross.org/research/expeca/>`_ re
 
 
 .. toctree::
-   :caption: Installation
+   :caption: Table of Contents
 
    installation
-   
-.. toctree::
-   :caption: Usage
-
    usage
+   contributing
 
-.. toctree::
-   :caption: Development (WIP)
+==================
 
-   codestyle
+.. include:: team.rst
 
-==================================
+==================
 
-.. toctree::
-   :caption: Full documentation:
-
-   modules
-
+.. include:: license.rst
 
 Indices and tables
 ==================
@@ -47,16 +39,9 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-==================================
+==================
 
-.. include:: license.rst
+.. toctree::
+   :caption: Full documentation:
 
-
-Team
-====
-
-- `Manuel Olguín Muñoz <https://olguin.se>`_: PhD student in Networking for Cyberphysical Systems; lead developer and maintainer for the CLEAVE project.
-
-- `Seyed Samie Mostafavi <https://www.kth.se/profile/ssmos>`_: PhD student in Networking for Cyberphysical Systems.
-
-- `Dr. James R. Gross <https://www.jamesgross.org/>`_: Professor in Networking for Cyberphysical Systems; PI for the `ExPECA <https://www.jamesgross.org/research/expeca/>`_ project.
+   modules
