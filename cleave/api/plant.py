@@ -349,15 +349,16 @@ class GaussianConstantActuator(SimpleConstantActuator):
                  prop_name: str,
                  g_mean: float,
                  g_std: float,
-                 start_value: Optional[PhyPropType] = None,
+                 initial_value: Optional[PhyPropType] = None,
                  prealloc_size: int = int(1e6)):
-        super(GaussianConstantActuator, self).__init__(prop_name=prop_name)
+        super(GaussianConstantActuator, self).__init__(
+            prop_name=prop_name, initial_value=initial_value)
         import numpy
         self._random = numpy.random.default_rng()
         self._noise_mean = g_mean
         self._noise_std = g_std
         self._noise_prealloc = prealloc_size
-        self._value = start_value
+        self._value = initial_value
 
         # preallocate values for efficiency
         self._noise = deque(self._random.normal(
