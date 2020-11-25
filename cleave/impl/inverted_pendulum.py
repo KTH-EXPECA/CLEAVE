@@ -41,16 +41,39 @@ G_CONST = Vec2d(0, -9.8)
 
 def visualization_loop(input_q: Queue,
                        shutdown_event: Event,
-                       screen_w: int,
-                       screen_h: int,
+                       window_w: int,
+                       window_h: int,
                        caption: str,
-                       ppm: float = 200.0) \
-        -> None:
+                       ppm: float = 200.0) -> None:
+    """
+    Utility function that executes a Pyglet GUI loop to graphically visualize
+    the inverted pendulum. Should always be called from a separate Process.
+
+    Parameters
+    ----------
+    input_q
+        Input queue which holds dictionaries describing the figures to be
+        drawn on screen.
+    shutdown_event
+        Event to signal a shutdown of the Plant.
+    window_w
+        Window width.
+    window_h
+        Window height.
+    caption
+        Window caption.
+    ppm
+        Factor relating number of pixels per meter.
+
+    Returns
+    -------
+
+    """
     import pyglet
-    window = pyglet.window.Window(screen_w, screen_h,
+    window = pyglet.window.Window(window_w, window_h,
                                   vsync=False,
                                   caption=caption)
-    floor_offset = Vec2d(screen_w / 2, 5)  # TODO fix magic number
+    floor_offset = Vec2d(window_w / 2, 5)  # TODO fix magic number
 
     def on_draw(dt):
         # TODO: needs a timeout for shutdown
@@ -107,6 +130,10 @@ def visualization_loop(input_q: Queue,
 
 
 class InvPendulumState(State):
+    """
+    Implementation of a discrete-time simulation of an inverted pendulum.
+    """
+
     def __init__(self,
                  ground_friction: float = 0.1,
                  cart_mass: float = 0.5,
@@ -116,6 +143,25 @@ class InvPendulumState(State):
                  pend_mass: float = 0.2,
                  pend_moment: float = 0.001,  # TODO: calculate with pymunk?
                  ):
+        """
+
+        Parameters
+        ----------
+        ground_friction
+            Friction factor to apply for the ground.
+        cart_mass
+            Mass of the pendulum cart in Kg.
+        cart_dims
+            Dimensions of the cart in meters.
+        pend_com
+            Center of mass for the pendulum arm.
+        pend_width
+            Width of the pendulum arm in meters.
+        pend_mass
+            Mass of the pendulum in Kg.
+        pend_moment
+            Moment of the pendulum.
+        """
         super(InvPendulumState, self).__init__()
         # set up state
 
@@ -190,7 +236,11 @@ class InvPendulumState(State):
 
 
 class InvPendulumStateWithViz(InvPendulumState):
-    # TODO: tidy up, document
+    """
+    Implementation of a discrete-time simulation of an inverted pendulum,
+    with a graphical visualization using Pyglet.
+    """
+
     def __init__(self,
                  ground_friction: float = 0.1,
                  cart_mass: float = 0.5,
@@ -204,6 +254,25 @@ class InvPendulumStateWithViz(InvPendulumState):
                  caption: str = 'Inverted Pendulum Simulation',
                  ppm: float = 200.0
                  ):
+        """
+
+        Parameters
+        ----------
+        ground_friction
+            Friction factor to apply for the ground.
+        cart_mass
+            Mass of the pendulum cart in Kg.
+        cart_dims
+            Dimensions of the cart in meters.
+        pend_com
+            Center of mass for the pendulum arm.
+        pend_width
+            Width of the pendulum arm in meters.
+        pend_mass
+            Mass of the pendulum in Kg.
+        pend_moment
+            Moment of the pendulum.
+        """
         from multiprocessing.context import Process
 
         super(InvPendulumStateWithViz, self).__init__(
@@ -270,11 +339,24 @@ class InvPendulumStateWithViz(InvPendulumState):
 
 
 class InvPendulumController(Controller):
+    """
+    Proportional-differential controller for the Inverted Pendulum.
+    """
+
     #: Pendulum parameters
     K = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]
     NBAR = -57.25
 
     def __init__(self, ref: float = 0.0, max_force: float = 25):
+        """
+
+        Parameters
+        ----------
+        ref:
+            Position on the X-axis around which to balance the pendulum.
+        max_force
+            Maximum force, in Newtons, allowed to apply to the pendulum.
+        """
         super(InvPendulumController, self).__init__()
         self._count = 0
         self._ref = ref
