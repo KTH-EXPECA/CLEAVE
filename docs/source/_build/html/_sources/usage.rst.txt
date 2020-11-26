@@ -9,9 +9,17 @@
 Emulating a Networked Control System
 ####################################
 
-Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controller Services. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controller Services are the computational elements which perform the necessary computations for the controlling of Plants.
+Emulations of Networked Control Systems in CLEAVE are centered around two core concepts: Plants and Controller Services. These terms follow the terminology used in Control Systems research: Plants are physical systems we wish to control, whereas Controller Services are the computational elements which perform the necessary computations for the controlling of Plants. CLEAVE provides an easy-to-use API to implement these components, and abstracts away the network code, allowing researchers to focus on the NCS itself.
 
-In the context of CLEAVE emulations, the definitions of Plants and Controller Services are done through configuration files written in pure Python. These are then executed using the :code:`cleave.py` launcher script. A couple of of such configuration files can be found under the :code:`examples/` directory, and we will discuss them in more detail in :ref:`deploying_included_ncs`.
+.. figure:: /images/CLEAVE_Overview.png
+    :align: center
+    :width: 500
+    :figwidth: 100%
+    :alt: Overview of CLEAVE
+
+    General overview of CLEAVE's design. 
+
+In practical terms, the definitions of Plants and Controller Services are done through configuration files written in pure Python. These are then executed using the :code:`cleave.py` launcher script. A couple of of such configuration files can be found under the :code:`examples/` directory, and we will discuss them in more detail in :ref:`deploying_included_ncs`.
 
 To execute a Plant, use the :code:`run-plant` sub-command and provide a Plant configuration file:
 
@@ -81,6 +89,16 @@ These are the representations of the physical systems wich we want to control. P
 - A collection of |Sensor| objects, which measure specific properties of the |State|, potentially transforming them, and send them to the Controller Service.
 
 - A collection of |Actuator| objects, which receive inputs from the Controller Service, potentially transform or distort them, and finally act upon specific properties of the |State|.
+
+
+.. figure:: /images/CLEAVE_PLANT.png
+    :align: center
+    :width: 800
+    :figwidth: 100%
+    :alt: Overview of a Plant
+
+    General overview of the structure of, and flow of data in a Plant in CLEAVE.
+
 
 State
 ^^^^^
@@ -270,6 +288,14 @@ Controller Services
 -------------------
 
 As discussed previously, a Controller Service correspond to the element in the NCS emulation which implements the necessary logic and computations to achieve the desired control of the Plant. In CLEAVE, Controller Services are implemented as stateful microservices paired with a specific Plant that receive samples of the Plant |State| semantic sensor variables over a UDP socket and return new values for the |State| semantic actuator variables over the same socket. Controller Services currently have a single user-defined component: a |Controller| which implements the control strategy. 
+
+.. figure:: /images/CLEAVE_CONTROL.png
+    :align: center
+    :width: 800
+    :figwidth: 100%
+    :alt: Overview of a Controller Service
+
+    General overview of the structure of, and flow of data in a Controller Service in CLEAVE.
 
 Controllers
 ^^^^^^^^^^^

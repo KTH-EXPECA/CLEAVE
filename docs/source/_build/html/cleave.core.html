@@ -216,6 +216,55 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 </dd></dl>
 
+<dl class="py class">
+<dt id="cleave.core.config.Config">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Any<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">defaults</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Any<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.config.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Helper class to hold configuration variables with optional default values.</p>
+<dl class="py method">
+<dt id="cleave.core.config.Config.get_parameter">
+<code class="sig-name descname">get_parameter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">k</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span> &#x2192; Any<a class="headerlink" href="#cleave.core.config.Config.get_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Looks up and returns a named parameter from the configuration.
+If the parameter is not defined and not required, this will returned
+its default value instead.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>k</strong> – Parameter name.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The parameter value if defined. If the parameter is not defined
+but optional, this value will correspond to the parameter’s
+default value.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#cleave.core.config.ConfigError" title="cleave.core.config.ConfigError"><strong>ConfigError</strong></a> – If the parameter is required and has not been defined.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cleave.core.config.ConfigFile">
+<em class="property">class </em><code class="sig-prename descclassname">cleave.core.config.</code><code class="sig-name descname">ConfigFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config_path</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">cmd_line_overrides</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Any<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">defaults</span><span class="p">:</span> <span class="n">Mapping<span class="p">[</span>str<span class="p">, </span>Any<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.core.config.ConfigFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cleave.core.config.Config" title="cleave.core.config.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.core.config.Config</span></code></a></p>
+<p>Helper class to wrap access to a config.py file containing configuration
+variables for the program.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_path</strong> – Path to the config script.</p></li>
+<li><p><strong>cmd_line_overrides</strong> – Overrides for config variables obtained from the command line.
+Config parameters defined here will always override the config file.</p></li>
+<li><p><strong>defaults</strong> – Mapping of fallback values for missing parameters.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 <div class="section" id="module-cleave.core.eventloop">
 <span id="cleave-core-eventloop-module"></span><h2>cleave.core.eventloop module<a class="headerlink" href="#module-cleave.core.eventloop" title="Permalink to this headline">¶</a></h2>

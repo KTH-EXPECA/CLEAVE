@@ -182,10 +182,44 @@
 <dd><p>Gravity constants</p>
 </dd></dl>
 
+<dl class="py function">
+<dt id="cleave.impl.inverted_pendulum.visualization_loop">
+<code class="sig-prename descclassname">cleave.impl.inverted_pendulum.</code><code class="sig-name descname">visualization_loop</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input_q</span><span class="p">:</span> <span class="n">multiprocessing.context.BaseContext.Queue</span></em>, <em class="sig-param"><span class="n">shutdown_event</span><span class="p">:</span> <span class="n">multiprocessing.context.BaseContext.Event</span></em>, <em class="sig-param"><span class="n">window_w</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">window_h</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">caption</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">ppm</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">200.0</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.impl.inverted_pendulum.visualization_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility function that executes a Pyglet GUI loop to graphically visualize
+the inverted pendulum. Should always be called from a separate Process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_q</strong> – Input queue which holds dictionaries describing the figures to be
+drawn on screen.</p></li>
+<li><p><strong>shutdown_event</strong> – Event to signal a shutdown of the Plant.</p></li>
+<li><p><strong>window_w</strong> – Window width.</p></li>
+<li><p><strong>window_h</strong> – Window height.</p></li>
+<li><p><strong>caption</strong> – Window caption.</p></li>
+<li><p><strong>ppm</strong> – Factor relating number of pixels per meter.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt id="cleave.impl.inverted_pendulum.InvPendulumState">
 <em class="property">class </em><code class="sig-prename descclassname">cleave.impl.inverted_pendulum.</code><code class="sig-name descname">InvPendulumState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ground_friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">cart_mass</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.5</span></em>, <em class="sig-param"><span class="n">cart_dims</span><span class="p">:</span> <span class="n">pymunk.vec2d.Vec2d</span> <span class="o">=</span> <span class="default_value">Vec2d(0.3, 0.2)</span></em>, <em class="sig-param"><span class="n">pend_com</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.6</span></em>, <em class="sig-param"><span class="n">pend_width</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">pend_mass</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">pend_moment</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumState" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="cleave.api.html#cleave.api.plant.State" title="cleave.api.plant.State"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.api.plant.State</span></code></a></p>
+<p>Implementation of a discrete-time simulation of an inverted pendulum.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ground_friction</strong> – Friction factor to apply for the ground.</p></li>
+<li><p><strong>cart_mass</strong> – Mass of the pendulum cart in Kg.</p></li>
+<li><p><strong>cart_dims</strong> – Dimensions of the cart in meters.</p></li>
+<li><p><strong>pend_com</strong> – Center of mass for the pendulum arm.</p></li>
+<li><p><strong>pend_width</strong> – Width of the pendulum arm in meters.</p></li>
+<li><p><strong>pend_mass</strong> – Mass of the pendulum in Kg.</p></li>
+<li><p><strong>pend_moment</strong> – Moment of the pendulum.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="cleave.impl.inverted_pendulum.InvPendulumState.advance">
 <code class="sig-name descname">advance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">delta_t</span><span class="p">:</span> <span class="n">float</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumState.advance" title="Permalink to this definition">¶</a></dt>
@@ -205,6 +239,21 @@ will be 0 the first time this method is called.</p>
 <dt id="cleave.impl.inverted_pendulum.InvPendulumStateWithViz">
 <em class="property">class </em><code class="sig-prename descclassname">cleave.impl.inverted_pendulum.</code><code class="sig-name descname">InvPendulumStateWithViz</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ground_friction</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">cart_mass</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.5</span></em>, <em class="sig-param"><span class="n">cart_dims</span><span class="p">:</span> <span class="n">pymunk.vec2d.Vec2d</span> <span class="o">=</span> <span class="default_value">Vec2d(0.3, 0.2)</span></em>, <em class="sig-param"><span class="n">pend_com</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.6</span></em>, <em class="sig-param"><span class="n">pend_width</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">pend_mass</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">pend_moment</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.001</span></em>, <em class="sig-param"><span class="n">screen_w</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">screen_h</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">700</span></em>, <em class="sig-param"><span class="n">caption</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'Inverted Pendulum Simulation'</span></em>, <em class="sig-param"><span class="n">ppm</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">200.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumStateWithViz" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#cleave.impl.inverted_pendulum.InvPendulumState" title="cleave.impl.inverted_pendulum.InvPendulumState"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.impl.inverted_pendulum.InvPendulumState</span></code></a></p>
+<p>Implementation of a discrete-time simulation of an inverted pendulum,
+with a graphical visualization using Pyglet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ground_friction</strong> – Friction factor to apply for the ground.</p></li>
+<li><p><strong>cart_mass</strong> – Mass of the pendulum cart in Kg.</p></li>
+<li><p><strong>cart_dims</strong> – Dimensions of the cart in meters.</p></li>
+<li><p><strong>pend_com</strong> – Center of mass for the pendulum arm.</p></li>
+<li><p><strong>pend_width</strong> – Width of the pendulum arm in meters.</p></li>
+<li><p><strong>pend_mass</strong> – Mass of the pendulum in Kg.</p></li>
+<li><p><strong>pend_moment</strong> – Moment of the pendulum.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="cleave.impl.inverted_pendulum.InvPendulumStateWithViz.initialize">
 <code class="sig-name descname">initialize</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumStateWithViz.initialize" title="Permalink to this definition">¶</a></dt>
@@ -236,6 +285,15 @@ will be 0 the first time this method is called.</p>
 <dt id="cleave.impl.inverted_pendulum.InvPendulumController">
 <em class="property">class </em><code class="sig-prename descclassname">cleave.impl.inverted_pendulum.</code><code class="sig-name descname">InvPendulumController</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">max_force</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">25</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumController" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="cleave.api.html#cleave.api.controller.Controller" title="cleave.api.controller.Controller"><code class="xref py py-class docutils literal notranslate"><span class="pre">cleave.api.controller.Controller</span></code></a></p>
+<p>Proportional-differential controller for the Inverted Pendulum.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref</strong> – Position on the X-axis around which to balance the pendulum.</p></li>
+<li><p><strong>max_force</strong> – Maximum force, in Newtons, allowed to apply to the pendulum.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt id="cleave.impl.inverted_pendulum.InvPendulumController.K">
 <code class="sig-name descname">K</code><em class="property"> = [-57.38901804, -36.24133932, 118.51380879, 28.97241832]</em><a class="headerlink" href="#cleave.impl.inverted_pendulum.InvPendulumController.K" title="Permalink to this definition">¶</a></dt>
