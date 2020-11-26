@@ -34,5 +34,7 @@ python:
   version: 3.8
   install:
     - requirements: requirements_docs.txt
+    - requirements: requirements.txt
+    - requirements: requirements_viz.txt
 
 
