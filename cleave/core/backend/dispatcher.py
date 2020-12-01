@@ -13,9 +13,10 @@
 #  limitations under the License.
 import json
 import uuid
-from typing import Any
+from typing import Any, Mapping
 
 from klein import Klein
+from klein.resource import KleinResource
 from twisted.internet import endpoints
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.python.failure import Failure
@@ -28,38 +29,92 @@ class MalformedRequest(Exception):
     pass
 
 
+def _write_json_response(request: Request,
+                         status_code: int,
+                         response: Mapping,
+                         finish: bool = True) -> None:
+    request.setResponseCode(status_code)
+    request.setHeader('content-type', 'application/json')
+    request.write(json.dumps(response).encode('utf8'))
+    if finish:
+        request.finish()
+
+
+def ensure_headers(req: Request, headers: Mapping[str, str]) -> None:
+    for header, exp_value in headers.items():
+        req_value = req.getHeader(header)
+        if req_value is None or req_value.lower() != exp_value.lower():
+            raise MalformedRequest()
+
+
+class ControllerResource:
+    def __init__(self):
+        # TODO: wrap actual controller
+
+        self._id = uuid.uuid4()
+        self._app = Klein()
+        # relative routes
+        self._app.route('/controller', methods=['GET'])(self.info)
+        self._app.route('/controller', methods=['DELETE'])(self.shutdown)
+
+    @property
+    def resource(self) -> KleinResource:
+        return self._app.resource()
+
+    @property
+    def uuid(self) -> uuid.UUID:
+        return self._id
+
+    def info(self, req: Request) -> Any:
+        # ensure_headers(req, {'content-type': 'application/json'})
+        _write_json_response(
+            request=req,
+            response={'controller': f'{self._id}'},
+            status_code=200
+        )
+        return server.NOT_DONE_YET
+
+    def shutdown(self, req: Request) -> Any:
+        ensure_headers(req, {'content-type': 'application/json'})
+        _write_json_response(
+            request=req,
+            response={'controller': f'{self._id}'},
+            status_code=200
+        )
+        return server.NOT_DONE_YET
+
+
 class Dispatcher:
     def __init__(self):
         self._app = Klein()
-        self._running_ctrls = dict()
+        self._controllers = dict()
 
         # set up routes
         self._app.route('/', methods=['POST'])(self.spawn_controller)
-        self._app.route('/<string:ctrl_id>',
-                        methods=['GET'])(self.controller_info)
+        self._app.route('/<string:ctrl_id>', branch=True)(self.controller)
 
         self._app.handle_errors(MalformedRequest)(self.malformed_request)
         self._app.handle_errors(json.JSONDecodeError)(self.json_decode_error)
 
-    def malformed_request(self,
-                          request: Request,
+    @staticmethod
+    def malformed_request(request: Request,
                           failure: Failure) -> Any:
         # TODO: parameterize content type
-        request.setResponseCode(400)
-        request.write(json.dumps({
-            'error': 'Malformed request.'
-        }).encode('utf8'))
-        request.finish()
+        _write_json_response(
+            request=request,
+            response={'error': 'Malformed request.'},
+            status_code=400
+        )
         return server.NOT_DONE_YET
 
-    def json_decode_error(self,
-                          request: Request,
+    @staticmethod
+    def json_decode_error(request: Request,
                           failure: Failure) -> Any:
-        request.setResponseCode(400)
-        request.write(json.dumps({
-            'error': 'Could not decode JSON payload.'
-        }).encode('utf8'))
-        request.finish()
+        _write_json_response(
+            request=request,
+            response={'error': 'Could not decode JSON payload.'},
+            status_code=400
+        )
         return server.NOT_DONE_YET
 
     def run(self, host: str, port: int, reactor: PosixReactorBase) -> None:
@@ -73,10 +128,7 @@ class Dispatcher:
         reactor.run()
 
     def spawn_controller(self, request: Request) -> Any:
-        content_type = request.getHeader('content-type').lower()
-        if content_type != 'application/json':
-            raise MalformedRequest()
-
+        ensure_headers(request, {'content-type': 'application/json'})
         req_dict = json.load(request.content)
         try:
             controller_cls = req_dict['controller']
@@ -85,31 +137,39 @@ class Dispatcher:
         except (KeyError, AssertionError):
             raise MalformedRequest()
 
-        # TODO: spawn controller, store process in dictionary
         # TODO: make it deferred?
-        ctrl_id = uuid.uuid4()
-        self._running_ctrls[ctrl_id] = object()
+        # actually spawn shit
+        ctrl_resource = ControllerResource()
+        self._controllers[ctrl_resource.uuid] = ctrl_resource
 
         resp_dict = {
-            'controller': str(ctrl_id)
+            'controller': str(ctrl_resource.uuid)
         }
 
-        request.setResponseCode(200)
-        request.write(json.dumps(resp_dict).encode('utf8'))
-        request.finish()
+        _write_json_response(
+            request=request,
+            response=resp_dict,
+            status_code=200
+        )
         return server.NOT_DONE_YET
 
-    def controller_info(self,
-                        request: Request,
-                        ctrl_id: str) -> Any:
-
-        ctrl_id = uuid.UUID(ctrl_id)
+    def controller(self,
+                   request: Request,
+                   ctrl_id: str) -> Any:
+        # ensure_headers(request, {'content-type': 'application/json'})
         try:
-            controller = self._running_ctrls[ctrl_id]
-
-            # TODO: print info
-            return str(ctrl_id).encode('utf8')
+            ctrl_id = uuid.UUID(ctrl_id)
+            return self._controllers[ctrl_id].resource
+        except ValueError:
+            _write_json_response(
+                request=request,
+                response={'error': f'Malformed uuid {ctrl_id}'},
+                status_code=400
+            )
         except KeyError:
-            request.setResponseCode(404)
-            request.finish()
-            return server.NOT_DONE_YET
+            _write_json_response(
+                request=request,
+                response={'error': f'No such controller: {ctrl_id}'},
+                status_code=404
+            )
+        return server.NOT_DONE_YET
