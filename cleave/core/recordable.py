@@ -29,7 +29,7 @@ import abc
 import threading
 from collections import namedtuple
 from pathlib import Path
-from threading import RLock
+from queue import Empty, Queue
 from typing import Any, Mapping, NamedTuple, Sequence, Set, Union
 
 import numpy as np
@@ -152,37 +152,54 @@ class CSVRecorder(Recorder):
         self._chunk_count = 0
         self._chunk_row_idx = 0
 
-        self._lock = RLock()
+        self._chunk_q = Queue()
+        self._chunk_write_thread = threading.Thread(
+            target=self._writer_loop, args=(self._path,))
+        self._shutdown_event = threading.Event()
 
-    def initialize(self) -> None:
-        # "touch" the file to clear it and prepare for actual writing
-        with self._path.open('wb') as fp:
+    def _writer_loop(self, path: Path) -> None:
+        with path.open('wb') as fp:
+            # "touch" the file to clear it and prepare for actual writing
             fp.write(bytes(0x00))
 
-    def _flush_chunk_to_disk(self) -> threading.Thread:
-        chunk = self._table_chunk.iloc[:self._chunk_row_idx].copy()
-        count = self._chunk_count
+        with path.open('a', newline='') as fp:
+            while not self._shutdown_event.is_set():
+                try:
+                    chunk, with_hdr = self._chunk_q.get(block=True,
+                                                        timeout=0.05)
+                except Empty:
+                    continue
 
-        def _flush():
-            # TODO: make sure there's not a bottleneck in the flush
-            #  operation, enqueue them somehow using a worker thread maybe.
-            with self._lock, self._path.open('a', newline='') as fp:
-                chunk.to_csv(fp, header=(count == 0), index=False)
+                chunk.to_csv(fp, header=with_hdr, index=False)
+                self._chunk_q.task_done()
 
-        # flush in separate thread to avoid locking up the GIL
-        t = threading.Thread(target=_flush)
-        t.start()
+            # this only occurs at shutdown, so there shouldn't be any new
+            # chunks coming in
+            while not self._chunk_q.empty():
+                chunk, with_hdr = self._chunk_q.get_nowait()
+                chunk.to_csv(fp, header=with_hdr, index=False)
+                self._chunk_q.task_done()
 
-        self._chunk_row_idx = 0
-        self._chunk_count += 1
-
-        return t
+    def initialize(self) -> None:
+        # initialize the writing thread
+        self._shutdown_event.clear()
+        while self._chunk_q.qsize() > 0:
+            self._chunk_q.get_nowait()
+        self._chunk_write_thread.start()
 
     def flush(self) -> None:
         """
         Flushes the internal record buffer to the backing CSV file.
         """
-        self._flush_chunk_to_disk()
+
+        self._chunk_q.put((
+            (self._table_chunk.iloc[:self._chunk_row_idx].copy()),
+            self._chunk_count == 0))
+
+        self._chunk_row_idx = 0
+        self._chunk_count += 1
+
+        return
 
     def notify(self, latest_record: NamedTuple) -> None:
         self._table_chunk.iloc[self._chunk_row_idx] = \
@@ -191,9 +208,14 @@ class CSVRecorder(Recorder):
 
         if self._chunk_row_idx == self._table_chunk.shape[0]:
             # flush to disk
-            self._flush_chunk_to_disk()
+            self.flush()
 
     def shutdown(self) -> None:
         self._log.info(f'Flushing and closing CSV table writer on path '
                        f'{self._path}...')
-        self._flush_chunk_to_disk().join()  # wait for the final write
+        self.flush()
+        self._shutdown_event.set()
+        self._chunk_q.join()
+        self._chunk_write_thread.join()
+        self._chunk_write_thread = threading.Thread(
+            target=self._writer_loop, args=(self._path,))
