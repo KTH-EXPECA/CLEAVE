@@ -12,12 +12,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import json
+import uuid
 from typing import Any
 
-import klein
+from klein import Klein
+from twisted.internet import endpoints
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.python.failure import Failure
+from twisted.web import server
 from twisted.web.http import Request
+from twisted.web.server import Site
 
 
 class MalformedRequest(Exception):
@@ -26,11 +30,14 @@ class MalformedRequest(Exception):
 
 class Dispatcher:
     def __init__(self):
-        self._app = klein.Klein()
+        self._app = Klein()
         self._running_ctrls = dict()
 
         # set up routes
         self._app.route('/', methods=['POST'])(self.spawn_controller)
+        self._app.route('/<string:ctrl_id>',
+                        methods=['GET'])(self.controller_info)
+
         self._app.handle_errors(MalformedRequest)(self.malformed_request)
         self._app.handle_errors(json.JSONDecodeError)(self.json_decode_error)
 
@@ -39,31 +46,31 @@ class Dispatcher:
                           failure: Failure) -> Any:
         # TODO: parameterize content type
         request.setResponseCode(400)
-        return {
+        request.write(json.dumps({
             'error': 'Malformed request.'
-        }
+        }).encode('utf8'))
+        request.finish()
+        return server.NOT_DONE_YET
 
     def json_decode_error(self,
                           request: Request,
                           failure: Failure) -> Any:
         request.setResponseCode(400)
-        request.finish()
-        return {
+        request.write(json.dumps({
             'error': 'Could not decode JSON payload.'
-        }
+        }).encode('utf8'))
+        request.finish()
+        return server.NOT_DONE_YET
 
-    # def run(self, host: str, port: int, reactor: PosixReactorBase) -> None:
-    #     # Create desired endpoint
-    #     endpoint_description = f'tcp4:port={port}:interface={host}'
-    #     endpoint = endpoints.serverFromString(reactor, endpoint_description)
-    #
-    #     # This actually starts listening on the endpoint with the Klein app
-    #     endpoint.listen(Site(app.resource())
-    #
-    #     # After doing other things like setting up logging,
-    #     # starting other services in the reactor or
-    #     # listening on other ports or sockets:
-    #     reactor.run()
+    def run(self, host: str, port: int, reactor: PosixReactorBase) -> None:
+        # Create desired endpoint
+        host = host.replace(':', '\:')
+        endpoint_description = f'tcp:port={port}:interface={host}'
+        endpoint = endpoints.serverFromString(reactor, endpoint_description)
+
+        # This actually starts listening on the endpoint with the Klein app
+        endpoint.listen(Site(self._app.resource()))
+        reactor.run()
 
     def spawn_controller(self, request: Request) -> Any:
         content_type = request.getHeader('content-type').lower()
@@ -78,5 +85,31 @@ class Dispatcher:
         except (KeyError, AssertionError):
             raise MalformedRequest()
 
+        # TODO: spawn controller, store process in dictionary
+        # TODO: make it deferred?
+        ctrl_id = uuid.uuid4()
+        self._running_ctrls[ctrl_id] = object()
+
+        resp_dict = {
+            'controller': str(ctrl_id)
+        }
+
         request.setResponseCode(200)
-        return req_dict
+        request.write(json.dumps(resp_dict).encode('utf8'))
+        request.finish()
+        return server.NOT_DONE_YET
+
+    def controller_info(self,
+                        request: Request,
+                        ctrl_id: str) -> Any:
+
+        ctrl_id = uuid.UUID(ctrl_id)
+        try:
+            controller = self._running_ctrls[ctrl_id]
+
+            # TODO: print info
+            return str(ctrl_id).encode('utf8')
+        except KeyError:
+            request.setResponseCode(404)
+            request.finish()
+            return server.NOT_DONE_YET
