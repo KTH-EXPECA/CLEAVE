@@ -20,11 +20,12 @@ from pathlib import Path
 
 import click
 
-# from cleave.core.backend.dispatcher import Dispatcher
+from cleave.core.eventloop import reactor  # this line needs to always be first!
+
+from cleave.core.backend.dispatcher import Dispatcher
 from cleave.core.client.physicalsim import PhysicalSimulation
 from cleave.core.client.plant import CSVRecordingPlant, Plant
 from cleave.core.config import Config, ConfigFile
-from cleave.core.eventloop import reactor
 from cleave.core.logging import loguru
 from cleave.core.network.backend import UDPControllerService
 from cleave.core.network.client import UDPControllerInterface
@@ -133,11 +134,11 @@ def run_controller(config_file_path: str):
     service.serve()
 
 
-# @cli.command('run-dispatcher')
-# @click.argument('port', type=int)
-# def run_dispatcher(port: int):
-#     dispatcher = Dispatcher()
-#     dispatcher.run('localhost', port)
+@cli.command('run-dispatcher')
+@click.argument('port', type=int)
+def run_dispatcher(port: int):
+    dispatcher = Dispatcher()
+    dispatcher.run('localhost', port, reactor)
 
 
 if __name__ == '__main__':
