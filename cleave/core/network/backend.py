@@ -24,6 +24,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import time
+from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Sequence, Set, Tuple
 
 import msgpack
@@ -31,14 +33,30 @@ from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 
 from .protocol import *
-from ...api.controller import Controller
 from ..backend.controller import ControllerWrapper
 from ..logging import Logger
-from ..recordable import NamedRecordable, Recordable, Recorder
+from ..recordable import CSVRecorder, NamedRecordable, Recordable, Recorder
+from ...api.controller import Controller
 from ...api.util import PhyPropMapping
 
 
-class UDPControllerService(Recordable, DatagramProtocol):
+class BaseControllerService(Recordable, ABC):
+    def __init__(self,
+                 port: int,
+                 controller: Controller,
+                 reactor: PosixReactorBase):
+        super(BaseControllerService, self).__init__()
+        self._port = port
+        self._control = ControllerWrapper(controller, reactor)
+        self._reactor = reactor
+        self._logger = Logger()
+
+    @abstractmethod
+    def serve(self) -> None:
+        pass
+
+
+class UDPControllerService(BaseControllerService, DatagramProtocol):
     """
     UDP implementation of a controller service. Receives sensor samples over
     UDP and pushes them to the controller for processing.
@@ -47,20 +65,30 @@ class UDPControllerService(Recordable, DatagramProtocol):
     def __init__(self,
                  port: int,
                  controller: Controller,
-                 reactor: PosixReactorBase):
-        super(UDPControllerService, self).__init__()
-        self._port = port
-        self._control = ControllerWrapper(controller, reactor)
-        self._reactor = reactor
+                 reactor: PosixReactorBase,
+                 output_dir: Path):
+        super(UDPControllerService, self).__init__(
+            port=port,
+            controller=controller,
+            reactor=reactor
+        )
+        self._out_dir = output_dir
         self._msg_fact = ControlMessageFactory()
-        self._logger = Logger()
-
         self._records = NamedRecordable(
             name=self.__class__.__name__,
             record_fields=['seq', 'recv_timestamp', 'recv_size',
                            'process_time', 'send_timestamp', 'send_size']
 
         )
+
+        # record ourselves!
+        if not self._out_dir.exists():
+            self._out_dir.mkdir(parents=True, exist_ok=False)
+        elif not self._out_dir.is_dir():
+            raise FileExistsError(f'{self._out_dir} exists and is not a '
+                                  f'directory, aborting.')
+
+        self._recorder = CSVRecorder(self, self._out_dir / 'service.csv')
 
     @property
     def recorders(self) -> Set[Recorder]:
@@ -78,6 +106,12 @@ class UDPControllerService(Recordable, DatagramProtocol):
         # start listening
         self._logger.info('Starting controller service...')
         self._reactor.listenUDP(self._port, self)
+
+        self._reactor.addSystemEventTrigger('before', 'startup',
+                                            self._recorder.initialize)
+        self._reactor.addSystemEventTrigger('after', 'shutdown',
+                                            self._recorder.shutdown)
+
         self._reactor.run()
 
     def stopProtocol(self) -> None:

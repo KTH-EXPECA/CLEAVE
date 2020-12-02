@@ -113,24 +113,10 @@ def run_controller(config_file_path: str):
     )
 
     # TODO: modularize obtaining the reactor?
-    service = config.controller_service(config.port, config.controller, reactor)
-
-    # TODO: refactor this using composition
-    # TODO: parameterize
-
-    if config.output_dir:
-        out_dir = Path(config.output_dir).resolve()
-
-        if not out_dir.exists():
-            out_dir.mkdir(parents=True, exist_ok=False)
-        elif not out_dir.is_dir():
-            raise FileExistsError(f'{out_dir} exists and is not a '
-                                  f'directory, aborting.')
-
-        recorder = CSVRecorder(service, out_dir / 'service.csv')
-        reactor.addSystemEventTrigger('before', 'startup', recorder.initialize)
-        reactor.addSystemEventTrigger('after', 'shutdown', recorder.shutdown)
-
+    service = config.controller_service(config.port,
+                                        config.controller,
+                                        reactor,
+                                        Path(config.output_dir))
     service.serve()
 
 
