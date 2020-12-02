@@ -249,8 +249,8 @@ class InvPendulumStateWithViz(InvPendulumState):
                  pend_width: float = 0.1,
                  pend_mass: float = 0.2,
                  pend_moment: float = 0.001,  # TODO: calculate with pymunk?
-                 screen_w: int = 1000,
-                 screen_h: int = 700,
+                 window_w: int = 1000,
+                 window_h: int = 700,
                  caption: str = 'Inverted Pendulum Simulation',
                  ppm: float = 200.0
                  ):
@@ -292,8 +292,8 @@ class InvPendulumStateWithViz(InvPendulumState):
                                   kwargs=dict(
                                       input_q=self._coord_q,
                                       shutdown_event=self._shutdown_event,
-                                      screen_w=screen_w,
-                                      screen_h=screen_h,
+                                      window_w=window_w,
+                                      window_h=window_h,
                                       caption=caption,
                                       ppm=ppm,
                                   ))
