@@ -12,8 +12,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import json
+import multiprocessing as mp
+import os
+import signal
 import uuid
-from typing import Any, Mapping
+from pathlib import Path
+from typing import Any, Mapping, Type
 
 from klein import Klein
 from klein.resource import KleinResource
@@ -23,6 +27,9 @@ from twisted.python.failure import Failure
 from twisted.web import server
 from twisted.web.http import Request
 from twisted.web.server import Site
+
+from ..network.backend import UDPControllerService
+from ...api.controller import Controller
 
 
 class MalformedRequest(Exception):
@@ -68,14 +75,21 @@ def ensure_headers(req: Request, headers: Mapping[str, str]) -> None:
             raise MalformedRequest()
 
 
-class ControllerResource:
-    def __init__(self):
-        # TODO: wrap actual controller
-
+class ControllerProcessResource:
+    def __init__(self,
+                 control_cls: Type[Controller],
+                 params: Mapping[str, Any]):
+        super(ControllerProcessResource, self).__init__()
         self._id = uuid.uuid4()
         self._app = Klein()
-        # relative routes
         self._app.route('/status', methods=['GET'])(self.info)
+
+        out_q = mp.Queue()
+        self._process = mp.Process(
+            target=ControllerProcessResource._control_process,
+            args=(control_cls, params, str(self._id), out_q))
+        self._process.start()
+        self._interface, self._port, self._out_path = out_q.get()
 
     @property
     def resource(self) -> KleinResource:
@@ -89,31 +103,63 @@ class ControllerResource:
         # ensure_headers(req, {'content-type': 'application/json'})
         write_json_response(
             request=req,
-            response={'controller': f'{self._id}'},
+            response={
+                'id'        : f'{self._id}',
+                'process_id': self._process.pid,
+                'interface' : self._interface,
+                'port'      : self._port
+            },
             status_code=200
         )
         return server.NOT_DONE_YET
 
-    def shutdown(self) -> None:
-        pass
+    def shut_down(self, timeout: float = 5) -> None:
+        os.kill(self._process.pid, signal.SIGINT)
+        try:
+            self._process.join(timeout=timeout)
+        except TimeoutError:
+            self._process.terminate()
+            self._process.join()
+
+    @staticmethod
+    def _control_process(control_cls: Type[Controller],
+                         params: Mapping[str, Any],
+                         uid: str,
+                         out_q: mp.Queue) -> None:
+        from twisted.internet import reactor
+        reactor: PosixReactorBase = reactor
+
+        controller = control_cls(**params)
+        path = Path(f'./controllers/{uid}').resolve()
+        service = UDPControllerService(
+            controller=controller,
+            output_dir=path)
+
+        port = reactor.listenUDP(0, service.protocol)
+        out_q.put((port.interface, port.port, path))
+        reactor.run()
 
 
 class Dispatcher:
-    def __init__(self):
+    def __init__(self, controllers: Mapping[str, Type[Controller]]):
+        super(Dispatcher, self).__init__()
         self._app = Klein()
         self._controllers: Mapping[str, ControllerResource] = dict()
+        self._controller_cls = controllers
 
         # set up routes
-        self._app.route('/',
-                        methods=['POST', 'GET', 'DELETE'])(
-            self.controller_collection)
-        self._app.route('/<string:ctrl_id>', branch=True)(
-            self.controller_resource)
+        self._app.route('/', methods=['POST', 'GET', 'DELETE']) \
+            (self.controller_collection)
+        self._app.route('/<string:ctrl_id>', branch=True) \
+            (self.controller_resource)
 
         self._app.handle_errors(MalformedRequest)(malformed_request)
         self._app.handle_errors(json.JSONDecodeError)(json_decode_error)
 
-    def run(self, host: str, port: int, reactor: PosixReactorBase) -> None:
+    def run(self, host: str, port: int) -> None:
+        from twisted.internet import reactor
+        reactor: PosixReactorBase = reactor
+
         # Create desired endpoint
         host = host.replace(':', '\:')
         endpoint_description = f'tcp:port={port}:interface={host}'
@@ -150,6 +196,7 @@ class Dispatcher:
         return server.NOT_DONE_YET
 
     def _list_controllers(self, request: Request) -> Any:
+        # TODO: return wrapped controller class, not ControllerResource
         write_json_response(request=request,
                             response={
                                 str(c_id): ctrl.__class__.__name__
