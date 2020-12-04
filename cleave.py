@@ -21,7 +21,6 @@ from pathlib import Path
 import click
 
 from cleave.core.eventloop import reactor  # this line needs to always be first!
-
 from cleave.core.backend.dispatcher import Dispatcher
 from cleave.core.client.physicalsim import PhysicalSimulation
 from cleave.core.client.plant import CSVRecordingPlant, Plant
@@ -29,7 +28,6 @@ from cleave.core.config import Config, ConfigFile
 from cleave.core.logging import loguru
 from cleave.core.network.backend import UDPControllerService
 from cleave.core.network.client import UDPControllerInterface
-from cleave.core.recordable import CSVRecorder
 
 _control_defaults = dict(
     output_dir='./controller_metrics/',
@@ -113,11 +111,10 @@ def run_controller(config_file_path: str):
     )
 
     # TODO: modularize obtaining the reactor?
-    service = config.controller_service(config.port,
-                                        config.controller,
+    service = config.controller_service(config.controller,
                                         reactor,
                                         Path(config.output_dir))
-    service.serve()
+    service.serve(config.port)
 
 
 @cli.command('run-dispatcher')

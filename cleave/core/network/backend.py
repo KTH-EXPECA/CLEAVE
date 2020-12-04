@@ -26,7 +26,7 @@
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Sequence, Set, Tuple
+from typing import Optional, Sequence, Set, Tuple
 
 import msgpack
 from twisted.internet.posixbase import PosixReactorBase
@@ -42,17 +42,15 @@ from ...api.util import PhyPropMapping
 
 class BaseControllerService(Recordable, ABC):
     def __init__(self,
-                 port: int,
                  controller: Controller,
                  reactor: PosixReactorBase):
         super(BaseControllerService, self).__init__()
-        self._port = port
         self._control = ControllerWrapper(controller, reactor)
         self._reactor = reactor
         self._logger = Logger()
 
     @abstractmethod
-    def serve(self) -> None:
+    def serve(self, port: Optional[int] = None) -> None:
         pass
 
 
@@ -63,12 +61,10 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
     """
 
     def __init__(self,
-                 port: int,
                  controller: Controller,
                  reactor: PosixReactorBase,
                  output_dir: Path):
         super(UDPControllerService, self).__init__(
-            port=port,
             controller=controller,
             reactor=reactor
         )
@@ -98,14 +94,14 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
     def record_fields(self) -> Sequence[str]:
         return self._records.record_fields
 
-    def serve(self) -> None:
+    def serve(self, port: Optional[int] = None) -> None:
         """
         Starts listening for and serving control requests.
         """
 
         # start listening
         self._logger.info('Starting controller service...')
-        self._reactor.listenUDP(self._port, self)
+        self._reactor.listenUDP(port, self)
 
         self._reactor.addSystemEventTrigger('before', 'startup',
                                             self._recorder.initialize)
