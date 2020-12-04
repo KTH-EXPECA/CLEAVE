@@ -54,7 +54,7 @@ class BaseControllerService(Recordable, ABC):
         self._controller = controller
         self._busy_cond = Condition()
         self._busy = False
-        self._log = Logger()
+        self._logger = Logger()
 
     def process_sensor_samples(self, samples: PhyPropMapping) -> Deferred:
         def process() -> PhyPropMapping:
@@ -67,7 +67,8 @@ class BaseControllerService(Recordable, ABC):
 
         def busy_errback(fail: Failure) -> None:
             fail.trap(BusyControllerException)
-            self._log.warn('Controller is busy, discarding received samples.')
+            self._logger.warn('Controller is busy, discarding received '
+                              'samples.')
 
         def unlock_callback(actuation: PhyPropMapping) -> PhyPropMapping:
             with self._busy_cond:

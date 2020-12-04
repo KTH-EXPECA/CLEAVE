@@ -18,7 +18,7 @@ from abc import ABC, abstractmethod
 from collections import Collection
 from pathlib import Path
 
-from twisted.internet import task
+from twisted.internet import reactor, task
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.python.failure import Failure
 
@@ -30,6 +30,8 @@ from ..logging import LogLevel, Logger
 from ..network.client import BaseControllerInterface
 from ..recordable import CSVRecorder
 from ...api.plant import Actuator, Sensor, UnrecoverableState
+
+reactor: PosixReactorBase = reactor
 
 
 class Plant(ABC):
@@ -84,13 +86,12 @@ class Plant(ABC):
 
 class BasePlant(Plant):
     def __init__(self,
-                 reactor: PosixReactorBase,
                  physim: PhysicalSimulation,
                  sensors: Collection[Sensor],
                  actuators: Collection[Actuator],
                  control_interface: BaseControllerInterface):
         super(BasePlant, self).__init__()
-        self._reactor = reactor
+        # self._reactor = reactor
         self._physim = physim
         self._control = control_interface
 
@@ -195,14 +196,14 @@ class BasePlant(Plant):
 
         self._logger.error('Details of variables which failed sanity checks '
                            f'have been output to {err_log_path.resolve()}')
-        self._reactor.stop()
+        reactor.stop()
 
     def _simloop_errback(self, failure: Failure):
         # general purpose errback to ouput a traceback and cleanly shutdown
         # after an exception in the simulation loop
         self._logger.critical('Exception in simulation loop.')
         self._logger.error(f'\n{failure.getTraceback()}')
-        self._reactor.stop()
+        reactor.stop()
 
     def execute(self):
         """
@@ -220,17 +221,17 @@ class BasePlant(Plant):
             if not self._control.is_ready():
                 # controller not ready, wait a bit
                 self._logger.warn('Waiting for controller...')
-                self._reactor.callLater(0.01, _wait_for_network_and_init)
+                reactor.callLater(0.01, _wait_for_network_and_init)
             else:
                 # schedule timestep
                 self._logger.info('Starting simulation...')
                 self._physim.initialize()
                 sim_loop = task.LoopingCall \
                     .withCount(self._execute_emu_timestep)
-                sim_loop.clock = self._reactor
+                sim_loop.clock = reactor
 
                 ticker_loop = task.LoopingCall(self._log_plant_rate_callback)
-                ticker_loop.clock = self._reactor
+                ticker_loop.clock = reactor
 
                 # have loop run slightly faster than required, as we rather
                 # have the plant be a bit too fast than too slow
@@ -244,14 +245,13 @@ class BasePlant(Plant):
 
                 ticker_loop.start(interval=5)  # TODO: magic number?
 
-        self._control.register_with_reactor(self._reactor)
+        self._control.register_with_reactor(reactor)
         # callback for shutdown
-        self._reactor.addSystemEventTrigger('after', 'shutdown',
-                                            self.on_shutdown)
+        reactor.addSystemEventTrigger('after', 'shutdown', self.on_shutdown)
 
-        self._reactor.callWhenRunning(_wait_for_network_and_init)
-        self._reactor.suggestThreadPoolSize(3)  # input, output and processing
-        self._reactor.run()
+        reactor.callWhenRunning(_wait_for_network_and_init)
+        reactor.suggestThreadPoolSize(3)  # input, output and processing
+        reactor.run()
 
 
 class CSVRecordingPlant(BasePlant):
@@ -261,14 +261,12 @@ class CSVRecordingPlant(BasePlant):
     """
 
     def __init__(self,
-                 reactor: PosixReactorBase,
                  physim: PhysicalSimulation,
                  sensors: Collection[Sensor],
                  actuators: Collection[Actuator],
                  control_interface: BaseControllerInterface,
                  recording_output_dir: Path = Path('.')):
         super(CSVRecordingPlant, self).__init__(
-            reactor=reactor,
             physim=physim,
             sensors=sensors,
             actuators=actuators,

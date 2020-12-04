@@ -19,7 +19,6 @@ import sys
 from pathlib import Path
 
 import click
-from twisted.internet import selectreactor
 from twisted.internet.posixbase import PosixReactorBase
 
 from cleave.core.backend.dispatcher import Dispatcher
@@ -30,12 +29,6 @@ from cleave.core.logging import loguru
 from cleave.core.network.backend import BaseControllerService, \
     UDPControllerService
 from cleave.core.network.client import UDPControllerInterface
-
-# first things first, install the reactor
-selectreactor.install()
-from twisted.internet import reactor
-
-reactor: PosixReactorBase = reactor
 
 _control_defaults = dict(
     output_dir='./controller_metrics/',
@@ -64,7 +57,6 @@ def build_plant_from_config(config: Config) -> Plant:
     """
     host_addr = (socket.gethostbyname(config.host), config.port)
     return CSVRecordingPlant(
-        reactor=reactor,
         physim=PhysicalSimulation(
             state=config.state,
             tick_rate=config.tick_rate
@@ -113,6 +105,9 @@ def run_plant(config_file_path: str):
                                 file_okay=True,
                                 dir_okay=False))
 def run_controller(config_file_path: str):
+    from twisted.internet import reactor
+    reactor: PosixReactorBase = reactor
+
     config = ConfigFile(
         config_path=config_file_path,
         defaults=_control_defaults
@@ -128,8 +123,10 @@ def run_controller(config_file_path: str):
 @cli.command('run-dispatcher')
 @click.argument('port', type=int)
 def run_dispatcher(port: int):
+    from twisted.internet import reactor
+    reactor: PosixReactorBase = reactor
+
     dispatcher = Dispatcher()
-    dispatcher.run('localhost', port, reactor)
 
 
 if __name__ == '__main__':
