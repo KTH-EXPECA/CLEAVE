@@ -26,31 +26,62 @@
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Sequence, Set, Tuple
+from threading import Condition
+from typing import Sequence, Set, Tuple, Union
 
 import msgpack
-from twisted.internet.posixbase import PosixReactorBase
-from twisted.internet.protocol import DatagramProtocol
+from twisted.internet.defer import Deferred
+from twisted.internet.protocol import DatagramProtocol, ProcessProtocol, \
+    Protocol
+from twisted.internet.threads import deferToThread
+from twisted.python.failure import Failure
 
 from .protocol import *
-from ..backend.controller import ControllerWrapper
 from ..logging import Logger
 from ..recordable import CSVRecorder, NamedRecordable, Recordable, Recorder
 from ...api.controller import Controller
 from ...api.util import PhyPropMapping
 
 
+class BusyControllerException(Exception):
+    pass
+
+
 class BaseControllerService(Recordable, ABC):
     def __init__(self,
-                 controller: Controller,
-                 reactor: PosixReactorBase):
+                 controller: Controller):
         super(BaseControllerService, self).__init__()
-        self._control = ControllerWrapper(controller, reactor)
-        self._reactor = reactor
-        self._logger = Logger()
+        self._controller = controller
+        self._busy_cond = Condition()
+        self._busy = False
+        self._log = Logger()
 
+    def process_sensor_samples(self, samples: PhyPropMapping) -> Deferred:
+        def process() -> PhyPropMapping:
+            with self._busy_cond:
+                if self._busy:
+                    raise BusyControllerException()
+                self._busy = True
+
+            return self._controller.process(samples)
+
+        def busy_errback(fail: Failure) -> None:
+            fail.trap(BusyControllerException)
+            self._log.warn('Controller is busy, discarding received samples.')
+
+        def unlock_callback(actuation: PhyPropMapping) -> PhyPropMapping:
+            with self._busy_cond:
+                self._busy = False
+            return actuation
+
+        deferred = deferToThread(process)
+        deferred.addCallback(unlock_callback)
+        deferred.addErrback(busy_errback)
+        return deferred
+
+    @property
     @abstractmethod
-    def serve(self, port: Optional[int] = None) -> None:
+    def protocol(self) -> Union[Protocol, ProcessProtocol, DatagramProtocol]:
         pass
 
 
@@ -60,13 +91,15 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
     UDP and pushes them to the controller for processing.
     """
 
+    @property
+    def protocol(self) -> Union[Protocol, ProcessProtocol, DatagramProtocol]:
+        return self
+
     def __init__(self,
                  controller: Controller,
-                 reactor: PosixReactorBase,
                  output_dir: Path):
         super(UDPControllerService, self).__init__(
-            controller=controller,
-            reactor=reactor
+            controller=controller
         )
         self._out_dir = output_dir
         self._msg_fact = ControlMessageFactory()
@@ -94,27 +127,16 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
     def record_fields(self) -> Sequence[str]:
         return self._records.record_fields
 
-    def serve(self, port: Optional[int] = None) -> None:
-        """
-        Starts listening for and serving control requests.
-        """
-
-        # start listening
-        self._logger.info('Starting controller service...')
-        self._reactor.listenUDP(port, self)
-
-        self._reactor.addSystemEventTrigger('before', 'startup',
-                                            self._recorder.initialize)
-        self._reactor.addSystemEventTrigger('after', 'shutdown',
-                                            self._recorder.shutdown)
-
-        self._reactor.run()
+    def startProtocol(self) -> None:
+        self._logger.info('Started controller service...')
+        self._recorder.initialize()
 
     def stopProtocol(self) -> None:
         """
         Executed during shutdown.
         """
         self._logger.warn('Shutting down controller service.')
+        self._recorder.shutdown()
 
     def datagramReceived(self, in_dgram: bytes, addr: Tuple[str, int]):
         """
@@ -153,8 +175,8 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
                         send_size=out_size
                     )
 
-                self._control.process_sensor_samples(in_msg.payload,
-                                                     result_callback)
+                self.process_sensor_samples(in_msg.payload) \
+                    .addCallback(result_callback)
             else:
                 self._logger.warn(f'Ignoring message of unrecognized type '
                                   f'{in_msg.msg_type.name}.')

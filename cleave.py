@@ -19,15 +19,23 @@ import sys
 from pathlib import Path
 
 import click
+from twisted.internet import selectreactor
+from twisted.internet.posixbase import PosixReactorBase
 
-from cleave.core.eventloop import reactor  # this line needs to always be first!
 from cleave.core.backend.dispatcher import Dispatcher
 from cleave.core.client.physicalsim import PhysicalSimulation
 from cleave.core.client.plant import CSVRecordingPlant, Plant
 from cleave.core.config import Config, ConfigFile
 from cleave.core.logging import loguru
-from cleave.core.network.backend import UDPControllerService
+from cleave.core.network.backend import BaseControllerService, \
+    UDPControllerService
 from cleave.core.network.client import UDPControllerInterface
+
+# first things first, install the reactor
+selectreactor.install()
+from twisted.internet import reactor
+
+reactor: PosixReactorBase = reactor
 
 _control_defaults = dict(
     output_dir='./controller_metrics/',
@@ -110,11 +118,11 @@ def run_controller(config_file_path: str):
         defaults=_control_defaults
     )
 
-    # TODO: modularize obtaining the reactor?
-    service = config.controller_service(config.controller,
-                                        reactor,
-                                        Path(config.output_dir))
-    service.serve(config.port)
+    service: BaseControllerService = config.controller_service(
+        config.controller,
+        Path(config.output_dir))
+    reactor.listenUDP(config.port, service.protocol)
+    reactor.run()
 
 
 @cli.command('run-dispatcher')
