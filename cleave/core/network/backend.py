@@ -36,6 +36,11 @@ class BusyControllerException(Exception):
     pass
 
 
+class ControllerProcessingException(Exception):
+    pass
+
+
+# noinspection PyTypeChecker
 class BaseControllerService(Recordable, ABC):
     def __init__(self,
                  controller: Controller):
@@ -55,24 +60,31 @@ class BaseControllerService(Recordable, ABC):
                     raise BusyControllerException()
                 self._busy = True
 
-            return self._controller.process(samples)
+            try:
+                return self._controller.process(samples)
+            except Exception as e:
+                raise ControllerProcessingException() from e
+            finally:
+                with self._busy_cond:
+                    self._busy = False
 
-        def busy_errback(fail: Failure) -> None:
-            fail.trap(BusyControllerException)
-            self._logger.warn('Controller is busy, discarding received '
-                              'samples.')
+        def errback(fail: Failure) -> None:
+            exc = fail.trap(BusyControllerException,
+                            ControllerProcessingException)
 
-        def unlock_callback(actuation: PhyPropMapping) -> PhyPropMapping:
-            with self._busy_cond:
-                self._busy = False
-            return actuation
-
-        deferred = deferToThread(process)
-        deferred.addCallback(unlock_callback)
-        deferred.addCallback(success_cb)
+            if exc == BusyControllerException:
+                self._logger.warn('Controller is busy, discarding received '
+                                  'samples.')
+            elif exc == ControllerProcessingException:
+                self._logger.error('Error encountered while processing '
+                                   'samples.')
+                self._logger.error(fail.getTraceback())
 
         # in case the controller is busy, don't return anything
-        deferred.addErrback(busy_errback)
+        # don't return anything if there's an error in processing either
+        deferred = deferToThread(process)
+        deferred.addCallback(success_cb)
+        deferred.addErrback(errback)
         return deferred
 
     @property
