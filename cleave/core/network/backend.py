@@ -113,7 +113,7 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
             raise FileExistsError(f'{self._out_dir} exists and is not a '
                                   f'directory, aborting.')
 
-        self._recorder = CSVRecorder(self, self._out_dir / 'service.csv')
+        self._recorder = CSVRecorder(self, self._out_dir, 'service')
 
     @property
     def recorders(self) -> Set[Recorder]:

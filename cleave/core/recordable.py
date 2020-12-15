@@ -26,6 +26,7 @@
 from __future__ import annotations
 
 import abc
+from datetime import datetime
 import threading
 from collections import namedtuple
 from pathlib import Path
@@ -129,7 +130,8 @@ class CSVRecorder(Recorder):
 
     def __init__(self,
                  recordable: Recordable,
-                 output_path: Union[Path, str],
+                 output_dir: Path,
+                 metric_name: str,
                  chunk_size: int = 1000):
         # TODO: maybe add timestamp??
         super(CSVRecorder, self).__init__(recordable)
@@ -137,14 +139,14 @@ class CSVRecorder(Recorder):
         self._recordable = recordable
         self._log = Logger()
 
-        self._path = output_path.resolve() \
-            if isinstance(output_path, Path) else Path(output_path).resolve()
+        output_dir = output_dir.resolve()
+        if output_dir.exists() and not output_dir.is_dir():
+            raise FileExistsError(f'{self._path} exists and is not a '
+                                  f'directory!')
 
-        if self._path.exists():
-            if self._path.is_dir():
-                raise FileExistsError(f'{self._path} exists and is a '
-                                      f'directory!')
-            self._log.warn(f'{self._path} will be overwritten with new data.')
+        output_dir.mkdir(exist_ok=True, parents=True)
+        self._path = output_dir / \
+                     f'{metric_name}.{datetime.now():%Y%m%d.%H%M%S%f}.csv'
 
         dummy_data = np.empty((chunk_size, len(recordable.record_fields)))
         self._table_chunk = pd.DataFrame(data=dummy_data,
