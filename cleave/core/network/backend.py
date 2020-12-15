@@ -27,7 +27,7 @@ import time
 from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Condition
-from typing import Sequence, Set, Tuple, Union
+from typing import Any, Callable, Optional, Sequence, Set, Tuple, Union
 
 import msgpack
 from twisted.internet.defer import Deferred
@@ -56,7 +56,10 @@ class BaseControllerService(Recordable, ABC):
         self._busy = False
         self._logger = Logger()
 
-    def process_sensor_samples(self, samples: PhyPropMapping) -> Deferred:
+    def process_sensor_samples(self,
+                               samples: PhyPropMapping,
+                               success_cb: Callable[[PhyPropMapping], Any]) \
+            -> Deferred:
         def process() -> PhyPropMapping:
             with self._busy_cond:
                 if self._busy:
@@ -77,6 +80,9 @@ class BaseControllerService(Recordable, ABC):
 
         deferred = deferToThread(process)
         deferred.addCallback(unlock_callback)
+        deferred.addCallback(success_cb)
+
+        # in case the controller is busy, don't return anything
         deferred.addErrback(busy_errback)
         return deferred
 
@@ -158,7 +164,10 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
             if in_msg.msg_type == ControlMsgType.SENSOR_SAMPLE:
                 self._logger.info('Got control request.')
 
-                def result_callback(act_cmds: PhyPropMapping) -> None:
+                def result_callback(act_cmds: Optional[PhyPropMapping]) -> None:
+                    if act_cmds is None:
+                        return
+
                     out_msg = in_msg.make_control_reply(act_cmds)
                     out_dgram = out_msg.serialize()
                     out_size = len(out_dgram)
@@ -176,8 +185,7 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
                         send_size=out_size
                     )
 
-                self.process_sensor_samples(in_msg.payload) \
-                    .addCallback(result_callback)
+                self.process_sensor_samples(in_msg.payload, result_callback)
             else:
                 self._logger.warn(f'Ignoring message of unrecognized type '
                                   f'{in_msg.msg_type.name}.')
