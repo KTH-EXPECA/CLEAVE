@@ -23,56 +23,15 @@ from klein import Klein
 from klein.resource import KleinResource
 from twisted.internet import endpoints
 from twisted.internet.posixbase import PosixReactorBase
-from twisted.python.failure import Failure
 from twisted.web import server
 from twisted.web.http import Request
 from twisted.web.server import Site
 
+from .web_utils import MalformedRequest, ensure_headers, json_decode_errback, \
+    malformed_request, \
+    write_json_response
 from ..network.backend import UDPControllerService
 from ...api.controller import Controller
-
-
-class MalformedRequest(Exception):
-    pass
-
-
-def write_json_response(request: Request,
-                        status_code: int,
-                        response: Mapping,
-                        finish: bool = True) -> None:
-    request.setResponseCode(status_code)
-    request.setHeader('content-type', 'application/json')
-    request.write(json.dumps(response).encode('utf8'))
-    if finish:
-        request.finish()
-
-
-def malformed_request(request: Request,
-                      failure: Failure) -> Any:
-    # TODO: parameterize content type
-    write_json_response(
-        request=request,
-        response={'error': 'Malformed request.'},
-        status_code=400
-    )
-    return server.NOT_DONE_YET
-
-
-def json_decode_error(request: Request,
-                      failure: Failure) -> Any:
-    write_json_response(
-        request=request,
-        response={'error': 'Could not decode JSON payload.'},
-        status_code=400
-    )
-    return server.NOT_DONE_YET
-
-
-def ensure_headers(req: Request, headers: Mapping[str, str]) -> None:
-    for header, exp_value in headers.items():
-        req_value = req.getHeader(header)
-        if req_value is None or req_value.lower() != exp_value.lower():
-            raise MalformedRequest()
 
 
 class ControllerProcessResource:
@@ -154,7 +113,7 @@ class Dispatcher:
             (self.controller_resource)
 
         self._app.handle_errors(MalformedRequest)(malformed_request)
-        self._app.handle_errors(json.JSONDecodeError)(json_decode_error)
+        self._app.handle_errors(json.JSONDecodeError)(json_decode_errback)
 
     def run(self, host: str, port: int) -> None:
         from twisted.internet import reactor
