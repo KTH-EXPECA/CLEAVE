@@ -95,7 +95,7 @@ def visualization_loop(input_q: Queue,
             angle = shape['angle']
             position = shape['position']
             # get vertices in world coordinates
-            vertices = [Vec2d(v).rotated(angle) + position for v in
+            vertices = [Vec2d(*v).rotated(angle) + position for v in
                         raw_vertices]
 
             # convert vertices to pixel coordinates
@@ -113,7 +113,7 @@ def visualization_loop(input_q: Queue,
         for line in coord_dict['lines']:
             raw_vertices = line['vertices']
             radius = line['radius']
-            vertices = [Vec2d(v) + (0, radius) for v in raw_vertices]
+            vertices = [Vec2d(*v) + (0, radius) for v in raw_vertices]
 
             # convert vertices to pixel coordinates
             points = []
@@ -201,8 +201,8 @@ class InvPendulumState(State):
 
         # joint
         _joint_pos = self._cart_body.position + Vec2d(0, cart_dims.y / 2)
-        joint = pymunk.constraint.PivotJoint(self._cart_body, self._pend_body,
-                                             _joint_pos)
+        joint = pymunk.constraints.PivotJoint(self._cart_body, self._pend_body,
+                                              _joint_pos)
         joint.collide_bodies = False
         self._space.add(joint)
 
