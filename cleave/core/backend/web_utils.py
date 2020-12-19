@@ -12,8 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import json
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping, Tuple
 
+from jsonschema import ValidationError, validate as json_validate
 from twisted.python.failure import Failure
 from twisted.web import server
 from twisted.web.http import Request
@@ -60,3 +61,45 @@ def ensure_headers(req: Request, headers: Mapping[str, str]) -> None:
         req_value = req.getHeader(header)
         if req_value is None or req_value.lower() != exp_value.lower():
             raise MalformedRequest()
+
+
+def json_endpoint(schema: Mapping, payload_required: bool = True) \
+        -> Callable[[Callable], Callable]:
+    def outer_wrapper(fn: Callable[..., Tuple[int, Mapping]]) -> Callable:
+        def inner_wrapper(self, request: Request, *args, **kwargs) -> Any:
+            # ensure headers are application/json
+            ctype = request.getHeader('Content-Type')
+            if ctype is None or ctype.lower() != 'application/json':
+                # malformed request
+                write_json_response(
+                    request=request,
+                    response={'error': 'Content-type must be '
+                                       'application/json.'},
+                    status_code=415
+                )
+                return server.NOT_DONE_YET
+
+            # validate the payload using json schema
+            payload = json.load(request.content)
+            try:
+                json_validate(schema, payload)
+            except ValidationError as val_err:
+                write_json_response(
+                    request=request,
+                    response={'error': 'JSON request failed validation.',
+                              'cause': val_err.cause},
+                    status_code=400
+                )
+                return server.NOT_DONE_YET
+
+            code, results = fn(self, payload, *args, **kwargs)
+            write_json_response(
+                request=request,
+                response=results,
+                status_code=code
+            )
+            return server.NOT_DONE_YET
+
+        return inner_wrapper
+
+    return outer_wrapper
