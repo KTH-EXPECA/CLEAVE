@@ -23,6 +23,11 @@ from twisted.internet.posixbase import PosixReactorBase
 from cleave.core.network.backend import UDPControllerService
 
 
+#: This file contains code for executing a standalone controller service
+#: which takes its configuration from STDIN in the form of a JSON string.
+#: This controller is intended for together with the Dispatcher.
+
+
 class JSON(click.ParamType):
     name = 'JSON'
 

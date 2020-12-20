@@ -19,14 +19,31 @@ from twisted.web import server
 from twisted.web.http import Request
 
 
-class MalformedRequest(Exception):
-    pass
+#: This module contains misc utilities for the Dispatcher web server.
 
 
 def write_json_response(request: Request,
                         status_code: int,
                         response: Mapping,
                         finish: bool = True) -> None:
+    """
+    Write a properly formatted JSON response to an HTTP request.
+
+    Parameters
+    ----------
+    request
+        The HTTP request.
+    status_code
+        Response status code.
+    response
+        A dictionary which will be converted to a JSON string.
+    finish
+        Finish the response or not.
+
+    Returns
+    -------
+
+    """
     request.setResponseCode(status_code)
     request.setHeader('content-type', 'application/json')
     request.write(json.dumps(response).encode('utf8'))
@@ -37,6 +54,23 @@ def write_json_response(request: Request,
 def json_endpoint(schema: Mapping,
                   bound_method: bool = True) \
         -> Callable[[Callable], Callable]:
+    """
+    Mark a method/function as an HTTP endpoint expecting JSON inputs and
+    responding with JSON outputs.
+
+    Parameters
+    ----------
+    schema
+        Schema against which incoming requests will be validated.
+    bound_method
+        Whether the decorated function is a bound method or not.
+
+    Returns
+    -------
+        A decorator for an endpoint callback.
+
+    """
+
     def outer_wrapper(fn: Callable[..., Tuple[int, Mapping]]) -> Callable:
         def inner_wrapper(*args, **kwargs) -> Any:
             if bound_method:

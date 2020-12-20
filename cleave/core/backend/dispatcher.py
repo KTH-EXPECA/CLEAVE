@@ -36,7 +36,17 @@ reactor: PosixReactorBase = reactor
 
 
 class CtrlProcProtocol(ProcessProtocol):
+    """
+    Handles communication with controller subprocess.
+    """
+
     def __init__(self, controller_id: uuid.UUID):
+        """
+        Parameters
+        ----------
+        controller_id
+            ID of the controller associated with this protocol.
+        """
         self._ready = False
         self._info = {}
         self._log = Logger()
@@ -78,7 +88,18 @@ class CtrlProcProtocol(ProcessProtocol):
 
 
 class Dispatcher:
+    """
+    Implementation of an HTTP server for dynamic spawning of controller.
+    """
+
     def __init__(self, controllers: Mapping[str, Type[Controller]]):
+        """
+
+        Parameters
+        ----------
+        controllers
+            Mapping from string to Controller class.
+        """
         super(Dispatcher, self).__init__()
         self._log = Logger()
         self._app = Klein()
@@ -100,6 +121,17 @@ class Dispatcher:
             }[request.method.decode('utf8')](request))
 
     def run(self, host: str, port: int) -> None:
+        """
+        Initializes the server, listening on host:port.
+
+        Parameters
+        ----------
+        host
+            Interface on which to listen.
+        port
+            Port on which to accept incoming requests.
+        """
+
         # Create desired endpoint
         host = host.replace(':', '\:')
         endpoint_description = f'tcp:port={port}:interface={host}'
