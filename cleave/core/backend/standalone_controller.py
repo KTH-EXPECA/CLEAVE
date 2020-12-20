@@ -20,6 +20,7 @@ import click
 import loguru
 from twisted.internet.posixbase import PosixReactorBase
 
+from cleave.api.controller import Controller
 from cleave.core.network.backend import UDPControllerService
 
 
@@ -56,6 +57,9 @@ def run_controller(config: Mapping[str, Any]) -> None:
 
     ctrl_mod = importlib.import_module(config['module'])
     ctrl_class = getattr(ctrl_mod, config['controller'])
+
+    assert issubclass(ctrl_class, Controller)
+
     params = config['params']
     uuid = config['id']
 
