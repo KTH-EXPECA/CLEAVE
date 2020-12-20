@@ -15,7 +15,7 @@ import inspect
 import json
 import os
 import uuid
-from typing import Any, Dict, Mapping, Tuple, Type
+from typing import Any, Mapping, Tuple, Type
 
 from klein import Klein
 from twisted.internet import endpoints, reactor
@@ -27,64 +27,13 @@ from twisted.web import server
 from twisted.web.http import Request
 from twisted.web.server import Site
 
-from . import schemas, standalone_controller
-from .web_utils import json_endpoint, write_json_response
+from . import standalone_controller
+from .web_utils import json_endpoint, spawn_controller_schema, \
+    write_json_response
 from ..logging import Logger
 from ...api.controller import Controller
 
 reactor: PosixReactorBase = reactor
-
-
-class CtrlProcProtocol(ProcessProtocol):
-    """
-    Handles communication with controller subprocess.
-    """
-
-    def __init__(self, controller_id: uuid.UUID):
-        """
-        Parameters
-        ----------
-        controller_id
-            ID of the controller associated with this protocol.
-        """
-        self._ready = False
-        self._info = {}
-        self._log = Logger()
-        self._id = controller_id
-
-    def outReceived(self, data: bytes):
-        # once we receive the info, the controller process is ready
-        self._info = json.loads(data.decode('utf8'))
-        host = self._info['host']
-        port = self._info['port']
-        self._ready = True
-        self.transport.closeStdout()
-        self._log.info(f'Controller {self._id} is ready and listening on '
-                       f'{port}:{host}.')
-
-    def errReceived(self, data: bytes):
-        msg = data.decode('utf8')
-        self._log.error(f'Controller {self._id}:\n', msg)
-
-    @property
-    def info(self) -> Mapping[str, Any]:
-        return dict(
-            ready=self._ready,
-            info=self._info
-        )
-
-    def shutdown(self) -> None:
-        self._log.warn(f'Controller {self._id} shutting down.')
-        self.transport.signalProcess('INT')
-
-    def processEnded(self, fail: Failure):
-        if not (isinstance(fail.value, ProcessDone)
-                or fail.value.exitCode == 0):
-            self._log.error(
-                f'Controller {self._id} exited with exit code '
-                f'{fail.value.exitCode}!'
-            )
-        self._log.warn(f'Controller {self._id} shut down.')
 
 
 class Dispatcher:
@@ -103,7 +52,7 @@ class Dispatcher:
         super(Dispatcher, self).__init__()
         self._log = Logger()
         self._app = Klein()
-        self._controllers: Dict[uuid.UUID, CtrlProcProtocol] = dict()
+        self._running_controllers = dict()
         self._controller_classes = controllers
 
         # set up routes
@@ -147,10 +96,12 @@ class Dispatcher:
         d.addCallback(listen_callback)
         reactor.run()
 
-    @json_endpoint(schemas.spawn_controller)
-    def spawn_controller(self, req_dict: Mapping[str, Any]) \
-            -> Tuple[int, Mapping]:
-
+    @json_endpoint(spawn_controller_schema)
+    def spawn_controller(self,
+                         req_dict: Mapping[str, Any]) -> Tuple[int, Mapping]:
+        """
+        Dynamically spawns a Controller Service.
+        """
         controller_cls = req_dict['controller']
 
         # get actual controller class and its module
@@ -173,9 +124,53 @@ class Dispatcher:
             params=parameters,
         ), separators=(',', ':'), indent=None)
 
-        proto = CtrlProcProtocol(controller_id)
+        # create an internal ProcessProtocol to bind some callbacks
+        class CtrlProcProtocol(ProcessProtocol):
+            # keep a reference to the dispatcher
+            dispatcher = self
+
+            def outReceived(self, data: bytes):
+                # once we receive the info, the controller process is ready
+                # now we can update the dispatcher with the info
+                info = json.loads(data.decode('utf8'))
+                host = info['host']
+                port = info['port']
+
+                self.dispatcher._running_controllers[controller_id] = \
+                    {
+                        'protocol': self,
+                        'info'    : info
+                    }
+
+                self.transport.closeStdout()
+                self.dispatcher._log.info(
+                    f'Controller {controller_id} is ready and listening on '
+                    f'{port}:{host}.')
+
+            def errReceived(self, data: bytes):
+                msg = data.decode('utf8')
+                self.dispatcher._log.error(f'Controller {controller_id}: ',
+                                           msg)
+
+            def shutdown(self) -> None:
+                self.dispatcher._log.warn(f'Controller {controller_id} '
+                                          f'shutting down.')
+                self.transport.signalProcess('INT')
+
+            def processEnded(self, fail: Failure):
+                if not (isinstance(fail.value, ProcessDone)
+                        or fail.value.exitCode == 0):
+                    self._log.error(
+                        f'Controller {self._id} exited with exit code '
+                        f'{fail.value.exitCode}!'
+                    )
+
+                # remove the controller from the dispatcher
+                self.dispatcher._running_controllers.pop(controller_id)
+                self._log.warn(f'Controller {self._id} shut down.')
+
         reactor.spawnProcess(
-            proto,
+            CtrlProcProtocol(),
             executable='python',
             args=(
                 'python',
@@ -185,14 +180,12 @@ class Dispatcher:
             env=None,
             path=os.getcwd()
         )
-
-        self._controllers[controller_id] = proto
         return 202, {'id': str(controller_id)}
 
     def list_controllers(self, request: Request) -> Any:
         controllers = {
-            str(c_id): ctrl.info
-            for c_id, ctrl in self._controllers.items()
+            str(c_id): ctrl_dict['info']
+            for c_id, ctrl_dict in self._running_controllers.items()
         }
 
         write_json_response(request=request,
@@ -205,8 +198,8 @@ class Dispatcher:
                             ctrl_id: str) -> Any:
         try:
             controller_uuid = uuid.UUID(ctrl_id)
-            controller_proto = self._controllers.pop(controller_uuid)
-            controller_proto.shutdown()
+            controller_dict = self._running_controllers[controller_uuid]
+            controller_dict['protocol'].shutdown()
             request.setResponseCode(202)
             request.finish()
         except ValueError:
@@ -228,11 +221,11 @@ class Dispatcher:
                         ctrl_id: str) -> Any:
         try:
             ctrl_id = uuid.UUID(ctrl_id)
-            controller_proc = self._controllers[ctrl_id]
+            controller_dict = self._running_controllers[ctrl_id]
 
             write_json_response(
                 request=request,
-                response=controller_proc.info,
+                response=controller_dict['info'],
                 status_code=200
             )
         except ValueError:

@@ -120,3 +120,23 @@ def json_endpoint(schema: Mapping,
         return inner_wrapper
 
     return outer_wrapper
+
+
+spawn_controller_schema = {
+    '$schema'    : 'http://json-schema.org/draft-07/schema#',
+    'title'      : 'Spawn controller',
+    'description': 'A request to spawn a controller.',
+    'type'       : 'object',
+    'properties' : {
+        'controller': {
+            'description': 'The controller class to instantiate.',
+            'type'       : 'string'
+        },
+        'params'    : {
+            'description': 'The parameters provided to the controller on '
+                           'instantiation.',
+            'type'       : 'object'
+        },
+    },
+    'required'   : ['controller']
+}
