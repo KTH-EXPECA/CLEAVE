@@ -15,7 +15,6 @@ import json
 from typing import Any, Callable, Mapping, Tuple
 
 from jsonschema import ValidationError, validate as json_validate
-from twisted.python.failure import Failure
 from twisted.web import server
 from twisted.web.http import Request
 
@@ -33,34 +32,6 @@ def write_json_response(request: Request,
     request.write(json.dumps(response).encode('utf8'))
     if finish:
         request.finish()
-
-
-def malformed_request(request: Request,
-                      failure: Failure) -> Any:
-    # TODO: parameterize content type
-    write_json_response(
-        request=request,
-        response={'error': 'Malformed request.'},
-        status_code=400
-    )
-    return server.NOT_DONE_YET
-
-
-def json_decode_errback(request: Request,
-                        failure: Failure) -> Any:
-    write_json_response(
-        request=request,
-        response={'error': 'Could not decode JSON payload.'},
-        status_code=400
-    )
-    return server.NOT_DONE_YET
-
-
-def ensure_headers(req: Request, headers: Mapping[str, str]) -> None:
-    for header, exp_value in headers.items():
-        req_value = req.getHeader(header)
-        if req_value is None or req_value.lower() != exp_value.lower():
-            raise MalformedRequest()
 
 
 def json_endpoint(schema: Mapping,
