@@ -17,6 +17,7 @@
 import socket
 import sys
 from pathlib import Path
+from typing import Optional
 
 import click
 from twisted.internet.posixbase import PosixReactorBase
@@ -70,11 +71,21 @@ def build_plant_from_config(config: Config) -> Plant:
 
 @click.group()
 @click.option('-v', '--verbose', count=True, default=0, show_default=False,
-              help='Set the logging verbosity level.')
+              help='Set the STDERR logging verbosity level.')
 @click.option('-c/-nc', '--colorize-logs/--no-colorize-logs', type=bool,
               default=True, show_default=True, help='Colorize log output.')
-def cli(verbose: int, colorize_logs: bool):
-    # TODO: add option for file logging
+@click.option('-f', '--file-log', type=click.Path(file_okay=True,
+                                                  dir_okay=False),
+              help='Save log to the specified file. File logs are always set '
+                   'to maximum verbosity.')
+def cli(verbose: int,
+        colorize_logs: bool,
+        file_log: Optional[str] = None):
+    """
+    Launch a CLEAVE emulation. For details on each subcommand, please run
+
+    cleave.py SUBCOMMAND --help
+    """
 
     # configure logging
     log_level = max(loguru.logger.level('CRITICAL').no - (verbose * 10), 0)
@@ -85,6 +96,14 @@ def cli(verbose: int, colorize_logs: bool):
                              '<level><b>{level}</b></level> '
                              '{message}')
 
+    if file_log is not None:
+        loguru.logger.add(file_log,
+                          level=loguru.logger.level('DEBUG').no,
+                          colorize=False,
+                          format='<light-green>{time}</light-green> '
+                                 '<level><b>{level}</b></level> '
+                                 '{message}')
+
 
 @cli.command('run-plant')
 @click.argument('config_file_path',
@@ -92,6 +111,10 @@ def cli(verbose: int, colorize_logs: bool):
                                 file_okay=True,
                                 dir_okay=False))
 def run_plant(config_file_path: str):
+    """
+    Execute a CLEAVE Plant with the given configuration file.
+    """
+
     config = ConfigFile(
         config_path=config_file_path,
         defaults=_plant_defaults
@@ -107,6 +130,10 @@ def run_plant(config_file_path: str):
                                 file_okay=True,
                                 dir_okay=False))
 def run_controller(config_file_path: str):
+    """
+    Execute a CLEAVE Controller Service with the given configuration file.
+    """
+
     from twisted.internet import reactor
     reactor: PosixReactorBase = reactor
 
@@ -125,6 +152,10 @@ def run_controller(config_file_path: str):
 @cli.command('run-dispatcher')
 @click.argument('port', type=int)
 def run_dispatcher(port: int):
+    """
+    Initialize a CLEAVE Dispatcher listening on the given port.
+    """
+
     from twisted.internet import reactor
     from cleave.impl.inverted_pendulum import InvPendulumController
     reactor: PosixReactorBase = reactor
