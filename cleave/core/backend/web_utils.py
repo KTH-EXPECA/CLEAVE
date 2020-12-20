@@ -63,10 +63,16 @@ def ensure_headers(req: Request, headers: Mapping[str, str]) -> None:
             raise MalformedRequest()
 
 
-def json_endpoint(schema: Mapping, payload_required: bool = True) \
+def json_endpoint(schema: Mapping,
+                  bound_method: bool = True) \
         -> Callable[[Callable], Callable]:
     def outer_wrapper(fn: Callable[..., Tuple[int, Mapping]]) -> Callable:
-        def inner_wrapper(self, request: Request, *args, **kwargs) -> Any:
+        def inner_wrapper(*args, **kwargs) -> Any:
+            if bound_method:
+                self, request, *args = args
+            else:
+                request, *args = args
+
             # ensure headers are application/json
             ctype = request.getHeader('Content-Type')
             if ctype is None or ctype.lower() != 'application/json':
@@ -82,22 +88,28 @@ def json_endpoint(schema: Mapping, payload_required: bool = True) \
             # validate the payload using json schema
             payload = json.load(request.content)
             try:
-                json_validate(schema, payload)
+                json_validate(payload, schema)
             except ValidationError as val_err:
                 write_json_response(
                     request=request,
-                    response={'error': 'JSON request failed validation.',
-                              'cause': val_err.cause},
+                    response={'error': val_err.message},
                     status_code=400
                 )
                 return server.NOT_DONE_YET
 
-            code, results = fn(self, payload, *args, **kwargs)
-            write_json_response(
-                request=request,
-                response=results,
-                status_code=code
-            )
+            result = fn(self, payload, *args, **kwargs) \
+                if bound_method else fn(payload, *args, **kwargs)
+
+            if isinstance(result, Tuple):
+                code, result = result
+                write_json_response(
+                    request=request,
+                    response=result,
+                    status_code=code
+                )
+            else:
+                request.setResponseCode(result)
+                request.finish()
             return server.NOT_DONE_YET
 
         return inner_wrapper

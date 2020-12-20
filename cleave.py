@@ -124,9 +124,12 @@ def run_controller(config_file_path: str):
 @click.argument('port', type=int)
 def run_dispatcher(port: int):
     from twisted.internet import reactor
+    from cleave.impl.inverted_pendulum import InvPendulumController
     reactor: PosixReactorBase = reactor
 
-    dispatcher = Dispatcher()
+    # TODO: parameterize
+    dispatcher = Dispatcher({'InvPendulumController': InvPendulumController})
+    dispatcher.run('localhost', 8080)
 
 
 if __name__ == '__main__':

@@ -1,13 +1,13 @@
 #  Copyright (c) 2020 KTH Royal Institute of Technology
 #
-#  Licensed under the Apache License, Version 2.0 (the "License");
+#  Licensed under the Apache License, Version 2.0 (the 'License');
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
 #
 #         http://www.apache.org/licenses/LICENSE-2.0
 #
 #  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
+#  distributed under the License is distributed on an 'AS IS' BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
@@ -17,7 +17,7 @@ import os
 import signal
 import uuid
 from pathlib import Path
-from typing import Any, Mapping, Type
+from typing import Any, Dict, Mapping, Tuple, Type
 
 from klein import Klein
 from klein.resource import KleinResource
@@ -27,9 +27,10 @@ from twisted.web import server
 from twisted.web.http import Request
 from twisted.web.server import Site
 
-from .web_utils import MalformedRequest, ensure_headers, json_decode_errback, \
-    malformed_request, \
-    write_json_response
+from . import schemas
+from .web_utils import MalformedRequest, json_decode_errback, \
+    json_endpoint, malformed_request, write_json_response
+from ..logging import Logger
 from ..network.backend import UDPControllerService
 from ...api.controller import Controller
 
@@ -42,6 +43,8 @@ class ControllerProcessResource:
         self._id = uuid.uuid4()
         self._app = Klein()
         self._app.route('/status', methods=['GET'])(self.info)
+        self._controller_cls = control_cls
+        self._params = params
 
         out_q = mp.Queue()
         self._process = mp.Process(
@@ -49,6 +52,26 @@ class ControllerProcessResource:
             args=(control_cls, params, str(self._id), out_q))
         self._process.start()
         self._interface, self._port, self._out_path = out_q.get()
+
+    @property
+    def controller_class(self) -> Type[Controller]:
+        return self._controller_cls
+
+    @property
+    def controller_params(self) -> Mapping[str, Any]:
+        return self._params
+
+    @property
+    def port(self) -> int:
+        return self._port
+
+    @property
+    def address(self) -> str:
+        return self._interface
+
+    @property
+    def out_path(self) -> Path:
+        return self._out_path
 
     @property
     def resource(self) -> KleinResource:
@@ -102,13 +125,18 @@ class ControllerProcessResource:
 class Dispatcher:
     def __init__(self, controllers: Mapping[str, Type[Controller]]):
         super(Dispatcher, self).__init__()
+        self._log = Logger()
         self._app = Klein()
-        self._controllers: Mapping[str, ControllerResource] = dict()
+        self._ctrl_res: Dict[uuid.UUID, ControllerProcessResource] = dict()
         self._controller_cls = controllers
 
         # set up routes
-        self._app.route('/', methods=['POST', 'GET', 'DELETE']) \
-            (self.controller_collection)
+        # TODO: for some reason, this defaults to DELETE?
+        self._app.route('/', methods=['GET'])(self.list_controllers)
+        self._app.route('/', methods=['POST'])(self.spawn_controller)
+        self._app.route('/', methods=['DELETE'])(self.shutdown_controller)
+
+        # route for spawned controllers
         self._app.route('/<string:ctrl_id>', branch=True) \
             (self.controller_resource)
 
@@ -124,68 +152,73 @@ class Dispatcher:
         endpoint_description = f'tcp:port={port}:interface={host}'
         endpoint = endpoints.serverFromString(reactor, endpoint_description)
 
+        def listen_callback(port):
+            addr = port.getHost()
+            self._log.info(f'Dispatcher HTTP server listening on '
+                           f'http://{addr.host}:{addr.port}')
+
         # This actually starts listening on the endpoint with the Klein app
-        endpoint.listen(Site(self._app.resource()))
+        d = endpoint.listen(Site(self._app.resource()))
+        d.addCallback(listen_callback)
         reactor.run()
 
-    def _spawn_controller(self,
-                          request: Request,
-                          req_dict: Mapping[str, Any]) -> Any:
-        try:
-            controller_cls = req_dict['controller']
-            parameters = req_dict['parameters']
-            assert type(parameters) == dict
-        except (KeyError, AssertionError):
-            raise MalformedRequest()
+    @json_endpoint(schemas.spawn_controller)
+    def spawn_controller(self, req_dict: Mapping[str, Any]) \
+            -> Tuple[int, Mapping]:
 
-        # TODO: make it deferred?
-        # TODO: actually spawn shit
-        ctrl_resource = ControllerResource()
-        self._controllers[ctrl_resource.uuid] = ctrl_resource
+        controller_cls = req_dict['controller']
+        parameters = req_dict['params']
+
+        ctrl_resource = ControllerProcessResource(
+            control_cls=controller_cls,
+            params=parameters
+        )
+        self._ctrl_res[ctrl_resource.uuid] = ctrl_resource
 
         resp_dict = {
-            'controller': str(ctrl_resource.uuid)
+            'controller': str(ctrl_resource.uuid),
+            'host'      : ctrl_resource.address,
+            'port'      : ctrl_resource.port,
+            'log_path'  : ctrl_resource.out_path
         }
+        return 200, resp_dict
 
-        write_json_response(
-            request=request,
-            response=resp_dict,
-            status_code=200
-        )
-        return server.NOT_DONE_YET
+    @json_endpoint(schemas.shutdown_controller)
+    def shutdown_controller(self, req_dict: Mapping[str, Any]) -> Any:
+        try:
+            controller_uuid = uuid.UUID(req_dict['id'])
+            res = self._ctrl_res[controller_uuid]
+        except ValueError:
+            return 400, {'error', 'Could not parse controller UUID.'}
+        except KeyError:
+            return 404, {'error', f'No such controller {req_dict["id"]}.'}
 
-    def _list_controllers(self, request: Request) -> Any:
-        # TODO: return wrapped controller class, not ControllerResource
+        res.shut_down()
+        return 200
+
+    def list_controllers(self, request: Request) -> Any:
+
+        controllers = [
+            {
+                'id'        : str(c_id),
+                'controller':
+                    ctrl.controller_class.__name__,
+                'parameters': ctrl.controller_params,
+            }
+            for c_id, ctrl in self._ctrl_res.items()
+        ]
+
         write_json_response(request=request,
-                            response={
-                                str(c_id): ctrl.__class__.__name__
-                                for c_id, ctrl in self._controllers.items()
-                            },
+                            response={'controllers': controllers},
                             status_code=200)
         return server.NOT_DONE_YET
-
-    def controller_collection(self, request: Request) -> Any:
-        method = request.method.decode('utf-8').upper()
-        if method == 'GET':
-            return self._list_controllers(request)
-
-        ensure_headers(request, {'content-type': 'application/json'})
-        req_dict = json.load(request.content)
-        if method == 'POST':
-            return self._spawn_controller(request, req_dict)
-        elif method == 'DELETE':
-            pass  # TODO
-        else:
-            raise RuntimeError(f'Request with unexpected '
-                               f'method {method}!')
 
     def controller_resource(self,
                             request: Request,
                             ctrl_id: str) -> Any:
-        # ensure_headers(request, {'content-type': 'application/json'})
         try:
             ctrl_id = uuid.UUID(ctrl_id)
-            return self._controllers[ctrl_id].resource
+            return self._ctrl_res[ctrl_id].resource
         except ValueError:
             write_json_response(
                 request=request,
