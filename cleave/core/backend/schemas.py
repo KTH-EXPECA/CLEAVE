@@ -44,3 +44,31 @@ shutdown_controller = {
     },
     'required'   : ['id']
 }
+
+standalone_controller = {
+    '$schema'    : 'http://json-schema.org/draft-07/schema#',
+    'title'      : 'Argument for the standalone controller launch script.',
+    'description': '',
+    'type'       : 'object',
+    'properties' : {
+        'controller': {
+            'description': 'Controller class to run.',
+            'type'       : 'string'
+        },
+        'module'    : {
+            'description': 'Python module from which to import the '
+                           'controller class.',
+            'type'       : 'string'
+        },
+        'params'    : {
+            'description': 'Object containing the parameters to pass to the '
+                           'controller constructor.',
+            'type'       : 'object'
+        },
+        'uuid' : {
+            'description': 'UUID for the controller resource.',
+            'type': 'string'
+        }
+    },
+    'required'   : ['controller', 'module', 'params']
+}
