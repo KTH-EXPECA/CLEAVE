@@ -74,7 +74,7 @@ def run_controller(config: Mapping[str, Any]) -> None:
             'controller': config['controller'],
             'path'      : str(path),
             'params'    : params,
-            'interface' : port.host,
+            'host'      : port.host,
             'port'      : port.port
         }, indent=None, separators=(',', ':')))
     )

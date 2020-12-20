@@ -32,17 +32,3 @@ spawn_controller = {
     },
     'required'   : ['controller']
 }
-
-shutdown_controller = {
-    '$schema'    : 'http://json-schema.org/draft-07/schema#',
-    'title'      : 'Shut down controller',
-    'description': 'A request to shut down a controller safely.',
-    'type'       : 'object',
-    'properties' : {
-        'id': {
-            'description': 'The id of the controller to be shut down.',
-            'type'       : 'string'
-        }
-    },
-    'required'   : ['id']
-}

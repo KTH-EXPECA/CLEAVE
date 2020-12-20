@@ -45,14 +45,16 @@ class CtrlProcProtocol(ProcessProtocol):
     def outReceived(self, data: bytes):
         # once we receive the info, the controller process is ready
         self._info = json.loads(data.decode('utf8'))
+        host = self._info['host']
+        port = self._info['port']
         self._ready = True
         self.transport.closeStdout()
-        self._log.info(f'Controller {self._id} is ready.')
+        self._log.info(f'Controller {self._id} is ready and listening on '
+                       f'{port}:{host}.')
 
     def errReceived(self, data: bytes):
-        # msg = data.decode('utf8')
-        print(data.decode('utf8'))
-        # self._log.error(f'Controller {self._id}:\n{msg}')
+        msg = data.decode('utf8')
+        self._log.error(f'Controller {self._id}:\n', msg)
 
     @property
     def info(self) -> Mapping[str, Any]:
@@ -72,6 +74,7 @@ class CtrlProcProtocol(ProcessProtocol):
                 f'Controller {self._id} exited with exit code '
                 f'{fail.value.exitCode}!'
             )
+        self._log.warn(f'Controller {self._id} shut down.')
 
 
 class Dispatcher:
@@ -83,15 +86,18 @@ class Dispatcher:
         self._controller_classes = controllers
 
         # set up routes
-        self._app.route('/', methods=['GET', 'POST', 'DELETE']) \
+        self._app.route('/', methods=['GET', 'POST']) \
             (lambda request: {
-                'GET'   : self.list_controllers,
-                'POST'  : self.spawn_controller,
-                'DELETE': self.shutdown_controller
+                'GET' : self.list_controllers,
+                'POST': self.spawn_controller,
             }[request.method.decode('utf8')](request))
 
-        # route for spawned controllers
-        self._app.route('/<string:ctrl_id>')(self.controller_resource)
+        # routes for spawned controllers
+        self._app.route('/<string:ctrl_id>', methods=['GET', 'DELETE']) \
+            (lambda request: {
+                'GET'   : self.controller_info,
+                'DELETE': self.shutdown_controller,
+            }[request.method.decode('utf8')](request))
 
     def run(self, host: str, port: int) -> None:
         # Create desired endpoint
@@ -149,20 +155,7 @@ class Dispatcher:
         )
 
         self._controllers[controller_id] = proto
-        return 202, {'controller': str(controller_id)}
-
-    @json_endpoint(schemas.shutdown_controller)
-    def shutdown_controller(self, req_dict: Mapping[str, Any]) -> Any:
-        try:
-            controller_uuid = uuid.UUID(req_dict['id'])
-            controller_proto = self._controllers.pop(controller_uuid)
-        except ValueError:
-            return 400, {'error', 'Could not parse controller UUID.'}
-        except KeyError:
-            return 404, {'error', f'No such controller {req_dict["id"]}.'}
-
-        controller_proto.shutdown()
-        return 202
+        return 202, {'id': str(controller_id)}
 
     def list_controllers(self, request: Request) -> Any:
         controllers = {
@@ -175,9 +168,32 @@ class Dispatcher:
                             status_code=200)
         return server.NOT_DONE_YET
 
-    def controller_resource(self,
+    def shutdown_controller(self,
                             request: Request,
                             ctrl_id: str) -> Any:
+        try:
+            controller_uuid = uuid.UUID(ctrl_id)
+            controller_proto = self._controllers.pop(controller_uuid)
+            controller_proto.shutdown()
+            request.setResponseCode(202)
+            request.finish()
+        except ValueError:
+            write_json_response(
+                request=request,
+                response={'error': 'Could not parse controller UUID.'},
+                status_code=400,
+            )
+        except KeyError:
+            write_json_response(
+                request=request,
+                response={'error': f'No such controller {ctrl_id}.'},
+                status_code=404
+            )
+        return server.NOT_DONE_YET
+
+    def controller_info(self,
+                        request: Request,
+                        ctrl_id: str) -> Any:
         try:
             ctrl_id = uuid.UUID(ctrl_id)
             controller_proc = self._controllers[ctrl_id]
