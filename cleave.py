@@ -74,6 +74,8 @@ def build_plant_from_config(config: Config) -> Plant:
 @click.option('-c/-nc', '--colorize-logs/--no-colorize-logs', type=bool,
               default=True, show_default=True, help='Colorize log output.')
 def cli(verbose: int, colorize_logs: bool):
+    # TODO: add option for file logging
+
     # configure logging
     log_level = max(loguru.logger.level('CRITICAL').no - (verbose * 10), 0)
     loguru.logger.add(sys.stderr,
