@@ -11,115 +11,67 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import inspect
 import json
-import multiprocessing as mp
 import os
-import signal
 import uuid
-from pathlib import Path
 from typing import Any, Dict, Mapping, Tuple, Type
 
 from klein import Klein
-from klein.resource import KleinResource
-from twisted.internet import endpoints
+from twisted.internet import endpoints, reactor
+from twisted.internet.error import ProcessDone
 from twisted.internet.posixbase import PosixReactorBase
+from twisted.internet.protocol import ProcessProtocol
+from twisted.python.failure import Failure
 from twisted.web import server
 from twisted.web.http import Request
 from twisted.web.server import Site
 
-from . import schemas
-from .web_utils import MalformedRequest, json_decode_errback, \
-    json_endpoint, malformed_request, write_json_response
+from . import schemas, standalone_controller
+from .web_utils import json_endpoint, write_json_response
 from ..logging import Logger
-from ..network.backend import UDPControllerService
 from ...api.controller import Controller
 
+reactor: PosixReactorBase = reactor
 
-class ControllerProcessResource:
-    def __init__(self,
-                 control_cls: Type[Controller],
-                 params: Mapping[str, Any]):
-        super(ControllerProcessResource, self).__init__()
-        self._id = uuid.uuid4()
-        self._app = Klein()
-        self._app.route('/status', methods=['GET'])(self.info)
-        self._controller_cls = control_cls
-        self._params = params
 
-        out_q = mp.Queue()
-        self._process = mp.Process(
-            target=ControllerProcessResource._control_process,
-            args=(control_cls, params, str(self._id), out_q))
-        self._process.start()
-        self._interface, self._port, self._out_path = out_q.get()
+class CtrlProcProtocol(ProcessProtocol):
+    def __init__(self, controller_id: uuid.UUID):
+        self._ready = False
+        self._info = {}
+        self._log = Logger()
+        self._id = controller_id
 
-    @property
-    def controller_class(self) -> Type[Controller]:
-        return self._controller_cls
+    def outReceived(self, data: bytes):
+        # once we receive the info, the controller process is ready
+        self._info = json.loads(data.decode('utf8'))
+        self._ready = True
+        self.transport.closeStdout()
+        self._log.info(f'Controller {self._id} is ready.')
 
-    @property
-    def controller_params(self) -> Mapping[str, Any]:
-        return self._params
+    def errReceived(self, data: bytes):
+        # msg = data.decode('utf8')
+        print(data.decode('utf8'))
+        # self._log.error(f'Controller {self._id}:\n{msg}')
 
     @property
-    def port(self) -> int:
-        return self._port
-
-    @property
-    def address(self) -> str:
-        return self._interface
-
-    @property
-    def out_path(self) -> Path:
-        return self._out_path
-
-    @property
-    def resource(self) -> KleinResource:
-        return self._app.resource()
-
-    @property
-    def uuid(self) -> uuid.UUID:
-        return self._id
-
-    def info(self, req: Request) -> Any:
-        # ensure_headers(req, {'content-type': 'application/json'})
-        write_json_response(
-            request=req,
-            response={
-                'id'        : f'{self._id}',
-                'process_id': self._process.pid,
-                'interface' : self._interface,
-                'port'      : self._port
-            },
-            status_code=200
+    def info(self) -> Mapping[str, Any]:
+        return dict(
+            ready=self._ready,
+            info=self._info
         )
-        return server.NOT_DONE_YET
 
-    def shut_down(self, timeout: float = 5) -> None:
-        os.kill(self._process.pid, signal.SIGINT)
-        try:
-            self._process.join(timeout=timeout)
-        except TimeoutError:
-            self._process.terminate()
-            self._process.join()
+    def shutdown(self) -> None:
+        self._log.warn(f'Controller {self._id} shutting down.')
+        self.transport.signalProcess('INT')
 
-    @staticmethod
-    def _control_process(control_cls: Type[Controller],
-                         params: Mapping[str, Any],
-                         uid: str,
-                         out_q: mp.Queue) -> None:
-        from twisted.internet import reactor
-        reactor: PosixReactorBase = reactor
-
-        controller = control_cls(**params)
-        path = Path(f'./controllers/{uid}').resolve()
-        service = UDPControllerService(
-            controller=controller,
-            output_dir=path)
-
-        port = reactor.listenUDP(0, service.protocol)
-        out_q.put((port.interface, port.port, path))
-        reactor.run()
+    def processEnded(self, fail: Failure):
+        if not (isinstance(fail.value, ProcessDone)
+                or fail.value.exitCode == 0):
+            self._log.error(
+                f'Controller {self._id} exited with exit code '
+                f'{fail.value.exitCode}!'
+            )
 
 
 class Dispatcher:
@@ -127,26 +79,21 @@ class Dispatcher:
         super(Dispatcher, self).__init__()
         self._log = Logger()
         self._app = Klein()
-        self._ctrl_res: Dict[uuid.UUID, ControllerProcessResource] = dict()
-        self._controller_cls = controllers
+        self._controllers: Dict[uuid.UUID, CtrlProcProtocol] = dict()
+        self._controller_classes = controllers
 
         # set up routes
-        # TODO: for some reason, this defaults to DELETE?
-        self._app.route('/', methods=['GET'])(self.list_controllers)
-        self._app.route('/', methods=['POST'])(self.spawn_controller)
-        self._app.route('/', methods=['DELETE'])(self.shutdown_controller)
+        self._app.route('/', methods=['GET', 'POST', 'DELETE']) \
+            (lambda request: {
+                'GET'   : self.list_controllers,
+                'POST'  : self.spawn_controller,
+                'DELETE': self.shutdown_controller
+            }[request.method.decode('utf8')](request))
 
         # route for spawned controllers
-        self._app.route('/<string:ctrl_id>', branch=True) \
-            (self.controller_resource)
-
-        self._app.handle_errors(MalformedRequest)(malformed_request)
-        self._app.handle_errors(json.JSONDecodeError)(json_decode_errback)
+        self._app.route('/<string:ctrl_id>')(self.controller_resource)
 
     def run(self, host: str, port: int) -> None:
-        from twisted.internet import reactor
-        reactor: PosixReactorBase = reactor
-
         # Create desired endpoint
         host = host.replace(':', '\:')
         endpoint_description = f'tcp:port={port}:interface={host}'
@@ -167,49 +114,64 @@ class Dispatcher:
             -> Tuple[int, Mapping]:
 
         controller_cls = req_dict['controller']
-        parameters = req_dict['params']
 
-        ctrl_resource = ControllerProcessResource(
-            control_cls=controller_cls,
-            params=parameters
+        # get actual controller class and its module
+        try:
+            controller = self._controller_classes[controller_cls]
+            module = inspect.getmodule(controller)
+            if module is None:
+                return 400, {'error': f'Could not find a module associated '
+                                      f'with controller {controller_cls}.'}
+        except KeyError:
+            return 400, {'error': f'No such controller class {controller_cls}.'}
+
+        parameters = req_dict.get('params', {})
+        controller_id = uuid.uuid4()
+
+        args = json.dumps(dict(
+            id=str(controller_id),
+            controller=controller.__name__,
+            module=module.__name__,
+            params=parameters,
+        ), separators=(',', ':'), indent=None)
+
+        proto = CtrlProcProtocol(controller_id)
+        reactor.spawnProcess(
+            proto,
+            executable='python',
+            args=(
+                'python',
+                standalone_controller.__file__,
+                args,
+            ),
+            env=None,
+            path=os.getcwd()
         )
-        self._ctrl_res[ctrl_resource.uuid] = ctrl_resource
 
-        resp_dict = {
-            'controller': str(ctrl_resource.uuid),
-            'host'      : ctrl_resource.address,
-            'port'      : ctrl_resource.port,
-            'log_path'  : ctrl_resource.out_path
-        }
-        return 200, resp_dict
+        self._controllers[controller_id] = proto
+        return 202, {'controller': str(controller_id)}
 
     @json_endpoint(schemas.shutdown_controller)
     def shutdown_controller(self, req_dict: Mapping[str, Any]) -> Any:
         try:
             controller_uuid = uuid.UUID(req_dict['id'])
-            res = self._ctrl_res[controller_uuid]
+            controller_proto = self._controllers.pop(controller_uuid)
         except ValueError:
             return 400, {'error', 'Could not parse controller UUID.'}
         except KeyError:
             return 404, {'error', f'No such controller {req_dict["id"]}.'}
 
-        res.shut_down()
-        return 200
+        controller_proto.shutdown()
+        return 202
 
     def list_controllers(self, request: Request) -> Any:
-
-        controllers = [
-            {
-                'id'        : str(c_id),
-                'controller':
-                    ctrl.controller_class.__name__,
-                'parameters': ctrl.controller_params,
-            }
-            for c_id, ctrl in self._ctrl_res.items()
-        ]
+        controllers = {
+            str(c_id): ctrl.info
+            for c_id, ctrl in self._controllers.items()
+        }
 
         write_json_response(request=request,
-                            response={'controllers': controllers},
+                            response=controllers,
                             status_code=200)
         return server.NOT_DONE_YET
 
@@ -218,7 +180,13 @@ class Dispatcher:
                             ctrl_id: str) -> Any:
         try:
             ctrl_id = uuid.UUID(ctrl_id)
-            return self._ctrl_res[ctrl_id].resource
+            controller_proc = self._controllers[ctrl_id]
+
+            write_json_response(
+                request=request,
+                response=controller_proc.info,
+                status_code=200
+            )
         except ValueError:
             write_json_response(
                 request=request,

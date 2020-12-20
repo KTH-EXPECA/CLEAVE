@@ -18,10 +18,8 @@ from typing import Any, Mapping
 
 import click
 import loguru
-from jsonschema import ValidationError, validate
 from twisted.internet.posixbase import PosixReactorBase
 
-from cleave.core.backend import schemas
 from cleave.core.network.backend import UDPControllerService
 
 
@@ -31,17 +29,10 @@ class JSON(click.ParamType):
     def convert(self, value, param, ctx):
         try:
             config = json.loads(value)
-            validate(config, schemas.standalone_controller)
             return config
         except json.JSONDecodeError:
             self.fail(
                 f'failed to decode param "{value}" as a JSON object.',
-                param,
-                ctx
-            )
-        except ValidationError as e:
-            self.fail(
-                f'JSON failed validation: {e.message}.',
                 param,
                 ctx
             )
@@ -52,21 +43,7 @@ class JSON(click.ParamType):
                 type=JSON())
 def run_controller(config: Mapping[str, Any]) -> None:
     """
-    Runs a standalone controller. Takes a single positional argument 
-    corresponding to a JSON string adhering to the following schema:
-
-
-    {
-
-        'controller': 'string',
-
-        'module': 'string',
-
-        'params': 'object',
-
-        'uuid': 'string'
-
-    }
+    Runs a standalone controller.
     """
 
     from twisted.internet import reactor
@@ -75,7 +52,7 @@ def run_controller(config: Mapping[str, Any]) -> None:
     ctrl_mod = importlib.import_module(config['module'])
     ctrl_class = getattr(ctrl_mod, config['controller'])
     params = config['params']
-    uuid = config['uuid']
+    uuid = config['id']
 
     controller = ctrl_class(**params)
     path = Path(f'/tmp/controllers/{uuid}').resolve()
@@ -92,10 +69,14 @@ def run_controller(config: Mapping[str, Any]) -> None:
 
     port = reactor.listenUDP(0, service.protocol).getHost()
     # out_q.put((port.interface, port.port, path))
-    print(
-        json.dumps({'interface': port.host, \
-                    'port'     : port.port},
-                   indent=None, separators=(',', ':'))
+    reactor.callWhenRunning(
+        lambda: print(json.dumps({
+            'controller': config['controller'],
+            'path'      : str(path),
+            'params'    : params,
+            'interface' : port.host,
+            'port'      : port.port
+        }, indent=None, separators=(',', ':')))
     )
     reactor.run()
 
