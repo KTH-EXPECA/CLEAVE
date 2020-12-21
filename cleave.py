@@ -22,7 +22,7 @@ from typing import Optional
 import click
 from twisted.internet.posixbase import PosixReactorBase
 
-from cleave.core.backend.dispatcher import Dispatcher
+from cleave.core.dispatcher.dispatcher import Dispatcher
 from cleave.core.client.physicalsim import PhysicalSimulation
 from cleave.core.client.plant import CSVRecordingPlant, Plant
 from cleave.core.config import Config, ConfigFile
