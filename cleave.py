@@ -20,16 +20,19 @@ from pathlib import Path
 from typing import Optional
 
 import click
+from twisted.internet import reactor
 from twisted.internet.posixbase import PosixReactorBase
 
-from cleave.core.dispatcher.dispatcher import Dispatcher
 from cleave.core.client.physicalsim import PhysicalSimulation
 from cleave.core.client.plant import CSVRecordingPlant, Plant
 from cleave.core.config import Config, ConfigFile
+from cleave.core.dispatcher.dispatcher import Dispatcher
 from cleave.core.logging import loguru
 from cleave.core.network.backend import BaseControllerService, \
     UDPControllerService
 from cleave.core.network.client import UDPControllerInterface
+
+reactor: PosixReactorBase = reactor
 
 _control_defaults = dict(
     output_dir='./controller_metrics/',
@@ -121,7 +124,8 @@ def run_plant(config_file_path: str):
     )
 
     plant = build_plant_from_config(config)
-    plant.execute()
+    plant.set_up()
+    reactor.run()
 
 
 @cli.command('run-controller')
@@ -133,9 +137,6 @@ def run_controller(config_file_path: str):
     """
     Execute a CLEAVE Controller Service with the given configuration file.
     """
-
-    from twisted.internet import reactor
-    reactor: PosixReactorBase = reactor
 
     config = ConfigFile(
         config_path=config_file_path,
@@ -155,14 +156,12 @@ def run_dispatcher(port: int):
     """
     Initialize a CLEAVE Dispatcher listening on the given port.
     """
-
-    from twisted.internet import reactor
     from cleave.impl.inverted_pendulum import InvPendulumController
-    reactor: PosixReactorBase = reactor
 
     # TODO: parameterize
     dispatcher = Dispatcher({'InvPendulumController': InvPendulumController})
-    dispatcher.run('localhost', 8080)
+    dispatcher.set_up('localhost', 8080)
+    reactor.run
 
 
 if __name__ == '__main__':

@@ -69,7 +69,7 @@ class Dispatcher:
                 'DELETE': self.shutdown_controller,
             }[request.method.decode('utf8')](request))
 
-    def run(self, host: str, port: int) -> None:
+    def set_up(self, host: str, port: int) -> None:
         """
         Initializes the server, listening on host:port.
 
@@ -94,7 +94,6 @@ class Dispatcher:
         # This actually starts listening on the endpoint with the Klein app
         d = endpoint.listen(Site(self._app.resource()))
         d.addCallback(listen_callback)
-        reactor.run()
 
     @json_endpoint(spawn_controller_schema)
     def spawn_controller(self,

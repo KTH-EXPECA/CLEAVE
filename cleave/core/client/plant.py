@@ -44,7 +44,7 @@ class Plant(ABC):
         self._clock = SimClock()
 
     @abstractmethod
-    def execute(self):
+    def set_up(self):
         """
         Executes this plant. Depending on implementation, this method may or
         may not be asynchronous.
@@ -205,9 +205,10 @@ class BasePlant(Plant):
         self._logger.error(f'\n{failure.getTraceback()}')
         reactor.stop()
 
-    def execute(self):
+    def set_up(self):
         """
-        Initiates the simluation of this plant.
+        Sets up the simulation of this plant, to be executed when
+        reactor.run() is called.
         """
 
         self._logger.info('Initializing plant...')
@@ -245,13 +246,13 @@ class BasePlant(Plant):
 
                 ticker_loop.start(interval=5)  # TODO: magic number?
 
-        self._control.register_with_reactor(reactor)
+        self._control.register_with_reactor()
         # callback for shutdown
         reactor.addSystemEventTrigger('after', 'shutdown', self.on_shutdown)
 
         reactor.callWhenRunning(_wait_for_network_and_init)
         reactor.suggestThreadPoolSize(3)  # input, output and processing
-        reactor.run()
+        # reactor.run()
 
 
 class CSVRecordingPlant(BasePlant):
@@ -287,10 +288,10 @@ class CSVRecordingPlant(BasePlant):
             CSVRecorder(self._actuators, recording_output_dir, 'actuators'),
         }
 
-    def execute(self):
+    def set_up(self):
         for recorder in self._recorders:
             recorder.initialize()
-        super(CSVRecordingPlant, self).execute()
+        super(CSVRecordingPlant, self).set_up()
 
     def on_shutdown(self) -> None:
         super(CSVRecordingPlant, self).on_shutdown()

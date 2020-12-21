@@ -22,14 +22,14 @@ from typing import Mapping, Sequence, Set, Tuple
 
 import msgpack
 import numpy as np
-from twisted.internet.posixbase import PosixReactorBase
+from twisted.internet import reactor
 from twisted.internet.protocol import DatagramProtocol
 
 from .protocol import ControlMessageFactory, NoMessage
 from ..logging import Logger
 from ..recordable import NamedRecordable, Recordable, Recorder
-from ...core.util import SingleElementQ
 from ...api.util import PhyPropMapping
+from ...core.util import SingleElementQ
 
 
 class BaseControllerInterface(Recordable, ABC):
@@ -68,12 +68,9 @@ class BaseControllerInterface(Recordable, ABC):
         pass
 
     @abstractmethod
-    def register_with_reactor(self, reactor: PosixReactorBase) -> None:
+    def register_with_reactor(self) -> None:
         """
         Registers this ControllerInterface with the event loop reactor.
-        Parameters
-        ----------
-        reactor
         """
         pass
 
@@ -160,5 +157,5 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         except (ValueError, msgpack.FormatError, msgpack.StackError):
             self._log.warn('Could not unpack data from {}:{}.'.format(*addr))
 
-    def register_with_reactor(self, reactor: PosixReactorBase):
+    def register_with_reactor(self):
         reactor.listenUDP(0, self)
