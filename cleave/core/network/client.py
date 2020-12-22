@@ -23,8 +23,9 @@ from typing import Any, Mapping, Sequence, Set, Tuple
 
 import msgpack
 import numpy as np
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 from twisted.internet.defer import Deferred, succeed
+from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
 from twisted.web.client import Agent, Response, readBody
 from twisted.web.http_headers import Headers
@@ -36,6 +37,8 @@ from ..logging import Logger
 from ..recordable import NamedRecordable, Recordable, Recorder
 from ...api.util import PhyPropMapping
 from ...core.util import SingleElementQ
+
+reactor: PosixReactorBase = reactor
 
 
 class BaseControllerInterface(Recordable, ABC):
@@ -224,13 +227,7 @@ class DispatcherClient:
             the details of the spawned controller.
         """
 
-        # TODO: parameterize controller interface creation
-
-        self._log.info(f'Requesting a new controller of class \"'
-                       f'{controller}\" from dispatcher listening on '
-                       f'{self._dispatcher_addr}')
-
-        def build_controller_interface(body: bytes):
+        def got_info(body: bytes):
             controller_info = json.loads(body.decode('utf8'))
             host = controller_info['host']
             port = controller_info['port']
@@ -240,16 +237,22 @@ class DispatcherClient:
         def info_callback(response: Response):
             if response.code == 200:
                 d = readBody(response)
-                d.addCallback(build_controller_interface)
+                d.addCallback(got_info)
             elif response.code == 202:
                 # controller not yet ready
                 self._log.info('Controller is not yet ready, retrying!')
-                d = self._agent.request(
-                    method=b'GET',
-                    uri=response.request.absoluteURI,
-                    headers=None, bodyProducer=None
-                )
-                d.addCallback(info_callback)
+
+                # use callLater to wait a bit
+                def retry():
+                    d = self._agent.request(
+                        method=b'GET',
+                        uri=response.request.absoluteURI,
+                        headers=None, bodyProducer=None
+                    )
+                    d.addCallback(info_callback)
+                    return d
+
+                d = task.deferLater(reactor, 0.1, retry)
             else:
                 raise AssertionError()  # TODO: change error type
             return d
@@ -275,6 +278,9 @@ class DispatcherClient:
             body_d.addCallback(resp_body_callback)
             return body_d
 
+        # self._log.info(f'Requesting a new controller of class \"'
+        #                f'{controller}\" from dispatcher listening on '
+        #                f'{self._dispatcher_addr}')
         d = self._agent.request(
             method=b'POST',
             uri=self._dispatcher_addr.encode('utf8'),

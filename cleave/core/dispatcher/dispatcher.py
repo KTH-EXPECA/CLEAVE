@@ -109,6 +109,15 @@ class Dispatcher:
         d = endpoint.listen(Site(self._app.resource()))
         d.addCallback(listen_callback)
 
+        # finally, add some shutdown procedures
+        def shutdown():
+            self._log.warn('Shutting down remaining controllers.')
+            for proto, info in self._running_controllers.items():
+                proto.shutdown()
+            self._log.warn('Dispatcher shut down.')
+
+        reactor.addSystemEventTrigger('after', 'shutdown', shutdown)
+
     @json_endpoint(spawn_controller_schema)
     def spawn_controller(self,
                          req_dict: Mapping[str, Any]) -> Tuple[int, Mapping]:
@@ -175,7 +184,7 @@ class Dispatcher:
                 if not (isinstance(fail.value, ProcessDone)
                         or fail.value.exitCode == 0):
                     self.dispatcher._log.error(
-                        f'Controller {self._id} exited with exit code '
+                        f'Controller {controller_id} exited with exit code '
                         f'{fail.value.exitCode}!'
                     )
 
