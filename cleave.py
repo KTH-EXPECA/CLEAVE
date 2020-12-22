@@ -147,5 +147,39 @@ def run_dispatcher(port: int):
     reactor.run()
 
 
+# @cli.command('run-plant-with-dispatcher')
+# @click.argument('config_file_path',
+#                 type=click.Path(exists=True,
+#                                 file_okay=True,
+#                                 dir_okay=False))
+# def run_plant_dispatcher(config_file_path: str):
+#     config = ConfigFile(
+#         config_path=config_file_path,
+#         defaults=_plant_defaults
+#     )
+#     pass
+
+
+# from cleave.core.logging import loguru
+# from cleave.core.network.client import DispatcherClient
+# from twisted.internet import reactor, task
+#
+# loguru.logger.add(sys.stderr,
+#                   level=0,
+#                   colorize=True,
+#                   format='<light-green>{time}</light-green> '
+#                          '<level><b>{level}</b></level> '
+#                          '{message}')
+# client = DispatcherClient('0.0.0.0', 8080)
+#
+#
+# def callback(info):
+#     return task.deferLater(reactor, 10, client.shutdown_controller, info['id'])
+#
+#
+# client.spawn_controller('InvPendulumController').addCallback(callback)
+# reactor.run()
+
+
 if __name__ == '__main__':
     cli()
