@@ -14,16 +14,22 @@
 
 from __future__ import annotations
 
+import json
 import time
 from abc import ABC, abstractmethod
 from queue import Empty
 from threading import Event
-from typing import Mapping, Sequence, Set, Tuple
+from typing import Any, Mapping, Sequence, Set, Tuple
 
 import msgpack
 import numpy as np
 from twisted.internet import reactor
+from twisted.internet.defer import Deferred, succeed
 from twisted.internet.protocol import DatagramProtocol
+from twisted.web.client import Agent, Response, readBody
+from twisted.web.http_headers import Headers
+from twisted.web.iweb import IBodyProducer
+from zope.interface import implementer
 
 from .protocol import ControlMessageFactory, NoMessage
 from ..logging import Logger
@@ -159,3 +165,123 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
 
     def register_with_reactor(self):
         reactor.listenUDP(0, self)
+
+
+# noinspection PyPep8Naming
+@implementer(IBodyProducer)
+class JSONProducer:
+    def __init__(self, body: Mapping[str, Any]):
+        self._ser_body = json.dumps(body,
+                                    indent=None,
+                                    separators=(',', ':')).encode('utf8')
+        self._len = len(self._ser_body)
+
+    @property
+    def length(self) -> int:
+        return self._len
+
+    def startProducing(self, consumer):
+        consumer.write(self._ser_body)
+        return succeed(None)
+
+    def pauseProducing(self):
+        pass
+
+    def stopProducing(self):
+        pass
+
+
+class DispatcherClient:
+    def __init__(self,
+                 host: str,
+                 port: int):
+        self._dispatcher_addr = f'http://{host}:{port}'
+
+        self._agent = Agent(reactor)
+        self._log = Logger()
+
+    def spawn_controller(self,
+                         controller: str,
+                         params: Mapping[str, Any] = {}) -> Deferred:
+        """
+        Spawns a Controller on the Dispatcher and builds a matching
+        controller interface, which is then passed on to the returned Deferred.
+
+        Parameters
+        ----------
+        controller
+            The name of the desired controller class.
+        params
+            Parameters to pass to the controller class constructor on the
+            dispatcher. All elements need to be serializable.
+
+        Returns
+        -------
+            A Deferred which will eventually return a BaseControllerInterface.
+        """
+
+        # TODO: parameterize controller interface creation
+
+        self._log.info(f'Requesting a new controller of class \"'
+                       f'{controller}\" from dispatcher listening on '
+                       f'{self._dispatcher_addr}')
+
+        def build_controller_interface(body: bytes):
+            controller_info = json.loads(body.decode('utf8'))
+            host = controller_info['host']
+            port = controller_info['port']
+            self._log.info(f'New controller listening on {host}:{port}.')
+            return UDPControllerInterface((host, port))
+
+        def info_callback(response: Response):
+            if response.code == 200:
+                d = readBody(response)
+                d.addCallback(build_controller_interface)
+            elif response.code == 202:
+                # controller not yet ready
+                self._log.info('Controller is not yet ready, retrying!')
+                d = self._agent.request(
+                    method='GET',
+                    uri=response.request.absoluteURI,
+                    headers=None, bodyProducer=None
+                )
+                d.addCallback(info_callback)
+            else:
+                raise AssertionError()  # TODO: change error type
+            return d
+
+        def resp_body_callback(body: bytes):
+            controller_uid = body.decode('utf8')
+            self._log.info(f'New controller spawning: {controller_uid}')
+
+            # find out port of the new controller
+            d = self._agent.request(
+                method='GET',
+                uri=f'{self._dispatcher_addr}/{controller_uid}',
+                headers=None, bodyProducer=None
+            )
+            d.addCallback(info_callback)
+            return d
+
+        def spawn_callback(response: Response):
+            assert 200 <= response.code < 300
+            self._log.info('Received successful response to controller '
+                           f'request from {self._dispatcher_addr}.')
+            body_d = readBody(response)
+            body_d.addCallback(resp_body_callback)
+            return body_d
+
+        d = self._agent.request(
+            method='POST',
+            uri=self._dispatcher_addr,
+            headers=Headers({'Content-Type': ['application/json']}),
+            bodyProducer=JSONProducer(dict(
+                controller=controller,
+                params=params
+            ))
+        )
+        d.addCallback(spawn_callback)
+        return d
+
+
+

@@ -85,6 +85,7 @@ class Plant(ABC):
 
 
 class BasePlant(Plant):
+    # Refactor: coherent api
     def __init__(self,
                  physim: PhysicalSimulation,
                  sensors: Collection[Sensor],

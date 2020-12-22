@@ -46,7 +46,9 @@ def write_json_response(request: Request,
     """
     request.setResponseCode(status_code)
     request.setHeader('content-type', 'application/json')
-    request.write(json.dumps(response).encode('utf8'))
+    request.write(json.dumps(response,
+                             indent=None,
+                             separators=(',', ':')).encode('utf8'))
     if finish:
         request.finish()
 

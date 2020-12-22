@@ -53,6 +53,7 @@ class Dispatcher:
         self._log = Logger()
         self._app = Klein()
         self._running_controllers = dict()
+        self._warming_up_controllers = set()
         self._controller_classes = controllers
 
         # set up routes
@@ -135,6 +136,7 @@ class Dispatcher:
                 host = info['host']
                 port = info['port']
 
+                self.dispatcher._warming_up_controllers.remove(controller_id)
                 self.dispatcher._running_controllers[controller_id] = \
                     {
                         'protocol': self,
@@ -168,6 +170,7 @@ class Dispatcher:
                 self.dispatcher._running_controllers.pop(controller_id)
                 self._log.warn(f'Controller {self._id} shut down.')
 
+        self._warming_up_controllers.add(controller_id)
         reactor.spawnProcess(
             CtrlProcProtocol(),
             executable='python',
@@ -234,9 +237,16 @@ class Dispatcher:
                 status_code=400
             )
         except KeyError:
-            write_json_response(
-                request=request,
-                response={'error': f'No such controller: {ctrl_id}'},
-                status_code=404
-            )
+            if ctrl_id in self._warming_up_controllers:
+                write_json_response(
+                    request=request,
+                    response={'status': 'Not ready.'},
+                    status_code=202
+                )
+            else:
+                write_json_response(
+                    request=request,
+                    response={'error': f'No such controller: {ctrl_id}'},
+                    status_code=404
+                )
         return server.NOT_DONE_YET
