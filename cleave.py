@@ -144,7 +144,7 @@ def run_dispatcher(port: int):
     # TODO: parameterize
     dispatcher = Dispatcher({'InvPendulumController': InvPendulumController})
     dispatcher.set_up('localhost', 8080)
-    reactor.run
+    reactor.run()
 
 
 if __name__ == '__main__':

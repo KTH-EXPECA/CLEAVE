@@ -80,6 +80,7 @@ def run_controller(config: Mapping[str, Any]) -> None:
     # out_q.put((port.interface, port.port, path))
     reactor.callWhenRunning(
         lambda: print(json.dumps({
+            'id'        : config['id'],
             'controller': config['controller'],
             'path'      : str(path),
             'params'    : params,

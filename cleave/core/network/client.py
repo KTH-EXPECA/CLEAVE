@@ -200,12 +200,15 @@ class DispatcherClient:
         self._agent = Agent(reactor)
         self._log = Logger()
 
+    @property
+    def dispatcher_address(self) -> str:
+        return self._dispatcher_addr
+
     def spawn_controller(self,
                          controller: str,
                          params: Mapping[str, Any] = {}) -> Deferred:
         """
-        Spawns a Controller on the Dispatcher and builds a matching
-        controller interface, which is then passed on to the returned Deferred.
+        Spawns a Controller on the Dispatcher.
 
         Parameters
         ----------
@@ -217,7 +220,8 @@ class DispatcherClient:
 
         Returns
         -------
-            A Deferred which will eventually return a BaseControllerInterface.
+            A Deferred which will eventually fire on a dictionary containing
+            the details of the spawned controller.
         """
 
         # TODO: parameterize controller interface creation
@@ -231,7 +235,7 @@ class DispatcherClient:
             host = controller_info['host']
             port = controller_info['port']
             self._log.info(f'New controller listening on {host}:{port}.')
-            return UDPControllerInterface((host, port))
+            return controller_info
 
         def info_callback(response: Response):
             if response.code == 200:
@@ -241,7 +245,7 @@ class DispatcherClient:
                 # controller not yet ready
                 self._log.info('Controller is not yet ready, retrying!')
                 d = self._agent.request(
-                    method='GET',
+                    method=b'GET',
                     uri=response.request.absoluteURI,
                     headers=None, bodyProducer=None
                 )
@@ -251,13 +255,13 @@ class DispatcherClient:
             return d
 
         def resp_body_callback(body: bytes):
-            controller_uid = body.decode('utf8')
+            controller_uid = json.loads(body.decode('utf8'))['id']
             self._log.info(f'New controller spawning: {controller_uid}')
 
             # find out port of the new controller
             d = self._agent.request(
-                method='GET',
-                uri=f'{self._dispatcher_addr}/{controller_uid}',
+                method=b'GET',
+                uri=f'{self._dispatcher_addr}/{controller_uid}'.encode('utf8'),
                 headers=None, bodyProducer=None
             )
             d.addCallback(info_callback)
@@ -272,8 +276,8 @@ class DispatcherClient:
             return body_d
 
         d = self._agent.request(
-            method='POST',
-            uri=self._dispatcher_addr,
+            method=b'POST',
+            uri=self._dispatcher_addr.encode('utf8'),
             headers=Headers({'Content-Type': ['application/json']}),
             bodyProducer=JSONProducer(dict(
                 controller=controller,
@@ -283,5 +287,29 @@ class DispatcherClient:
         d.addCallback(spawn_callback)
         return d
 
+    def shutdown_controller(self, controller_id: str) -> Deferred:
+        """
+        Shuts down a controller on the dispatcher.
 
+        Parameters
+        ----------
+        controller_id
+            The controller to shut down.
 
+        Returns
+        -------
+            A deferred which will fire once the request finishes.
+        """
+
+        def request_callback(response: Response):
+            assert 200 <= response.code < 300
+            self._log.info(f'Controller {controller_id} shutting down.')
+
+        self._log.info(f'Requesting shutdown of controller {controller_id}.')
+        d = self._agent.request(
+            method=b'DELETE',
+            uri=f'{self._dispatcher_addr}/{controller_id}'.encode('utf8'),
+            headers=None, bodyProducer=None
+        )
+        d.addCallback(request_callback)
+        return d

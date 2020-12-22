@@ -57,18 +57,31 @@ class Dispatcher:
         self._controller_classes = controllers
 
         # set up routes
-        self._app.route('/', methods=['GET', 'POST']) \
-            (lambda request: {
-                'GET' : self.list_controllers,
-                'POST': self.spawn_controller,
-            }[request.method.decode('utf8')](request))
-
         # routes for spawned controllers
-        self._app.route('/<string:ctrl_id>', methods=['GET', 'DELETE']) \
-            (lambda request: {
-                'GET'   : self.controller_info,
-                'DELETE': self.shutdown_controller,
-            }[request.method.decode('utf8')](request))
+        @self._app.route('/<ctrl_id>')
+        def single_controller(request, ctrl_id):
+            try:
+                return {
+                    'GET'   : self.controller_info,
+                    'DELETE': self.shutdown_controller,
+                }[request.method.decode('utf8')](request, ctrl_id)
+            except KeyError:
+                request.setResponseCode(405)  # method not allowed
+                request.finish()
+                return server.NOT_DONE_YET
+
+        # default route
+        @self._app.route('/')
+        def controller_collection(request):
+            try:
+                return {
+                    'GET' : self.list_controllers,
+                    'POST': self.spawn_controller,
+                }[request.method.decode('utf8')](request)
+            except KeyError:
+                request.setResponseCode(405)  # method not allowed
+                request.finish()
+                return server.NOT_DONE_YET
 
     def set_up(self, host: str, port: int) -> None:
         """
@@ -161,14 +174,15 @@ class Dispatcher:
             def processEnded(self, fail: Failure):
                 if not (isinstance(fail.value, ProcessDone)
                         or fail.value.exitCode == 0):
-                    self._log.error(
+                    self.dispatcher._log.error(
                         f'Controller {self._id} exited with exit code '
                         f'{fail.value.exitCode}!'
                     )
 
                 # remove the controller from the dispatcher
                 self.dispatcher._running_controllers.pop(controller_id)
-                self._log.warn(f'Controller {self._id} shut down.')
+                self.dispatcher._log.warn(f'Controller {controller_id} '
+                                          f'shut down.')
 
         self._warming_up_controllers.add(controller_id)
         reactor.spawnProcess(
