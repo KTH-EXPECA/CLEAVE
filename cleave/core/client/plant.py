@@ -18,6 +18,7 @@ from abc import ABC
 from collections import Collection
 from pathlib import Path
 
+import pytimeparse
 from twisted.internet import task
 from twisted.internet.defer import Deferred
 from twisted.internet.posixbase import PosixReactorBase
@@ -43,7 +44,16 @@ class Plant(ABC):
         self._logger = Logger()
         self._tick_dt = tick_dt
 
-    def set_up(self, reactor: PosixReactorBase) -> Deferred:
+    def set_up(self,
+               duration: str,
+               reactor: PosixReactorBase) -> Deferred:
+        duration_sec = pytimeparse.parse(duration)
+        sim_loop = task.LoopingCall.withCount(self.tick)
+
+        def timed_shutdown():
+            self._logger.warn('Emulation timeout reached.')
+            sim_loop.stop()
+
         def clean_shutdown(sim_loop: LoopingCall) -> Deferred:
             self._logger.info('Plant loop shut down cleanly.')
             return task.deferLater(reactor, 0, self.on_shutdown)
@@ -61,7 +71,6 @@ class Plant(ABC):
         def start_loop(*args, **kwargs):
             # schedule tick loops
             self._logger.info('Scheduling Plant ticks...')
-            sim_loop = task.LoopingCall.withCount(self.tick)
             sim_loop_deferred = sim_loop.start(interval=self._tick_dt)
             sim_loop_deferred.addCallback(clean_shutdown)
             sim_loop_deferred.addErrback(err_shutdown)
@@ -69,6 +78,9 @@ class Plant(ABC):
 
         d_chain = task.deferLater(reactor, 0, self.on_init)
         d_chain.addCallback(start_loop)
+
+        # set up shutdown signal
+        task.deferLater(reactor, duration_sec, timed_shutdown)
 
         return d_chain
 

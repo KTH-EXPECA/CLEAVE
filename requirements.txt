@@ -11,3 +11,4 @@ seaborn
 click
 klein
 jsonschema
+pytimeparse

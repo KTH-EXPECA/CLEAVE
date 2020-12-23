@@ -40,8 +40,9 @@ class BiasSensor(Sensor):
 
 host = 'localhost'
 port = 50000
+tick_rate = 200
+emu_duration = '15s'
 
-tick_rate = 100
 state = ExampleState()
 
 sensors = [BiasSensor(bias=0.2, prop_name='speed', sample_freq=50)]

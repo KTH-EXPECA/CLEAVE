@@ -30,7 +30,8 @@ from cleave.core.dispatcher.dispatcher import Dispatcher
 from cleave.core.logging import loguru
 from cleave.core.network.backend import BaseControllerService, \
     UDPControllerService
-from cleave.core.network.client import UDPControllerInterface
+from cleave.core.network.client import BaseControllerInterface, \
+    UDPControllerInterface
 
 reactor: PosixReactorBase = reactor
 
@@ -96,18 +97,28 @@ def run_plant(config_file_path: str):
         defaults=_plant_defaults
     )
 
+    # callback to start the plant as soon as the UDP connection is ready
+    def start_plant(control_i: BaseControllerInterface):
+        plant = CSVRecordingPlant(
+            physim=PhysicalSimulation(
+                state=config.state,
+                tick_rate=config.tick_rate
+            ),
+            sensors=config.sensors,
+            actuators=config.actuators,
+            control_interface=control_i,
+            recording_output_dir=Path(config.output_dir)
+        )
+        d = plant.set_up(reactor=reactor, duration=config.emu_duration)
+        d.addCallback(lambda _: reactor.stop())
+        return d
+
     host_addr = (socket.gethostbyname(config.host), config.port)
-    plant = CSVRecordingPlant(
-        physim=PhysicalSimulation(
-            state=config.state,
-            tick_rate=config.tick_rate
-        ),
-        sensors=config.sensors,
-        actuators=config.actuators,
-        control_interface=config.controller_interface(host_addr),
-        recording_output_dir=Path(config.output_dir)
-    )
-    plant.set_up()
+    # start the controller interface
+    control = UDPControllerInterface(host_addr, start_plant)
+    control.register_with_reactor(reactor=reactor)  # todo: fix
+
+    reactor.suggestThreadPoolSize(3)
     reactor.run()
 
 
@@ -174,7 +185,8 @@ def run_dispatcher(port: int):
 #
 #
 # def callback(info):
-#     return task.deferLater(reactor, 10, client.shutdown_controller, info['id'])
+#     return task.deferLater(reactor, 10, client.shutdown_controller,
+#     info['id'])
 #
 #
 # client.spawn_controller('InvPendulumController').addCallback(callback)

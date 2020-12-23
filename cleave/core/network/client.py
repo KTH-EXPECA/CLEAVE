@@ -18,12 +18,11 @@ import json
 import time
 from abc import ABC, abstractmethod
 from queue import Empty
-from threading import Event
-from typing import Any, Mapping, Sequence, Set, Tuple
+from typing import Any, Callable, Mapping, Sequence, Set, Tuple
 
 import msgpack
 import numpy as np
-from twisted.internet import reactor, task
+from twisted.internet import task
 from twisted.internet.defer import Deferred, succeed
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol
@@ -38,8 +37,6 @@ from ..recordable import NamedRecordable, Recordable, Recorder
 from ...api.util import PhyPropMapping
 from ...core.util import SingleElementQ
 
-reactor: PosixReactorBase = reactor
-
 
 class BaseControllerInterface(Recordable, ABC):
     """
@@ -47,8 +44,6 @@ class BaseControllerInterface(Recordable, ABC):
     """
 
     def __init__(self):
-        self._ready = Event()
-        self._ready.clear()
         self._log = Logger()
 
     @abstractmethod
@@ -76,15 +71,21 @@ class BaseControllerInterface(Recordable, ABC):
         """
         pass
 
-    @abstractmethod
-    def register_with_reactor(self) -> None:
-        """
-        Registers this ControllerInterface with the event loop reactor.
-        """
+
+class DummyControllerInterface(BaseControllerInterface):
+    def put_sensor_values(self, prop_values: PhyPropMapping) -> None:
         pass
 
-    def is_ready(self) -> bool:
-        return self._ready.is_set()
+    def get_actuator_values(self) -> PhyPropMapping:
+        return {}
+
+    @property
+    def recorders(self) -> Set[Recorder]:
+        return set()
+
+    @property
+    def record_fields(self) -> Sequence[str]:
+        return []
 
 
 class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
@@ -93,7 +94,9 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
     controller over UDP.
     """
 
-    def __init__(self, controller_addr: Tuple[str, int]):
+    def __init__(self,
+                 controller_addr: Tuple[str, int],
+                 ready_callback: Callable[[BaseControllerInterface], Any]):
         super(UDPControllerInterface, self).__init__()
         self._recv_q = SingleElementQ()
         self._caddr = controller_addr
@@ -108,6 +111,8 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
                                'rtt'           : np.inf}
         )
 
+        self._ready_callback = ready_callback
+
     @property
     def recorders(self) -> Set[Recorder]:
         return self._records.recorders
@@ -117,7 +122,8 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         return self._records.record_fields
 
     def startProtocol(self):
-        self._ready.set()
+        self._log.info(f'{self.__class__.__name__} listening and ready.')
+        return self._ready_callback(self)
 
     def stopProtocol(self):
         self._log.info('Recording messages which never got a reply...')
@@ -166,7 +172,7 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
         except (ValueError, msgpack.FormatError, msgpack.StackError):
             self._log.warn('Could not unpack data from {}:{}.'.format(*addr))
 
-    def register_with_reactor(self):
+    def register_with_reactor(self, reactor: PosixReactorBase):
         reactor.listenUDP(0, self)
 
 
@@ -196,10 +202,11 @@ class JSONProducer:
 
 class DispatcherClient:
     def __init__(self,
+                 reactor: PosixReactorBase,
                  host: str,
                  port: int):
         self._dispatcher_addr = f'http://{host}:{port}'
-
+        self._reactor = reactor
         self._agent = Agent(reactor)
         self._log = Logger()
 
@@ -252,7 +259,7 @@ class DispatcherClient:
                     d.addCallback(info_callback)
                     return d
 
-                d = task.deferLater(reactor, 0.1, retry)
+                d = task.deferLater(self._reactor, 0.1, retry)
             else:
                 raise AssertionError()  # TODO: change error type
             return d

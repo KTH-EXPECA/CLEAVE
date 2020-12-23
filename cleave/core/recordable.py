@@ -183,6 +183,7 @@ class CSVRecorder(Recorder):
                 self._chunk_q.task_done()
 
     def initialize(self) -> None:
+        self._log.info(f'Initializing CSVRecorder on {self._path}.')
         # initialize the writing thread
         self._shutdown_event.clear()
         while self._chunk_q.qsize() > 0:

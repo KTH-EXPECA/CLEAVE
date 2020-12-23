@@ -20,6 +20,7 @@ from cleave.impl.inverted_pendulum import InvPendulumStateWithViz
 host = 'localhost'
 port = 50000
 tick_rate = 200
+emu_duration = '15s'
 
 state = InvPendulumStateWithViz()
 
