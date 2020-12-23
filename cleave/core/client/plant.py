@@ -14,24 +14,23 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import Collection
 from pathlib import Path
 
-from twisted.internet import reactor, task
+from twisted.internet import task
+from twisted.internet.defer import Deferred
 from twisted.internet.posixbase import PosixReactorBase
+from twisted.internet.task import LoopingCall
 from twisted.python.failure import Failure
 
 from .actuator import ActuatorArray
 from .physicalsim import PhysicalSimulation
 from .sensor import SensorArray
-from .timing import SimClock
 from ..logging import LogLevel, Logger
 from ..network.client import BaseControllerInterface
 from ..recordable import CSVRecorder
 from ...api.plant import Actuator, Sensor, UnrecoverableState
-
-reactor: PosixReactorBase = reactor
 
 
 class Plant(ABC):
@@ -39,62 +38,73 @@ class Plant(ABC):
     Interface for all plants.
     """
 
-    def __init__(self):
+    def __init__(self,
+                 tick_dt: float):
         self._logger = Logger()
-        self._clock = SimClock()
+        self._tick_dt = tick_dt
 
-    @abstractmethod
-    def set_up(self):
-        """
-        Executes this plant. Depending on implementation, this method may or
-        may not be asynchronous.
+    def set_up(self, reactor: PosixReactorBase) -> Deferred:
+        def clean_shutdown(sim_loop: LoopingCall) -> Deferred:
+            self._logger.info('Plant loop shut down cleanly.')
+            return task.deferLater(reactor, 0, self.on_shutdown)
 
-        Returns
-        -------
+        def err_shutdown(fail: Failure) -> Deferred:
+            self._logger.error('Plant tick loop aborted with error!')
+            try:
+                self.on_tick_error(fail)
+            except:
+                self._logger.error('Exception in simulation loop.')
+                self._logger.error(f'\n{fail.getTraceback()}')
+            finally:
+                return task.deferLater(reactor, 0, self.on_shutdown)
 
-        """
+        def start_loop(*args, **kwargs):
+            # schedule tick loops
+            self._logger.info('Scheduling Plant ticks...')
+            sim_loop = task.LoopingCall.withCount(self.tick)
+            sim_loop_deferred = sim_loop.start(interval=self._tick_dt)
+            sim_loop_deferred.addCallback(clean_shutdown)
+            sim_loop_deferred.addErrback(err_shutdown)
+            return sim_loop_deferred
+
+        d_chain = task.deferLater(reactor, 0, self.on_init)
+        d_chain.addCallback(start_loop)
+
+        return d_chain
+
+    def tick(self, missed_count: int):
         pass
 
-    @property
-    @abstractmethod
-    def simulation_tick_rate(self) -> int:
-        """
-        The update frequency of this plant in Hz. Depending on
-        implementation, accessing this property may or may not be thread-safe.
+    def on_tick_error(self, fail: Failure) -> None:
+        fail.trap()
 
-        Returns
-        -------
-        int
-            The update frequency of the plant in Hertz.
-
-        """
+    def on_init(self) -> None:
         pass
 
-    @property
-    @abstractmethod
-    def simulation_tick_dt(self) -> float:
-        # TODO: document
-        pass
-
-    @abstractmethod
     def on_shutdown(self) -> None:
-        """
-        Handle shutdown stuff.
-        """
         pass
+
+    @property
+    def simulation_tick_rate(self) -> float:
+        return 1 / self._tick_dt
+
+    @property
+    def simulation_tick_dt(self) -> float:
+        return self._tick_dt
 
 
 class BasePlant(Plant):
-    # Refactor: coherent api
     def __init__(self,
                  physim: PhysicalSimulation,
                  sensors: Collection[Sensor],
                  actuators: Collection[Actuator],
                  control_interface: BaseControllerInterface):
-        super(BasePlant, self).__init__()
-        # self._reactor = reactor
+        super(BasePlant, self).__init__(physim.target_tick_delta)
         self._physim = physim
         self._control = control_interface
+
+        # TODO: needs to be moved into base class
+        self._ticker_loop = task.LoopingCall(self._log_plant_rate_callback)
 
         self._sensors = SensorArray(
             sensors=sensors,
@@ -107,17 +117,20 @@ class BasePlant(Plant):
             control=self._control
         )
 
-        # TODO: record timings? 
+    def on_init(self) -> None:
+        """
+        Sets up the simulation of this plant
+        """
 
-    @property
-    def simulation_tick_rate(self) -> int:
-        return self._physim.target_tick_rate
+        self._logger.info('Initializing plant...')
+        self._logger.warn(f'Target frequency: '
+                          f'{self._physim.target_tick_rate} Hz')
+        self._logger.warn(f'Target time step: '
+                          f'{self._physim.target_tick_delta * 1e3:0.1f} ms')
+        self._physim.initialize()
+        self._ticker_loop.start(interval=5)  # TODO: magic number?
 
-    @property
-    def simulation_tick_dt(self) -> float:
-        return self._physim.target_tick_delta
-
-    def _execute_emu_timestep(self, count: int) -> None:
+    def tick(self, missed_count: int) -> None:
         """
         Executes the emulation timestep. Intended use is inside a Twisted
         LoopingCall, hence why it takes a single integer parameter which
@@ -126,7 +139,7 @@ class BasePlant(Plant):
 
         Parameters
         ----------
-        count
+        missed_count
 
         Returns
         -------
@@ -148,13 +161,30 @@ class BasePlant(Plant):
         # this only sends if any sensors are triggered during this state update
         self._sensors.process_and_send_samples(prop_values=state_outputs)
 
+    def on_tick_error(self, fail: Failure) -> None:
+        fail.trap(UnrecoverableState)
+        import datetime
+        # called after the state raises an UnrecoverableState
+        # log the error and shutdown
+        self._logger.error('Simulation has reached an unrecoverable state. '
+                           'Aborting.')
+
+        timestamp = f'{datetime.datetime.now():%Y%m%d_%H%M%S.%f}'
+        err_log_path = Path(f'./errlog_{timestamp}.json')
+        with err_log_path.open('w') as fp:
+            print(fail.getErrorMessage(), file=fp)
+
+        self._logger.error(
+            'Details of variables which failed sanity checks '
+            f'have been output to {err_log_path.resolve()}')
+
     def on_shutdown(self) -> None:
         """
-        Called on shutdown of the framework.
+        Called on shutdown of the plant.
         """
 
-        # output stats on shutdown
         self._logger.warn('Shutting down plant, please wait...')
+        self._ticker_loop.stop()
 
         # call simulation shutdown
         self._physim.shutdown()
@@ -181,79 +211,6 @@ class BasePlant(Plant):
                                  f'{rate.interval_s:0.3f} seconds, '
                                  f'for an average of '
                                  f'{ticks_per_second:0.3f} ticks/second.')
-
-    def _unrecoverable_state_errback(self, failure: Failure):
-        failure.trap(UnrecoverableState)
-        import datetime
-        # called after the state raises an UnrecoverableState
-        # log the error and shutdown
-        self._logger.error('Simulation has reach an unrecoverable state. '
-                           'Aborting.')
-
-        err_log_path = \
-            Path(f'./errlog_{datetime.datetime.now():%Y%m%d_%H%M%S.%f}.json')
-        with err_log_path.open('w') as fp:
-            print(failure.getErrorMessage(), file=fp)
-
-        self._logger.error('Details of variables which failed sanity checks '
-                           f'have been output to {err_log_path.resolve()}')
-        reactor.stop()
-
-    def _simloop_errback(self, failure: Failure):
-        # general purpose errback to ouput a traceback and cleanly shutdown
-        # after an exception in the simulation loop
-        self._logger.critical('Exception in simulation loop.')
-        self._logger.error(f'\n{failure.getTraceback()}')
-        reactor.stop()
-
-    def set_up(self):
-        """
-        Sets up the simulation of this plant, to be executed when
-        reactor.run() is called.
-        """
-
-        self._logger.info('Initializing plant...')
-        self._logger.warn(f'Target frequency: '
-                          f'{self._physim.target_tick_rate} Hz')
-        self._logger.warn(f'Target time step: '
-                          f'{self._physim.target_tick_delta * 1e3:0.1f} ms')
-
-        # callback to wait for network before starting simloop
-        def _wait_for_network_and_init():
-            if not self._control.is_ready():
-                # controller not ready, wait a bit
-                self._logger.warn('Waiting for controller...')
-                reactor.callLater(0.01, _wait_for_network_and_init)
-            else:
-                # schedule timestep
-                self._logger.info('Starting simulation...')
-                self._physim.initialize()
-                sim_loop = task.LoopingCall \
-                    .withCount(self._execute_emu_timestep)
-                sim_loop.clock = reactor
-
-                ticker_loop = task.LoopingCall(self._log_plant_rate_callback)
-                ticker_loop.clock = reactor
-
-                # have loop run slightly faster than required, as we rather
-                # have the plant be a bit too fast than too slow
-                # todo: parameterize the scaling factor?
-                # todo: tune this
-                sim_loop_deferred = sim_loop.start(
-                    interval=self._physim.target_tick_delta)
-                sim_loop_deferred \
-                    .addErrback(self._unrecoverable_state_errback) \
-                    .addErrback(self._simloop_errback)
-
-                ticker_loop.start(interval=5)  # TODO: magic number?
-
-        self._control.register_with_reactor()
-        # callback for shutdown
-        reactor.addSystemEventTrigger('after', 'shutdown', self.on_shutdown)
-
-        reactor.callWhenRunning(_wait_for_network_and_init)
-        reactor.suggestThreadPoolSize(3)  # input, output and processing
-        # reactor.run()
 
 
 class CSVRecordingPlant(BasePlant):
@@ -289,14 +246,14 @@ class CSVRecordingPlant(BasePlant):
             CSVRecorder(self._actuators, recording_output_dir, 'actuators'),
         }
 
-    def set_up(self):
+    def on_init(self) -> None:
+        super(CSVRecordingPlant, self).on_init()
         for recorder in self._recorders:
             recorder.initialize()
-        super(CSVRecordingPlant, self).set_up()
 
     def on_shutdown(self) -> None:
-        super(CSVRecordingPlant, self).on_shutdown()
-
         # shut down recorders
         for recorder in self._recorders:
             recorder.shutdown()
+
+        super(CSVRecordingPlant, self).on_shutdown()
