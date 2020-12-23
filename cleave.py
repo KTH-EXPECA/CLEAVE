@@ -13,7 +13,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import socket
 import sys
 from pathlib import Path
 from typing import Any, Mapping, Optional
@@ -73,7 +73,8 @@ def setup_plant_with_dispatcher(config: Config, reactor: PosixReactorBase):
                 d = client.shutdown_controller(control['id'])
                 d.addBoth(lambda _: reactor.stop())
 
-        proto = UDPClient((control['host'], control['port']),
+        host = socket.gethostbyname(control['host'])
+        proto = UDPClient((host, control['port']),
                           output_dir=out_dir / control['id'])
         proto.register_with_reactor(reactor=reactor)
 
@@ -83,6 +84,8 @@ def setup_plant_with_dispatcher(config: Config, reactor: PosixReactorBase):
 
 
 def setup_plant_no_dispatcher(config: Config, reactor: PosixReactorBase):
+    output_dir = Path(config.output_dir)
+
     class UDPClient(RecordingUDPControlClient):
         def on_start(self, control_i: BaseControllerInterface):
             plant = CSVRecordingPlant(
@@ -93,7 +96,7 @@ def setup_plant_no_dispatcher(config: Config, reactor: PosixReactorBase):
                 sensors=config.sensors,
                 actuators=config.actuators,
                 control_interface=control_i,
-                recording_output_dir=config.output_dir
+                recording_output_dir=output_dir
             )
             d = plant.set_up(reactor=reactor, duration=config.emu_duration)
             d.addBoth(lambda _: self.transport.stopListening())
@@ -101,7 +104,9 @@ def setup_plant_no_dispatcher(config: Config, reactor: PosixReactorBase):
         def on_end(self):
             reactor.stop()
 
-    proto = UDPClient((config.host, config.port), output_dir=config.output_dir)
+    host = socket.gethostbyname(config.host)
+    proto = UDPClient((host, config.port),
+                      output_dir=output_dir)
     proto.register_with_reactor(reactor)
 
 
