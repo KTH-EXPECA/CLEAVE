@@ -22,6 +22,7 @@ import click
 from twisted.internet import reactor
 from twisted.internet.posixbase import PosixReactorBase
 
+from cleave.core.client.control import BaseControllerInterface
 from cleave.core.client.physicalsim import PhysicalSimulation
 from cleave.core.client.plant import CSVRecordingPlant
 from cleave.core.config import Config, ConfigFile
@@ -29,8 +30,8 @@ from cleave.core.dispatcher.dispatcher import Dispatcher
 from cleave.core.logging import loguru
 from cleave.core.network.backend import BaseControllerService, \
     UDPControllerService
-from cleave.core.network.client import DispatcherClient, RecordingUDPControlClient
-from cleave.core.client.control import BaseControllerInterface
+from cleave.core.network.client import DispatcherClient, \
+    RecordingUDPControlClient
 
 reactor: PosixReactorBase = reactor
 
