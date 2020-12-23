@@ -14,18 +14,16 @@
 
 # Example config file for an inverted pendulum inverted_pendulum
 
-from cleave.api.plant import SimpleConstantActuator, SimpleSensor
-from cleave.impl.inverted_pendulum import InvPendulumState
+from cleave.api.plant import GaussianConstantActuator, SimpleSensor
+from cleave.impl.inverted_pendulum import InvPendulumStateWithViz
 
+use_dispatcher = False
 host = 'localhost'
-port = 8080
-
-controller_class = 'InvPendulumController'
-
+port = 50000
 tick_rate = 200
 emu_duration = '15s'
 
-state = InvPendulumState()
+state = InvPendulumStateWithViz()
 
 sensors = [
     SimpleSensor('position', 100),
@@ -35,5 +33,8 @@ sensors = [
 ]
 
 actuators = [
-    SimpleConstantActuator(initial_value=0, prop_name='force')
+    GaussianConstantActuator('force',
+                             g_mean=0.0,
+                             g_std=1.0,
+                             initial_value=0)
 ]

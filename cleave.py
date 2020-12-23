@@ -14,13 +14,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import socket
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Mapping, Optional
 
 import click
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 from twisted.internet.posixbase import PosixReactorBase
 
 from cleave.core.client.physicalsim import PhysicalSimulation
@@ -31,18 +30,20 @@ from cleave.core.logging import loguru
 from cleave.core.network.backend import BaseControllerService, \
     UDPControllerService
 from cleave.core.network.client import BaseControllerInterface, \
-    UDPControllerInterface
+    DispatcherClient, UDPControllerInterface
 
 reactor: PosixReactorBase = reactor
 
 _control_defaults = dict(
     output_dir='./controller_metrics/',
-    controller_service=UDPControllerService
+    controller_service=UDPControllerService  # TODO: remove
 )
 
 _plant_defaults = dict(
     controller_interface=UDPControllerInterface,
     output_dir='./plant_metrics/',
+    controller_params={},
+    use_dispatcher=True,
 )
 
 
@@ -91,7 +92,6 @@ def run_plant(config_file_path: str):
     """
     Execute a CLEAVE Plant with the given configuration file.
     """
-
     config = ConfigFile(
         config_path=config_file_path,
         defaults=_plant_defaults
@@ -113,10 +113,23 @@ def run_plant(config_file_path: str):
         d.addCallback(lambda _: reactor.stop())
         return d
 
-    host_addr = (socket.gethostbyname(config.host), config.port)
-    # start the controller interface
-    control = UDPControllerInterface(host_addr, start_plant)
-    control.register_with_reactor(reactor=reactor)  # todo: fix
+    def control_spawn_callback(control: Mapping[str, Any]) -> Any:
+        # build a controller interface
+        ctrl_i = UDPControllerInterface((control['host'], control['port']),
+                                        start_plant)
+        ctrl_i.register_with_reactor(reactor=reactor)
+
+    if config.use_dispatcher:
+        client = DispatcherClient(reactor=reactor,
+                                  host=config.host,
+                                  port=config.port)
+        spawn_d = client.spawn_controller(controller=config.controller_class,
+                                          params=config.controller_params)
+        spawn_d.addCallback(control_spawn_callback)
+        # TODO: fix shutdown
+    else:
+        task.deferLater(reactor, 0, control_spawn_callback,
+                        {'host': config.host, 'port': config.port})
 
     reactor.suggestThreadPoolSize(3)
     reactor.run()
@@ -156,41 +169,6 @@ def run_dispatcher(port: int):
     dispatcher = Dispatcher({'InvPendulumController': InvPendulumController})
     dispatcher.set_up('localhost', 8080)
     reactor.run()
-
-
-# @cli.command('run-plant-with-dispatcher')
-# @click.argument('config_file_path',
-#                 type=click.Path(exists=True,
-#                                 file_okay=True,
-#                                 dir_okay=False))
-# def run_plant_dispatcher(config_file_path: str):
-#     config = ConfigFile(
-#         config_path=config_file_path,
-#         defaults=_plant_defaults
-#     )
-#     pass
-
-
-# from cleave.core.logging import loguru
-# from cleave.core.network.client import DispatcherClient
-# from twisted.internet import reactor, task
-#
-# loguru.logger.add(sys.stderr,
-#                   level=0,
-#                   colorize=True,
-#                   format='<light-green>{time}</light-green> '
-#                          '<level><b>{level}</b></level> '
-#                          '{message}')
-# client = DispatcherClient('0.0.0.0', 8080)
-#
-#
-# def callback(info):
-#     return task.deferLater(reactor, 10, client.shutdown_controller,
-#     info['id'])
-#
-#
-# client.spawn_controller('InvPendulumController').addCallback(callback)
-# reactor.run()
 
 
 if __name__ == '__main__':

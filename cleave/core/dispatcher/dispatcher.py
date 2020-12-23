@@ -112,8 +112,8 @@ class Dispatcher:
         # finally, add some shutdown procedures
         def shutdown():
             self._log.warn('Shutting down remaining controllers.')
-            for proto, info in self._running_controllers.items():
-                proto.shutdown()
+            for uuid, details in self._running_controllers.items():
+                details['protocol'].shutdown()
             self._log.warn('Dispatcher shut down.')
 
         reactor.addSystemEventTrigger('after', 'shutdown', shutdown)

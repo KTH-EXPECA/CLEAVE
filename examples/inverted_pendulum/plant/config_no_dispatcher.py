@@ -17,11 +17,9 @@
 from cleave.api.plant import SimpleConstantActuator, SimpleSensor
 from cleave.impl.inverted_pendulum import InvPendulumState
 
+use_dispatcher = False
 host = 'localhost'
-port = 8080
-
-controller_class = 'InvPendulumController'
-
+port = 50000
 tick_rate = 200
 emu_duration = '15s'
 

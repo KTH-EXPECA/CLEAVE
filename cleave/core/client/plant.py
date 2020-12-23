@@ -51,7 +51,7 @@ class Plant(ABC):
         sim_loop = task.LoopingCall.withCount(self.tick)
 
         def timed_shutdown():
-            self._logger.warn('Emulation timeout reached.')
+            self._logger.warn(f'Emulation timeout reached ({duration}).')
             sim_loop.stop()
 
         def clean_shutdown(sim_loop: LoopingCall) -> Deferred:
@@ -76,7 +76,13 @@ class Plant(ABC):
             sim_loop_deferred.addErrback(err_shutdown)
             return sim_loop_deferred
 
-        d_chain = task.deferLater(reactor, 0, self.on_init)
+        def init():
+            self._logger.info('Initializing Plant emulation.')
+            self._logger.info(f'Target duration: {duration} ({duration_sec} '
+                              f'seconds).')
+            self.on_init()
+
+        d_chain = task.deferLater(reactor, 0, init)
         d_chain.addCallback(start_loop)
 
         # set up shutdown signal
