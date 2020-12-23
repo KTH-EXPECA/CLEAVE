@@ -259,7 +259,7 @@ class CSVRecordingPlant(BasePlant):
         # TODO: factories?
         self._recorders = {
             CSVRecorder(self._physim, recording_output_dir, 'simulation'),
-            CSVRecorder(self._control, recording_output_dir, 'client'),
+            # CSVRecorder(self._control, recording_output_dir, 'client'),
             CSVRecorder(self._sensors, recording_output_dir, 'sensors'),
             CSVRecorder(self._actuators, recording_output_dir, 'actuators'),
         }

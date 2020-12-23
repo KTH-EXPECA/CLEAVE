@@ -19,18 +19,18 @@ from pathlib import Path
 from typing import Any, Mapping, Optional
 
 import click
-from twisted.internet import reactor, task
+from twisted.internet import reactor
 from twisted.internet.posixbase import PosixReactorBase
 
 from cleave.core.client.physicalsim import PhysicalSimulation
 from cleave.core.client.plant import CSVRecordingPlant
-from cleave.core.config import ConfigFile
+from cleave.core.config import Config, ConfigFile
 from cleave.core.dispatcher.dispatcher import Dispatcher
 from cleave.core.logging import loguru
 from cleave.core.network.backend import BaseControllerService, \
     UDPControllerService
 from cleave.core.network.client import BaseControllerInterface, \
-    DispatcherClient, UDPControllerInterface
+    DispatcherClient, RecordingUDPControlClient
 
 reactor: PosixReactorBase = reactor
 
@@ -40,11 +40,68 @@ _control_defaults = dict(
 )
 
 _plant_defaults = dict(
-    controller_interface=UDPControllerInterface,
     output_dir='./plant_metrics/',
     controller_params={},
     use_dispatcher=True,
 )
+
+
+def setup_plant_with_dispatcher(config: Config, reactor: PosixReactorBase):
+    client = DispatcherClient(reactor=reactor,
+                              host=config.host,
+                              port=config.port)
+    out_dir = Path(config.output_dir)
+
+    def control_spawn_callback(control: Mapping[str, Any]) -> Any:
+        class UDPClient(RecordingUDPControlClient):
+            def on_start(self, control_i: BaseControllerInterface):
+                plant = CSVRecordingPlant(
+                    physim=PhysicalSimulation(
+                        state=config.state,
+                        tick_rate=config.tick_rate
+                    ),
+                    sensors=config.sensors,
+                    actuators=config.actuators,
+                    control_interface=control_i,
+                    recording_output_dir=out_dir / control['id']
+                )
+                d = plant.set_up(reactor=reactor, duration=config.emu_duration)
+                d.addBoth(lambda _: self.transport.stopListening())
+
+            def on_end(self):
+                d = client.shutdown_controller(control['id'])
+                d.addBoth(lambda _: reactor.stop())
+
+        proto = UDPClient((control['host'], control['port']),
+                          output_dir=out_dir / control['id'])
+        proto.register_with_reactor(reactor=reactor)
+
+    spawn_d = client.spawn_controller(controller=config.controller_class,
+                                      params=config.controller_params)
+    spawn_d.addCallback(control_spawn_callback)
+
+
+def setup_plant_no_dispatcher(config: Config, reactor: PosixReactorBase):
+    class UDPClient(RecordingUDPControlClient):
+        def on_start(self, control_i: BaseControllerInterface):
+            plant = CSVRecordingPlant(
+                physim=PhysicalSimulation(
+                    state=config.state,
+                    tick_rate=config.tick_rate
+                ),
+                sensors=config.sensors,
+                actuators=config.actuators,
+                control_interface=control_i,
+                recording_output_dir=config.output_dir
+            )
+            d = plant.set_up(reactor=reactor, duration=config.emu_duration)
+            d.addBoth(lambda _: self.transport.stopListening())
+
+        def on_end(self):
+            reactor.stop()
+
+    proto = UDPClient((config.host, config.port), output_dir=config.output_dir)
+    proto.register_with_reactor(reactor)
 
 
 @click.group()
@@ -97,39 +154,12 @@ def run_plant(config_file_path: str):
         defaults=_plant_defaults
     )
 
-    # callback to start the plant as soon as the UDP connection is ready
-    def start_plant(control_i: BaseControllerInterface):
-        plant = CSVRecordingPlant(
-            physim=PhysicalSimulation(
-                state=config.state,
-                tick_rate=config.tick_rate
-            ),
-            sensors=config.sensors,
-            actuators=config.actuators,
-            control_interface=control_i,
-            recording_output_dir=Path(config.output_dir)
-        )
-        d = plant.set_up(reactor=reactor, duration=config.emu_duration)
-        d.addCallback(lambda _: reactor.stop())
-        return d
-
-    def control_spawn_callback(control: Mapping[str, Any]) -> Any:
-        # build a controller interface
-        ctrl_i = UDPControllerInterface((control['host'], control['port']),
-                                        start_plant)
-        ctrl_i.register_with_reactor(reactor=reactor)
+    # build a controller interface
 
     if config.use_dispatcher:
-        client = DispatcherClient(reactor=reactor,
-                                  host=config.host,
-                                  port=config.port)
-        spawn_d = client.spawn_controller(controller=config.controller_class,
-                                          params=config.controller_params)
-        spawn_d.addCallback(control_spawn_callback)
-        # TODO: fix shutdown
+        setup_plant_with_dispatcher(config, reactor)
     else:
-        task.deferLater(reactor, 0, control_spawn_callback,
-                        {'host': config.host, 'port': config.port})
+        setup_plant_no_dispatcher(config, reactor)
 
     reactor.suggestThreadPoolSize(3)
     reactor.run()

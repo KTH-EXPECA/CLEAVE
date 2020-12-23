@@ -17,8 +17,9 @@ from __future__ import annotations
 import json
 import time
 from abc import ABC, abstractmethod
+from pathlib import Path
 from queue import Empty
-from typing import Any, Callable, Mapping, Sequence, Set, Tuple
+from typing import Any, Mapping, Tuple
 
 import msgpack
 import numpy as np
@@ -33,12 +34,12 @@ from zope.interface import implementer
 
 from .protocol import ControlMessageFactory, NoMessage
 from ..logging import Logger
-from ..recordable import NamedRecordable, Recordable, Recorder
+from ..recordable import CSVRecorder, NamedRecordable
 from ...api.util import PhyPropMapping
 from ...core.util import SingleElementQ
 
 
-class BaseControllerInterface(Recordable, ABC):
+class BaseControllerInterface(ABC):
     """
     Defines the core interface for interacting with controllers.
     """
@@ -79,29 +80,18 @@ class DummyControllerInterface(BaseControllerInterface):
     def get_actuator_values(self) -> PhyPropMapping:
         return {}
 
-    @property
-    def recorders(self) -> Set[Recorder]:
-        return set()
 
-    @property
-    def record_fields(self) -> Sequence[str]:
-        return []
-
-
-class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
-    """
-    Controller interface which abstracts over-the-network interaction with a
-    controller over UDP.
-    """
+class RecordingUDPControlClient(DatagramProtocol, ABC):
 
     def __init__(self,
                  controller_addr: Tuple[str, int],
-                 ready_callback: Callable[[BaseControllerInterface], Any]):
-        super(UDPControllerInterface, self).__init__()
+                 output_dir: Path):
+        super(RecordingUDPControlClient, self).__init__()
         self._recv_q = SingleElementQ()
         self._caddr = controller_addr
         self._msg_fact = ControlMessageFactory()
         self._waiting_for_reply = {}
+        self._log = Logger()
 
         self._records = NamedRecordable(
             name=self.__class__.__name__,
@@ -110,22 +100,44 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
                                'recv_size'     : np.nan,
                                'rtt'           : np.inf}
         )
+        self._recorder = CSVRecorder(recordable=self._records,
+                                     output_dir=output_dir,
+                                     metric_name='udpclient')
 
-        self._ready_callback = ready_callback
+    @abstractmethod
+    def on_start(self, control_i: BaseControllerInterface):
+        pass
 
-    @property
-    def recorders(self) -> Set[Recorder]:
-        return self._records.recorders
-
-    @property
-    def record_fields(self) -> Sequence[str]:
-        return self._records.record_fields
+    @abstractmethod
+    def on_end(self):
+        pass
 
     def startProtocol(self):
-        self._log.info(f'{self.__class__.__name__} listening and ready.')
-        return self._ready_callback(self)
+        self._recorder.initialize()
+
+        # build a controller interface
+        class ControllerInterface(BaseControllerInterface):
+            proto = self
+
+            def put_sensor_values(self, prop_values: PhyPropMapping) -> None:
+                msg = self.proto._msg_fact.create_sensor_message(prop_values)
+                payload = msg.serialize()
+                # this should always be called from the reactor thread
+                self.proto.transport.write(payload, self.proto._caddr)
+                self.proto._waiting_for_reply[msg.seq] = {'msg' : msg,
+                                                          'size': len(payload)}
+
+            def get_actuator_values(self) -> PhyPropMapping:
+                try:
+                    return self.proto._recv_q.pop_nowait()
+                except Empty:
+                    return dict()
+
+        self._log.info(f'UDP client listening and ready.')
+        self.on_start(ControllerInterface())
 
     def stopProtocol(self):
+        self.on_end()
         self._log.info('Recording messages which never got a reply...')
         for _, out in self._waiting_for_reply.items():
             self._records.push_record(
@@ -133,20 +145,7 @@ class UDPControllerInterface(DatagramProtocol, BaseControllerInterface):
                 send_timestamp=out['msg'].timestamp,
                 send_size=out['size']
             )
-
-    def put_sensor_values(self, prop_values: PhyPropMapping) -> None:
-        msg = self._msg_fact.create_sensor_message(prop_values)
-        payload = msg.serialize()
-        # this should always be called from the reactor thread
-        self.transport.write(payload, self._caddr)
-        self._waiting_for_reply[msg.seq] = {'msg' : msg,
-                                            'size': len(payload)}
-
-    def get_actuator_values(self) -> PhyPropMapping:
-        try:
-            return self._recv_q.pop_nowait()
-        except Empty:
-            return dict()
+        self._recorder.shutdown()
 
     def datagramReceived(self, datagram: bytes, addr: Tuple[str, int]):
         # unpack commands
