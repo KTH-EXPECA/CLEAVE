@@ -29,8 +29,8 @@ from cleave.core.dispatcher.dispatcher import Dispatcher
 from cleave.core.logging import loguru
 from cleave.core.network.backend import BaseControllerService, \
     UDPControllerService
-from cleave.core.network.client import BaseControllerInterface, \
-    DispatcherClient, RecordingUDPControlClient
+from cleave.core.network.client import DispatcherClient, RecordingUDPControlClient
+from cleave.core.client.control import BaseControllerInterface
 
 reactor: PosixReactorBase = reactor
 

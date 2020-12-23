@@ -33,52 +33,11 @@ from twisted.web.iweb import IBodyProducer
 from zope.interface import implementer
 
 from .protocol import ControlMessageFactory, NoMessage
+from ..client.control import BaseControllerInterface
 from ..logging import Logger
 from ..recordable import CSVRecorder, NamedRecordable
 from ...api.util import PhyPropMapping
 from ...core.util import SingleElementQ
-
-
-class BaseControllerInterface(ABC):
-    """
-    Defines the core interface for interacting with controllers.
-    """
-
-    def __init__(self):
-        self._log = Logger()
-
-    @abstractmethod
-    def put_sensor_values(self, prop_values: PhyPropMapping) -> None:
-        """
-        Send a sample of sensor values to the controller.
-
-        Parameters
-        ----------
-        prop_values
-            Mapping from property names to sensor values.
-        """
-        pass
-
-    @abstractmethod
-    def get_actuator_values(self) -> PhyPropMapping:
-        """
-        Waits for incoming data from the controller and returns a mapping
-        from actuated property names to values.
-
-        Returns
-        -------
-        Mapping
-            Mapping from actuated property names to values.
-        """
-        pass
-
-
-class DummyControllerInterface(BaseControllerInterface):
-    def put_sensor_values(self, prop_values: PhyPropMapping) -> None:
-        pass
-
-    def get_actuator_values(self) -> PhyPropMapping:
-        return {}
 
 
 class RecordingUDPControlClient(DatagramProtocol, ABC):
@@ -138,7 +97,7 @@ class RecordingUDPControlClient(DatagramProtocol, ABC):
 
     def stopProtocol(self):
         self.on_end()
-        self._log.info('Recording messages which never got a reply...')
+        self._log.info('Recording messages that never got a reply...')
         for _, out in self._waiting_for_reply.items():
             self._records.push_record(
                 seq=out['msg'].seq,

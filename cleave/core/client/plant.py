@@ -29,7 +29,7 @@ from .actuator import ActuatorArray
 from .physicalsim import PhysicalSimulation
 from .sensor import SensorArray
 from ..logging import LogLevel, Logger
-from ..network.client import BaseControllerInterface
+from .control import BaseControllerInterface
 from ..recordable import CSVRecorder
 from ...api.plant import Actuator, Sensor, UnrecoverableState
 

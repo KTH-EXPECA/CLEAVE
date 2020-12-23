@@ -20,7 +20,7 @@ import numpy as np
 
 from .timing import SimTicker
 from ..logging import Logger
-from ..network.client import BaseControllerInterface
+from .control import BaseControllerInterface
 from ..recordable import NamedRecordable, Recordable, Recorder
 from ...api.plant import Sensor
 from ...api.util import PhyPropMapping
