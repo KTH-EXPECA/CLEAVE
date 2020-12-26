@@ -162,8 +162,8 @@ class InvPendulumState(State):
         # ground
         filt = pymunk.ShapeFilter(group=1)
         self._ground = pymunk.Segment(self._space.static_body,
-                                      (-4, -0.1),
-                                      (4, -0.1),
+                                      (-1e6, -0.1),
+                                      (1e6, -0.1),
                                       0.1)  # TODO remove magic numbers
 
         self._ground.friction = ground_friction
