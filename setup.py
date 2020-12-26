@@ -14,6 +14,8 @@
 
 import setuptools
 
+import cleave
+
 with open('./README.md', 'r') as fp:
     long_description = fp.read()
 
@@ -28,7 +30,7 @@ with open('./requirements_docs.txt', 'r') as fp:
 
 setuptools.setup(
     name='cleave',
-    version='0.1.0a',
+    version=cleave.__version__,
     author='KTH Royal Institute of Technology',  # TODO: Change?
     author_email='molguin@kth.se',  # TODO: Change?
     description='The CLEAVE (ControL bEnchmArking serVice on the Edge) '
@@ -51,6 +53,9 @@ setuptools.setup(
     extras_require={
         'viz' : viz_reqs,
         'docs': doc_reqs
+    },
+    entry_points={
+        'console_scripts': ['cleave=cleave.api.cli:cli'],
     },
     python_requires='>=3.8',
 )
