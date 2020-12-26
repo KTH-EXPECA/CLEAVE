@@ -36,10 +36,6 @@ class BusyControllerException(Exception):
     pass
 
 
-class ControllerProcessingException(Exception):
-    pass
-
-
 # noinspection PyTypeChecker
 class BaseControllerService(Recordable, ABC):
     def __init__(self,
@@ -62,20 +58,17 @@ class BaseControllerService(Recordable, ABC):
 
             try:
                 return self._controller.process(samples)
-            except Exception as e:
-                raise ControllerProcessingException() from e
             finally:
                 with self._busy_cond:
                     self._busy = False
 
         def errback(fail: Failure) -> None:
-            exc = fail.trap(BusyControllerException,
-                            ControllerProcessingException)
-
-            if exc == BusyControllerException:
+            try:
+                fail.trap()
+            except BusyControllerException:
                 self._logger.warn('Controller is busy, discarding received '
                                   'samples.')
-            elif exc == ControllerProcessingException:
+            except Exception as e:
                 self._logger.error('Error encountered while processing '
                                    'samples.')
                 self._logger.error(fail.getTraceback())
