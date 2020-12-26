@@ -20,6 +20,7 @@ from typing import Any, Mapping, Optional
 
 import click
 from twisted.internet import reactor
+from twisted.internet.error import ReactorNotRunning
 from twisted.internet.posixbase import PosixReactorBase
 
 from cleave.core.client.control import BaseControllerInterface
@@ -47,6 +48,13 @@ _plant_defaults = dict(
 )
 
 
+def shutdown(reactor: PosixReactorBase):
+    try:
+        reactor.stop()
+    except ReactorNotRunning:
+        pass
+
+
 def setup_plant_with_dispatcher(config: Config, reactor: PosixReactorBase):
     client = DispatcherClient(reactor=reactor,
                               host=config.host,
@@ -71,7 +79,7 @@ def setup_plant_with_dispatcher(config: Config, reactor: PosixReactorBase):
 
             def on_end(self):
                 d = client.shutdown_controller(control['id'])
-                d.addBoth(lambda _: reactor.stop())
+                d.addBoth(lambda _: shutdown(reactor))
 
         host = socket.gethostbyname(control['host'])
         proto = UDPClient((host, control['port']),
@@ -102,7 +110,7 @@ def setup_plant_no_dispatcher(config: Config, reactor: PosixReactorBase):
             d.addBoth(lambda _: self.transport.stopListening())
 
         def on_end(self):
-            reactor.stop()
+            shutdown(reactor)
 
     host = socket.gethostbyname(config.host)
     proto = UDPClient((host, config.port),
