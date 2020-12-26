@@ -38,13 +38,18 @@ reactor: PosixReactorBase = reactor
 
 _control_defaults = dict(
     output_dir='./controller_metrics/',
-    controller_service=UDPControllerService  # TODO: remove
+    controller_service=UDPControllerService,
+    startup_callbacks=[],
+    shutdown_callbacks=[],
+    # TODO: remove
 )
 
 _plant_defaults = dict(
     output_dir='./plant_metrics/',
     controller_params={},
     use_dispatcher=True,
+    startup_callbacks=[],
+    shutdown_callbacks=[],
 )
 
 
@@ -190,6 +195,10 @@ def run_plant(config_file_path: str):
         setup_plant_no_dispatcher(config, reactor)
 
     reactor.suggestThreadPoolSize(3)
+    for c in config.startup_callbacks:
+        reactor.addSystemEventTrigger('during', 'startup', c)
+    for c in config.shutdown_callbacks:
+        reactor.addSystemEventTrigger('during', 'shutdown', c)
     reactor.run()
 
 
@@ -211,6 +220,10 @@ def run_controller(config_file_path: str):
     service: BaseControllerService = config.controller_service(
         config.controller,
         Path(config.output_dir))
+    for c in config.startup_callbacks:
+        reactor.addSystemEventTrigger('during', 'startup', c)
+    for c in config.shutdown_callbacks:
+        reactor.addSystemEventTrigger('during', 'shutdown', c)
     reactor.listenUDP(config.port, service.protocol)
     reactor.run()
 
