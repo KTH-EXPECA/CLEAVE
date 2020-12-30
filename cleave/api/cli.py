@@ -229,8 +229,8 @@ def run_controller(config_file_path: str):
 
 
 @cli.command('run-dispatcher')
-@click.argument('port', type=int)
-def run_dispatcher(port: int):
+# @click.argument('port', type=int)
+def run_dispatcher():
     """
     Initialize a CLEAVE Dispatcher listening on the given port.
     """

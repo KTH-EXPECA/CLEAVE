@@ -22,8 +22,8 @@ port = 8080
 
 controller_class = 'InvPendulumController'
 
-tick_rate = 200
-emu_duration = '15s'
+tick_rate = 100
+emu_duration = '30m'
 
 state = InvPendulumState()
 
@@ -37,3 +37,5 @@ sensors = [
 actuators = [
     SimpleConstantActuator(initial_value=0, prop_name='force')
 ]
+
+output_dir = './plant_metrics'
