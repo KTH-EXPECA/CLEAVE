@@ -23,7 +23,7 @@ port = 50000
 tick_rate = 200
 emu_duration = '15s'
 
-state = InvPendulumState()
+state = InvPendulumState(fail_angle_rad=-1)
 
 sensors = [
     SimpleSensor('position', 100),

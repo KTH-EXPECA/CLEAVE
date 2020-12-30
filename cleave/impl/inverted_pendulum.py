@@ -124,6 +124,7 @@ class InvPendulumState(State):
     """
 
     def __init__(self,
+                 fail_angle_rad: float = 0.34,
                  ground_friction: float = 0.1,
                  cart_mass: float = 0.5,
                  cart_dims: Vec2d = Vec2d(0.3, 0.2),
@@ -200,10 +201,11 @@ class InvPendulumState(State):
         self.position = SensorVariable(self._cart_body.position.x)
         self.speed = SensorVariable(self._cart_body.velocity.x)
 
-        # the angle should never exceed ~20 degrees
+        angle_check = (lambda a: np.abs(a) < fail_angle_rad) \
+            if fail_angle_rad >= 0 else (lambda a: True)
+
         self.angle = SensorVariable(self._pend_body.angle,
-                                    sanity_check=
-                                    lambda angle: np.abs(angle) < 0.34)
+                                    sanity_check=angle_check)
 
         self.ang_vel = SensorVariable(self._pend_body.angular_velocity)
 
@@ -231,6 +233,7 @@ class InvPendulumStateWithViz(InvPendulumState):
     """
 
     def __init__(self,
+                 fail_angle_rad: float = 0.34,
                  ground_friction: float = 0.1,
                  cart_mass: float = 0.5,
                  cart_dims: Vec2d = Vec2d(0.3, 0.2),
@@ -265,6 +268,7 @@ class InvPendulumStateWithViz(InvPendulumState):
         from multiprocessing.context import Process
 
         super(InvPendulumStateWithViz, self).__init__(
+            fail_angle_rad=fail_angle_rad,
             ground_friction=ground_friction,
             cart_mass=cart_mass,
             cart_dims=cart_dims,
