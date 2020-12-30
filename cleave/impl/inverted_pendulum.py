@@ -137,6 +137,9 @@ class InvPendulumState(State):
 
         Parameters
         ----------
+        fail_angle_rad
+            Angle at which the pendulum is considered unrecoverable.
+            Negative values disable this check.
         ground_friction
             Friction factor to apply for the ground.
         cart_mass
@@ -250,6 +253,9 @@ class InvPendulumStateWithViz(InvPendulumState):
 
         Parameters
         ----------
+        fail_angle_rad
+            Angle at which the pendulum is considered unrecoverable.
+            Negative values disable this check.
         ground_friction
             Friction factor to apply for the ground.
         cart_mass
