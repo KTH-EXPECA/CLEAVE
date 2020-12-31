@@ -130,6 +130,7 @@ class Sensor(ABC):
     logic.
     """
 
+    # TODO: separate property name and sensor name
     # TODO: make Sensors and Actuators share a base class?
 
     def __init__(self, prop_name: str, sample_freq: int):
