@@ -171,9 +171,11 @@ class Dispatcher:
                     f'{port}:{host}.')
 
             def errReceived(self, data: bytes):
-                msg = data.decode('utf8')
-                self.dispatcher._log.error(f'Controller {controller_id}: ',
-                                           msg)
+                try:
+                    msg = data.decode('utf8')
+                except UnicodeDecodeError:
+                    msg = data
+                self.dispatcher._log.error(f'Controller {controller_id}: {msg}')
 
             def shutdown(self) -> None:
                 self.dispatcher._log.warn(f'Controller {controller_id} '
@@ -189,7 +191,12 @@ class Dispatcher:
                     )
 
                 # remove the controller from the dispatcher
-                self.dispatcher._running_controllers.pop(controller_id)
+                if controller_id in self.dispatcher._running_controllers:
+                    self.dispatcher._running_controllers.pop(controller_id)
+                if controller_id in self.dispatcher._warming_up_controllers:
+                    self.dispatcher._warming_up_controllers \
+                        .remove(controller_id)
+
                 self.dispatcher._log.warn(f'Controller {controller_id} '
                                           f'shut down.')
 
