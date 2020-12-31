@@ -15,6 +15,7 @@ import inspect
 import json
 import os
 import uuid
+from pathlib import Path
 from typing import Any, Mapping, Tuple, Type
 
 from klein import Klein
@@ -41,7 +42,9 @@ class Dispatcher:
     Implementation of an HTTP server for dynamic spawning of controller.
     """
 
-    def __init__(self, controllers: Mapping[str, Type[Controller]]):
+    def __init__(self,
+                 controllers: Mapping[str, Type[Controller]],
+                 output_dir: Path):
         """
 
         Parameters
@@ -54,6 +57,14 @@ class Dispatcher:
         self._app = Klein()
         self._running_controllers = dict()
         self._warming_up_controllers = set()
+
+        # make sure output dir exists and is a dir
+        self._output_dir = output_dir.resolve()
+        self._output_dir.mkdir(exist_ok=True, parents=True)
+
+        self._log.info(f'Controller output directory: {self._output_dir}')
+
+        assert len(controllers) > 0
         self._controller_classes = controllers
 
         # set up routes
@@ -94,6 +105,7 @@ class Dispatcher:
         port
             Port on which to accept incoming requests.
         """
+        # TODO: rework in similar way to plant (no system event triggers)
 
         # Create desired endpoint
         host = host.replace(':', '\:')
@@ -144,6 +156,7 @@ class Dispatcher:
             controller=controller.__name__,
             module=module.__name__,
             params=parameters,
+            output_dir=str(self._output_dir)
         ), separators=(',', ':'), indent=None)
 
         # create an internal ProcessProtocol to bind some callbacks

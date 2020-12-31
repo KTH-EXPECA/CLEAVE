@@ -62,14 +62,14 @@ def run_controller(config: Mapping[str, Any]) -> None:
 
     params = config['params']
     uuid = config['id']
+    output_dir = (Path(config['output_dir']) / str(uuid)).resolve()
 
     controller = ctrl_class(**params)
-    path = Path(f'/tmp/controllers/{uuid}').resolve()
     service = UDPControllerService(
         controller=controller,
-        output_dir=path)
+        output_dir=output_dir)
 
-    loguru.logger.add(path / 'controller.log',
+    loguru.logger.add(output_dir / 'controller.log',
                       level=10,
                       colorize=False,
                       format='<light-green>{time}</light-green> '
@@ -82,7 +82,7 @@ def run_controller(config: Mapping[str, Any]) -> None:
         lambda: print(json.dumps({
             'id'        : config['id'],
             'controller': config['controller'],
-            'path'      : str(path),
+            'path'      : str(output_dir),
             'params'    : params,
             'host'      : port.host,
             'port'      : port.port

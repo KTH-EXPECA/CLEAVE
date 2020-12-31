@@ -52,6 +52,10 @@ _plant_defaults = dict(
     shutdown_callbacks=[],
 )
 
+_dispatcher_defaults = dict(
+    output_dir='./controllers/',
+)
+
 
 def shutdown(reactor: PosixReactorBase):
     try:
@@ -229,14 +233,24 @@ def run_controller(config_file_path: str):
 
 
 @cli.command('run-dispatcher')
-# @click.argument('port', type=int)
-def run_dispatcher():
+@click.argument('config_file_path',
+                type=click.Path(exists=True,
+                                file_okay=True,
+                                dir_okay=False))
+def run_dispatcher(config_file_path):
     """
-    Initialize a CLEAVE Dispatcher listening on the given port.
+    Initialize a CLEAVE Dispatcher with the given configuration file.
     """
-    from cleave.impl.inverted_pendulum import InvPendulumController
 
-    # TODO: parameterize
-    dispatcher = Dispatcher({'InvPendulumController': InvPendulumController})
-    dispatcher.set_up('localhost', 8080)
+    # TODO: add way of checking optional/required parameters of controllers
+    #  from Dispatcher REST API
+
+    config = ConfigFile(
+        config_path=config_file_path,
+        defaults=_control_defaults
+    )
+
+    dispatcher = Dispatcher(config.controllers,
+                            Path(config.output_dir))
+    dispatcher.set_up(config.host, config.port)
     reactor.run()
