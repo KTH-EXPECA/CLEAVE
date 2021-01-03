@@ -1,0 +1,10 @@
+2021-01-03T15:54:36.744281+0000 INFO UDPControllerService starting on 36843
+2021-01-03T15:54:36.744403+0000 INFO Starting protocol <cleave.core.network.backend.UDPControllerService object at 0x7f85abcd7970>
+2021-01-03T15:54:36.744463+0000 INFO Started controller service...
+2021-01-03T15:54:36.744512+0000 INFO Initializing CSVRecorder on /output/controllers/b8df481f-8f9b-4f21-992a-eaa3f0ce6525/service.20210103.155436741076.csv.
+2021-01-03T16:28:08.131187+0000 INFO Received SIGINT, shutting down.
+2021-01-03T16:28:08.132251+0000 INFO (UDP Port 36843 Closed)
+2021-01-03T16:28:08.132561+0000 INFO Stopping protocol <cleave.core.network.backend.UDPControllerService object at 0x7f85abcd7970>
+2021-01-03T16:28:08.132748+0000 WARNING Shutting down controller service.
+2021-01-03T16:28:08.132906+0000 INFO Flushing and closing CSV table writer on path /output/controllers/b8df481f-8f9b-4f21-992a-eaa3f0ce6525/service.20210103.155436741076.csv...
+2021-01-03T16:28:08.136581+0000 INFO Main loop terminated.
