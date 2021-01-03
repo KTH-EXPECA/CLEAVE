@@ -11,6 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import errno
 import inspect
 import json
 import os
@@ -196,7 +197,7 @@ class Dispatcher:
                                           f'shutting down.')
                 self.transport.signalProcess('INT')
 
-            def processEnded(self, fail: Failure):
+            def processExited(self, fail: Failure):
                 if not (isinstance(fail.value, ProcessDone)
                         or fail.value.exitCode == 0):
                     self.dispatcher._log.error(
@@ -211,8 +212,11 @@ class Dispatcher:
                     self.dispatcher._warming_up_controllers \
                         .remove(controller_id)
 
-                self.dispatcher._log.warn(f'Controller {controller_id} '
-                                          f'shut down.')
+                # self.dispatcher._log.warn(f'Controller {controller_id} '
+                #                           f'shut down.')
+
+            def processEnded(self, fail: Failure):
+                self.processExited(fail)
 
         self._warming_up_controllers.add(controller_id)
 
@@ -227,14 +231,22 @@ class Dispatcher:
         self._log.debug(format='Exec args: {args}', args=argt)
         self._log.debug(f'Working dir: {os.getcwd()}')
 
-        reactor.spawnProcess(
-            CtrlProcProtocol(),
-            executable=sys.executable,
-            args=argt,
-            env=None,
-            path=os.getcwd()
-        )
-        return 202, {'id': str(controller_id)}
+        try:
+            reactor.spawnProcess(
+                CtrlProcProtocol(),
+                executable=sys.executable,
+                args=argt,
+                env=None,
+                path=os.getcwd(),
+                usePTY=True,
+
+            )
+            return 202, {'id': str(controller_id)}
+        except OSError as e:
+            self._log.error('Could not spawn new Controller')
+            if e.errno == errno.EAGAIN or e.errno == errno.ENOMEM:
+                self._log.error('Not enough system resources!')
+            return 500, {'error': 'Could not spawn Controller.'}
 
     def list_controllers(self, request: Request) -> Any:
         controllers = {
