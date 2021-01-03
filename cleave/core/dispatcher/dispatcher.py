@@ -14,6 +14,7 @@
 import inspect
 import json
 import os
+import sys
 import uuid
 from pathlib import Path
 from typing import Any, Mapping, Tuple, Type
@@ -214,14 +215,22 @@ class Dispatcher:
                                           f'shut down.')
 
         self._warming_up_controllers.add(controller_id)
+
+        argt = (
+            sys.executable,
+            str(Path(standalone_controller.__file__).resolve()),
+            args,
+        )
+
+        self._log.debug('Spawning Controller.')
+        self._log.debug(f'Executable: {sys.executable}')
+        self._log.debug(format='Exec args: {args}', args=argt)
+        self._log.debug(f'Working dir: {os.getcwd()}')
+
         reactor.spawnProcess(
             CtrlProcProtocol(),
-            executable='python',
-            args=(
-                'python',
-                standalone_controller.__file__,
-                args,
-            ),
+            executable=sys.executable,
+            args=argt,
             env=None,
             path=os.getcwd()
         )
