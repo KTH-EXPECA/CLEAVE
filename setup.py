@@ -58,4 +58,5 @@ setuptools.setup(
         'console_scripts': ['cleave=cleave.api.cli:cli'],
     },
     python_requires='>=3.8',
+    license='Apache v2'
 )
