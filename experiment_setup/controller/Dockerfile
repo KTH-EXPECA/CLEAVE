@@ -8,4 +8,4 @@ RUN pip install -U .
 RUN mkdir -p /output
 WORKDIR /output
 
-CMD cleave -vvvvv run-dispatcher /CLEAVE/examples/inverted_pendulum/dispatcher/config.py
+#CMD cleave -vvvvv run-controller /CLEAVE/experiment_setup/controller/config.py
