@@ -12,3 +12,4 @@ click
 klein
 jsonschema
 pytimeparse
+pluginbase
