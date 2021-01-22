@@ -40,7 +40,7 @@ for i in $(seq 1 "${N_CTRLS}"); do
   # spawn container in separate terminal window
   echo "Starting controller listening on port ${PORT}"
   (
-    ${TERM} docker run --rm -t --interactive \
+    ${TERM} -- docker run --rm -t --interactive \
       --publish=${PORT}:${CTRL_PORT}/udp \
       --volume="${HOST_DIR}":/output:rw \
       cleave/controller:latest \
