@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import builtins
 import json
 import time
 from abc import ABC, abstractmethod
@@ -82,7 +83,16 @@ class RecordingUDPControlClient(DatagramProtocol, ABC):
                 msg = self.proto._msg_fact.create_sensor_message(prop_values)
                 payload = msg.serialize()
                 # this should always be called from the reactor thread
-                self.proto.transport.write(payload, self.proto._caddr)
+                try:
+                    self.proto.transport.write(payload, self.proto._caddr)
+                except builtins.BlockingIOError:
+                    # Handles bug https://twistedmatrix.com/trac/ticket/2790
+                    # in twisted, where EWOULDBLOCK or EAGAIN are raised when
+                    # the UDP socket buffer is full.
+                    # Simply ignoring the datagram works, since UDP doesn't
+                    # provide any guarantees anyway.
+                    self.proto._log.warn('Full UDP socket buffer, silently '
+                                         'dropping datagram.')
                 self.proto._waiting_for_reply[msg.seq] = {'msg' : msg,
                                                           'size': len(payload)}
 
