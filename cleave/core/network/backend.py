@@ -11,7 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import builtins
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -165,7 +165,16 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
                     out_msg = in_msg.make_control_reply(act_cmds)
                     out_dgram = out_msg.serialize()
                     out_size = len(out_dgram)
-                    self.transport.write(out_dgram, addr)
+                    try:
+                        self.transport.write(out_dgram, addr)
+                    except builtins.BlockingIOError:
+                        # Handles bug https://twistedmatrix.com/trac/ticket/2790
+                        # in twisted, where EWOULDBLOCK or EAGAIN are raised
+                        # when the UDP socket buffer is full.
+                        # Simply ignoring the datagram works, since UDP doesn't
+                        # provide any guarantees anyway.
+                        self._logger.warn('Full UDP socket buffer, silently '
+                                          'dropping datagram.')
                     self._logger.debug(
                         'Sent command to {addr[0]}:{addr[1]} ({b} bytes).',
                         addr=addr, b=out_size)
