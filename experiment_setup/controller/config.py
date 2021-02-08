@@ -13,7 +13,8 @@
 #  limitations under the License.
 
 from cleave.impl.inverted_pendulum import InvPendulumController
+import os
 
 port = 50000
 controller = InvPendulumController(ref=0.0)
-output_dir = '/output'
+output_dir = os.getenv('OUTPUT_DIR', '/output')

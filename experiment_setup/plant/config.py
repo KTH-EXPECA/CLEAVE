@@ -19,14 +19,14 @@ import os
 from cleave.api.plant import SimpleConstantActuator, SimpleSensor
 from cleave.impl.inverted_pendulum import InvPendulumState
 
-_plant_n = int(os.environ['CLEAVE_PLANT_INDEX'])
+_plant_n = int(os.getenv('CLEAVE_PLANT_INDEX', 0))
 
 use_dispatcher = False
-host = str(os.environ['CLEAVE_CONTROL_HOST'])
+host = str(os.getenv('CLEAVE_CONTROL_HOST', '127.0.0.1'))
 port = 50000 + _plant_n
 tick_rate = 100
-emu_duration = '35m'
-output_dir = f'./plant_{_plant_n:02d}'
+emu_duration = str(os.getenv('CLEAVE_DURATION', '35m'))
+output_dir = str(os.getenv('OUTPUT_DIR', f'./plant_{_plant_n:02d}'))
 
 state = InvPendulumState(fail_angle_rad=-1)
 
