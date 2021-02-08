@@ -19,7 +19,7 @@ from pathlib import Path
 
 delays = (0, 4, 8, 16, 32, 64, 128)
 env = dict(os.environ)
-env['CLEAVE_DURATION'] = '5s'
+env['CLEAVE_DURATION'] = '15m'
 
 # add qdisc and reload
 subprocess.run(
