@@ -228,6 +228,9 @@ def run_controller(config_file_path: str):
         reactor.addSystemEventTrigger('during', 'startup', c)
     for c in config.shutdown_callbacks:
         reactor.addSystemEventTrigger('during', 'shutdown', c)
+
+    reactor.getThreadPool().adjustPoolsize(minthreads=3,
+                                           maxthreads=10)
     reactor.listenUDP(config.port, service.protocol)
     reactor.run()
 

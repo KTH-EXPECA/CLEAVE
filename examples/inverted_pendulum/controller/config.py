@@ -17,3 +17,4 @@ from cleave.impl.inverted_pendulum import InvPendulumController
 
 port = 50000
 controller = InvPendulumController(ref=0.0)
+output_dir = '/tmp/_cleave/'

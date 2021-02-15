@@ -40,3 +40,5 @@ actuators = [
                              g_std=1.0,
                              initial_value=0)
 ]
+
+output_dir = '/tmp/_cleave/'

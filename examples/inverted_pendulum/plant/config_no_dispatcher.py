@@ -35,3 +35,5 @@ sensors = [
 actuators = [
     SimpleConstantActuator(initial_value=0, prop_name='force')
 ]
+
+output_dir = '/tmp/_cleave/'

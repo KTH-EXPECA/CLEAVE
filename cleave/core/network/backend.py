@@ -15,21 +15,25 @@ import builtins
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from threading import Condition
+from queue import Empty
+from threading import Condition, Event
 from typing import Any, Callable, Optional, Sequence, Set, Tuple, Union
 
 import msgpack
-from twisted.internet.defer import Deferred
+from twisted.internet import reactor
+from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.protocol import DatagramProtocol, ProcessProtocol, \
     Protocol
-from twisted.internet.threads import deferToThread
-from twisted.python.failure import Failure
 
 from .protocol import *
 from ..logging import Logger
 from ..recordable import CSVRecorder, NamedRecordable, Recordable, Recorder
+from ..util import SingleElementQ
 from ...api.controller import Controller
 from ...api.util import PhyPropMapping
+
+# rework this
+reactor: PosixReactorBase = reactor
 
 
 class BusyControllerException(Exception):
@@ -45,40 +49,63 @@ class BaseControllerService(Recordable, ABC):
         self._busy_cond = Condition()
         self._busy = False
         self._logger = Logger()
+        self._q = SingleElementQ()
+        self._running = Event()
+        self._running.clear()
+
+    def initialize(self):
+        def _process_loop():
+            while self._running.is_set():
+                try:
+                    samples, cb = self._q.pop(timeout=0.1)
+                    results = self._controller.process(samples)
+                    reactor.callFromThread(cb, results)
+                except Empty:
+                    continue
+
+        self._running.set()
+        reactor.callInThread(_process_loop)
+
+    def shutdown(self):
+        self._running.clear()
 
     def process_sensor_samples(self,
                                samples: PhyPropMapping,
                                success_cb: Callable[[PhyPropMapping], Any]) \
-            -> Deferred:
-        def process() -> PhyPropMapping:
-            with self._busy_cond:
-                if self._busy:
-                    raise BusyControllerException()
-                self._busy = True
+            -> None:
 
-            try:
-                return self._controller.process(samples)
-            finally:
-                with self._busy_cond:
-                    self._busy = False
+        # put call in queue
+        self._q.put((samples, success_cb))
 
-        def errback(fail: Failure) -> None:
-            try:
-                fail.trap()
-            except BusyControllerException:
-                self._logger.warn('Controller is busy, discarding received '
-                                  'samples.')
-            except Exception as e:
-                self._logger.error('Error encountered while processing '
-                                   'samples.')
-                self._logger.error(fail.getTraceback())
-
-        # in case the controller is busy, don't return anything
-        # don't return anything if there's an error in processing either
-        deferred = deferToThread(process)
-        deferred.addCallback(success_cb)
-        deferred.addErrback(errback)
-        return deferred
+        # def process() -> PhyPropMapping:
+        #     with self._busy_cond:
+        #         if self._busy:
+        #             raise BusyControllerException()
+        #         self._busy = True
+        #
+        #     try:
+        #         return self._controller.process(samples)
+        #     finally:
+        #         with self._busy_cond:
+        #             self._busy = False
+        #
+        # def errback(fail: Failure) -> None:
+        #     try:
+        #         fail.trap()
+        #     except BusyControllerException:
+        #         self._logger.warn('Controller is busy, discarding received '
+        #                           'samples.')
+        #     except Exception as e:
+        #         self._logger.error('Error encountered while processing '
+        #                            'samples.')
+        #         self._logger.error(fail.getTraceback())
+        #
+        # # in case the controller is busy, don't return anything
+        # # don't return anything if there's an error in processing either
+        # deferred = deferToThread(process)
+        # deferred.addCallback(success_cb)
+        # deferred.addErrback(errback)
+        # return deferred
 
     @property
     @abstractmethod
@@ -130,6 +157,7 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
 
     def startProtocol(self) -> None:
         self._logger.info('Started controller service...')
+        self.initialize()
         self._recorder.initialize()
 
     def stopProtocol(self) -> None:
@@ -137,6 +165,7 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
         Executed during shutdown.
         """
         self._logger.warn('Shutting down controller service.')
+        self.shutdown()
         self._recorder.shutdown()
 
     def datagramReceived(self, in_dgram: bytes, addr: Tuple[str, int]):
