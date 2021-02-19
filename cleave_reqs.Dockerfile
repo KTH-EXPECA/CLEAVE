@@ -12,5 +12,5 @@ RUN apt-get install -y \
 
 COPY ./requirements.txt /opt/
 COPY ./requirements_viz.txt /opt/
-RUN pip3 install -U pip
-RUN pip3 install -r /opt/requirements.txt -r /opt/requirements_viz.txt
+RUN python3 -m pip install -U pip
+RUN python3 -m pip install -r /opt/requirements.txt -r /opt/requirements_viz.txt
