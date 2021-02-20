@@ -38,7 +38,7 @@ _compose_service_template = \
     ports:
       - 500{ctrl_index:02d}:50000/udp
     volumes:
-      - /tmp/cleave/controller_{ctrl_index:02d}:/output:rw
+      - {output_dir}/controller_{ctrl_index:02d}:/output:rw
     entrypoint: "cleave -vvvvv run-controller \
                 /CLEAVE/experiment_setup/controller/config.py"
     '''
@@ -52,14 +52,21 @@ def _sig_handle(signum, frame):
 
 @click.command()
 @click.argument('num-controllers', type=int)
-def main(num_controllers: int):
+@click.option('-o', '--output-dir',
+              default='/tmp/cleave',
+              show_default=True,
+              type=click.Path(exists=False,
+                              file_okay=False,
+                              dir_okay=True))
+def main(num_controllers: int, output_dir: str = '/tmp/cleave'):
     # make a temp dir to run docker-compose from
     tmp_dir = Path(f'/tmp/{uuid.uuid4()}')
     tmp_dir.mkdir(parents=True, exist_ok=False)
 
     out = _compose_prefix
     for i in range(num_controllers):
-        out += _compose_service_template.format(ctrl_index=i)
+        out += _compose_service_template.format(ctrl_index=i,
+                                                output_dir=output_dir)
 
     with (tmp_dir / 'docker-compose.yml').open('w') as fp:
         print(out, file=fp)
