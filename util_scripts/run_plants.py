@@ -70,6 +70,27 @@ def main(host_addr: str,
     for p in procs:
         p.wait()
 
+    # run the experiment
+    # each plant connects to a different port on the host
+    procs = [subprocess.Popen(
+        [
+            'sshpass', '-p', rpi_passwd,
+            'ssh', '-oPubkeyAuthentication=no', '-oPasswordAuthentication=yes',
+            f'{rpi_user}@{addr}', '--',
+            'docker', '--rm', '-d',
+            '-e', f'CLEAVE_DURATION={exp_duration}',
+            '-e', f'CLEAVE_CONTROL_HOST={host_addr}',
+            '-e', f'CLEAVE_PLANT_INDEX={i}',
+            cleave_docker_img,
+            'cleave', '-vvvvv', f'--file-log=/output/plant_{i:02}',
+            'run-plant', '/CLEAVE/experiment_setup/plant/config.py'
+        ],
+        env=env
+    ) for i, addr in enumerate(addresses)]
+
+    for p in procs:
+        p.wait()
+
 
 if __name__ == '__main__':
     main()
