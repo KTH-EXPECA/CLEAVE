@@ -8,7 +8,7 @@ pandas
 scipy
 matplotlib
 seaborn
-click
+click>=7.0
 klein
 jsonschema
 pytimeparse
