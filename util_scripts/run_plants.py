@@ -33,6 +33,12 @@ import click
 @click.command()
 @click.argument('host-addr', type=str)
 @click.argument('num-plants', type=int)
+@click.option('-o', '--output-dir',
+              default='./cleave',
+              show_default=True,
+              type=click.Path(exists=False,
+                              file_okay=False,
+                              dir_okay=True))
 @click.option('--plant-addr-template',
               type=str, default='192.168.1.2{:02d}', show_default=True)
 @click.option('--cleave_docker_img',
@@ -45,6 +51,7 @@ import click
               type=str, default='raspberry', show_default=True)
 def main(host_addr: str,
          num_plants: int,
+         output_dir: str = './cleave',
          plant_addr_template: str = '192.168.1.2{:02d}',
          cleave_docker_img: str = 'molguin/cleave:cleave',
          exp_duration: str = '35m',
@@ -87,6 +94,7 @@ def main(host_addr: str,
             '-e', f'CLEAVE_DURATION={exp_duration}',
             '-e', f'CLEAVE_CONTROL_HOST={host_addr}',
             '-e', f'CLEAVE_PLANT_INDEX={i}',
+            '--volume', f'{output_dir}:/output:rw',
             cleave_docker_img,
             'cleave', '-vvvvv', f'--file-log=/output/plant_{i:02}',
             'run-plant', '/CLEAVE/experiment_setup/plant/config.py'
