@@ -27,6 +27,7 @@ _run = Event()
 
 _compose_prefix = \
     '''
+version: "3"
 services:
     '''
 
