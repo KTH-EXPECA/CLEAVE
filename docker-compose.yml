@@ -3,4 +3,4 @@ services:
     image: molguin/cleave:cleave
     ports:
       - 50000-50012:50000
-    entrypoint: '/CLEAVE/get_compose_scale_index.sh'
+    entrypoint: '/usr/bin/ip addr show'
