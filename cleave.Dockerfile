@@ -1,4 +1,4 @@
-FROM cleave:base_reqs
+FROM molguin/cleave:base
 
 COPY . /CLEAVE
 WORKDIR /CLEAVE
