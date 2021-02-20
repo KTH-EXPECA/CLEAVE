@@ -1,4 +1,5 @@
-FROM ubuntu:20.04
+# requirements
+FROM ubuntu:20.04 AS base
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ="Europe/Stockholm"
@@ -16,3 +17,10 @@ RUN python3 -m pip install -U pip
 RUN python3 -m pip install  --install-option="build" --install-option="-j 4"\
     -r /opt/requirements.txt \
     -r /opt/requirements_viz.txt
+
+# cleave
+FROM base AS cleave
+COPY . /CLEAVE
+WORKDIR /CLEAVE
+RUN pip3 install -U .
+RUN mkdir -p /output
