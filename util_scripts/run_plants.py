@@ -60,7 +60,8 @@ def main(host_addr: str,
     procs = [subprocess.Popen(
         [
             'sshpass', '-p', rpi_passwd,
-            'ssh', f'{rpi_user}@{addr}', '--',
+            'ssh', '-oPubkeyAuthentication=no', '-oPasswordAuthentication=yes',
+            f'{rpi_user}@{addr}', '--',
             'docker', 'pull', cleave_docker_img
         ],
         env=env
