@@ -36,7 +36,7 @@ _compose_service_template = \
   controller_{ctrl_index:02d}:
     image: molguin/cleave:cleave
     ports:
-      - 500{ctrl_index:02d}:50000
+      - 500{ctrl_index:02d}:50000/udp
     volumes:
       - /tmp/cleave/controller_{ctrl_index:02d}:/output:rw
     entrypoint: "cleave -vvvvv run-controller \
