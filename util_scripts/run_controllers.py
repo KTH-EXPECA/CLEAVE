@@ -65,7 +65,7 @@ def main(num_controllers: int):
         print(out, file=fp)
 
     os.chdir(tmp_dir.resolve())
-    subprocess.run(['docker-compose', 'up', '--detach'])
+    subprocess.run(['docker-compose', 'up', '-d'])
     print(f'Spawned {num_controllers} controllers...')
     print('Press Ctrl-C to shutdown.')
     signal.signal(signal.SIGINT, _sig_handle)
