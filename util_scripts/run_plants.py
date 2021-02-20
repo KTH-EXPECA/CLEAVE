@@ -34,7 +34,7 @@ import click
 @click.argument('host-addr', type=str)
 @click.argument('num-plants', type=int)
 @click.option('-o', '--output-dir',
-              default='./cleave',
+              default='/home/pi/cleave',
               show_default=True,
               type=click.Path(exists=False,
                               file_okay=False,
