@@ -14,5 +14,5 @@ COPY ./requirements.txt /opt/
 COPY ./requirements_viz.txt /opt/
 RUN python3 -m pip install -U pip
 RUN python3 -m pip install  --install-option="build" --install-option="-j 4"\
-    -r /opt/requirements.txt \
-    -r /opt/requirements_viz.txt
+    -Ur /opt/requirements.txt \
+    -Ur /opt/requirements_viz.txt
