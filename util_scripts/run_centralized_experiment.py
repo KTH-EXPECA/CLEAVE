@@ -48,13 +48,12 @@ _compose_service_template = \
 
 
 def collect_results(base_output_dir: Path,
-                    ctrl_output: Path,
+                    temp_output: Path,
                     plant_index: int,
                     plant_addr_template: str,
                     plant_output: str,
                     rpi_passwd: str,
-                    rpi_user: str,
-                    delete_temp: bool):
+                    rpi_user: str):
     logger.info(f'Collecting results for setup {plant_index:d}...')
 
     # set up target dir
@@ -62,7 +61,7 @@ def collect_results(base_output_dir: Path,
     out_dir.mkdir(parents=True, exist_ok=False)
 
     # origin dirs
-    control_dir = ctrl_output / f'controller_{plant_index:02d}'
+    control_dir = temp_output / f'controller_{plant_index:02d}'
     plant_dir = f'{plant_output}/plant_{plant_index:02d}'
 
     # collect controller results
@@ -73,19 +72,12 @@ def collect_results(base_output_dir: Path,
     subprocess.run(
         ['sshpass', '-p', rpi_passwd,
          'scp', '-oPubkeyAuthentication=no', '-oPasswordAuthentication=yes',
-         f'{rpi_user}@{plant_addr_template.format(plant_index)}:'
-         f'"{plant_dir}/*"', out_dir]
+         '-r', f'{rpi_user}@{plant_addr_template.format(plant_index)}:'
+               f'{plant_dir}', temp_output]
     )
 
-    if delete_temp:
-        # delete temporary folders
-        shutil.rmtree(control_dir)
-        subprocess.run(
-            ['sshpass', '-p', rpi_passwd,
-             'ssh', '-oPubkeyAuthentication=no', '-oPasswordAuthentication=yes',
-             f'{rpi_user}@{plant_addr_template.format(plant_index)}', '--',
-             'rm', '-rf', plant_dir]
-        )
+    for plant_file in (temp_output / f'plant_{plant_index:02d}').iterdir():
+        shutil.copy(plant_file.resolve(), out_dir)
 
 
 def prepare_plant_docker_img(img_name: str,
@@ -171,7 +163,6 @@ def main(host_addr: str,
          controller_temp_dir: str = f'/tmp/{uuid.uuid4()}',
          plant_temp_dir: str = '/home/pi/cleave',
          nprocs: int = 6,
-         delete_temp: bool = True,
          verbose: int = 0):
     # Set log level
     log_level = max(logger.level('CRITICAL').no - (verbose * 10), 0)
@@ -251,7 +242,8 @@ def main(host_addr: str,
         time.sleep(1.0)
 
     logger.warning('Shutting down controller instances.')
-    subprocess.run(['docker-compose', 'kill', '-s', 'SIGINT'])
+    subprocess.run(['docker-compose', 'kill', '-s', 'SIGINT'],
+                   cwd=controller_temp_dir)
 
     # collect results per plant, in parallel
     with Pool(nprocs) as pool:
@@ -264,7 +256,6 @@ def main(host_addr: str,
                          itertools.repeat(plant_temp_dir),
                          itertools.repeat(rpi_passwd),
                          itertools.repeat(rpi_user),
-                         itertools.repeat(delete_temp)
                      ))
 
 
