@@ -26,6 +26,7 @@
 #  limitations under the License.
 import os
 import subprocess
+import time
 
 import click
 
@@ -81,6 +82,7 @@ def main(host_addr: str,
     print('Starting experiment in...')
     for t in range(5, 0, -1):
         print(f'\r{t}', end='')
+        time.sleep(1.0)
     print()
 
     # run the experiment
