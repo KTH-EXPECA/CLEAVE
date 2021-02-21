@@ -53,7 +53,7 @@ def _collect_results(base_output_dir: Path,
 @click.argument('num-plants', type=int)
 @click.argument('plant-output', type=str)
 @click.argument('target-dir', type=str)
-@click.option('-a', '--plant-address-template', type=str,
+@click.option('-a', '--plant-addr-template', type=str,
               default='192.168.1.2{:02d}', show_default=True)
 @click.option('-u', '--rpi-user', type=str,
               default='pi', show_default=True)
