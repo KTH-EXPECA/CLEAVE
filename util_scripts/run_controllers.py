@@ -64,6 +64,8 @@ def main(num_controllers: int, output_dir: str = '/tmp/cleave'):
     tmp_dir.mkdir(parents=True, exist_ok=False)
 
     out = _compose_prefix
+    # output dir needs to be absolute
+    output_dir = str(Path(output_dir).resolve())
     for i in range(num_controllers):
         out += _compose_service_template.format(ctrl_index=i,
                                                 output_dir=output_dir)
