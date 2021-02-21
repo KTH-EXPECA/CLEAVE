@@ -149,7 +149,6 @@ def prepare_controller_images(controller_temp_dir: Path,
               type=str, show_default=True,
               default='/home/pi/cleave')
 @click.option('-n', '--nprocs', type=int, default=6, show_default=True)
-@click.option('--delete-temp/--no-delete-temp', default=True, show_default=True)
 @click.option('-v', '--verbose', count=True, default=0, show_default=False,
               help='Set the STDERR logging verbosity level.')
 def main(host_addr: str,
