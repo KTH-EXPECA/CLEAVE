@@ -138,7 +138,7 @@ def prepare_controller_images(controller_temp_dir: Path,
 @click.argument('host-addr', type=str)
 @click.argument('num-plants', type=int)
 @click.argument('output-dir',
-                type=click.Path(exists=True, dir_okay=True, file_okay=False))
+                type=click.Path(exists=False, dir_okay=True, file_okay=False))
 @click.option('-d', '--exp-duration',
               type=str, default='35m', show_default=True)
 @click.option('--plant-addr-template',
