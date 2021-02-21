@@ -51,7 +51,7 @@ import click
               type=str, default='raspberry', show_default=True)
 def main(host_addr: str,
          num_plants: int,
-         output_dir: str = './cleave',
+         output_dir: str = '/home/pi/cleave',
          plant_addr_template: str = '192.168.1.2{:02d}',
          cleave_docker_img: str = 'molguin/cleave:cleave',
          exp_duration: str = '35m',
@@ -91,12 +91,13 @@ def main(host_addr: str,
             'ssh', '-oPubkeyAuthentication=no', '-oPasswordAuthentication=yes',
             f'{rpi_user}@{addr}', '--',
             'docker', 'run', '--rm', '-d',
+            '-e', f'OUTPUT_DIR=/output/plant_{i:02}',
             '-e', f'CLEAVE_DURATION={exp_duration}',
             '-e', f'CLEAVE_CONTROL_HOST={host_addr}',
             '-e', f'CLEAVE_PLANT_INDEX={i}',
             '--volume', f'{output_dir}:/output:rw',
             cleave_docker_img,
-            'cleave', '-vvvvv', f'--file-log=/output/plant_{i:02}',
+            'cleave', '-vvvvv', f'--file-log=/output/plant_{i:02}/plant.log',
             'run-plant', '/CLEAVE/experiment_setup/plant/config.py'
         ],
         env=env
