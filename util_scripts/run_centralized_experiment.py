@@ -177,6 +177,8 @@ def main(host_addr: str,
     base_output_dir = Path(output_dir).resolve()
     base_output_dir.mkdir(parents=True, exist_ok=False)
 
+    logger.warning(f'Results will be output to {base_output_dir}.')
+
     env = dict(os.environ)
     env['DEBIAN_FRONTEND'] = 'noninteractive'
 
@@ -191,6 +193,9 @@ def main(host_addr: str,
     # make the controller temp dir
     controller_temp_dir = Path(controller_temp_dir).resolve()
     controller_temp_dir.mkdir(parents=True, exist_ok=False)
+
+    logger.warning(f'Temporary data dir: {controller_temp_dir}')
+
     prepare_controller_images(controller_temp_dir,
                               num_plants,
                               cleave_docker_img)
