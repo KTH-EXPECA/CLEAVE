@@ -261,7 +261,7 @@ def main(host_addr: str,
     logger.warning('EXPERIMENT CANNOT BE CANCELLED AFTER STARTED.')
     logger.warning('Once experiment starts, you will have to wait until it is '
                    'finished to change any configuration.')
-    click.confirm('Are you sure you wish to continue?', abort=True)
+    logger.warning('Press Ctrl-C to abort now or wait for experiment to begin.')
 
     # start
     for t in range(5, 0, -1):
