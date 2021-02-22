@@ -187,7 +187,7 @@ def main(host_addr: str,
          controller_temp_dir: Optional[str] = None,
          plant_temp_dir: Optional[str] = None,
          nprocs: int = 6,
-         verbose: int = 0):
+         verbose: int = logger.level('INFO').no):
     """
     Run an experiment setup.
 
@@ -232,15 +232,15 @@ def main(host_addr: str,
     base_output_dir = Path(output_dir).resolve()
     base_output_dir.mkdir(parents=True, exist_ok=False)
 
-    logger.warning(f'Results will be output to {base_output_dir}.')
+    logger.info(f'Results will be output to {base_output_dir}.')
 
     # make the controller temp dir
     controller_temp_dir = Path(controller_temp_dir).resolve()
     controller_temp_dir.mkdir(parents=True, exist_ok=False)
 
-    logger.warning(f'Controller temporary data will be output to '
-                   f' {controller_temp_dir}')
-    logger.warning(f'Plant temporary data will be output to {plant_temp_dir}')
+    logger.info(f'Controller temporary data will be output to '
+                f' {controller_temp_dir}')
+    logger.info(f'Plant temporary data will be output to {plant_temp_dir}')
 
     env = dict(os.environ)
     env['DEBIAN_FRONTEND'] = 'noninteractive'
@@ -258,8 +258,10 @@ def main(host_addr: str,
                               cleave_docker_img)
     logger.info('Controller images pulled and ready.')
 
-    logger.critical('NOTE: EXPERIMENT CANNOT BE STOPPED THROUGH THIS SCRIPT '
-                    'ONCE STARTED!')
+    logger.warning('EXPERIMENT CANNOT BE CANCELLED AFTER STARTED.')
+    logger.warning('Once experiment starts, you will have to wait until it is '
+                   'finished to change any configuration.')
+    click.confirm('Are you sure you wish to continue?', abort=True)
 
     # start
     for t in range(5, 0, -1):
@@ -300,11 +302,11 @@ def main(host_addr: str,
         time.sleep(delta_t)
 
     logger.warning('Experiment finishing...')
-    logger.warning('Adding 20s of buffer time just in case.')
+    logger.info('Adding 20s of buffer time just in case.')
     for _ in tqdm.trange(20, desc='Finishing experiment...', leave=False):
         time.sleep(1.0)
 
-    logger.warning('Shutting down controller instances.')
+    logger.info('Shutting down controller instances.')
     subprocess.run(['docker-compose', 'kill', '-s', 'SIGINT'],
                    cwd=controller_temp_dir)
 
@@ -321,10 +323,11 @@ def main(host_addr: str,
                          itertools.repeat(rpi_user),
                      ))
 
-    logger.warning(f'Finished experiment {experiment_id}.')
-    logger.warning(f'Controller temporary data remains at'
-                   f' {controller_temp_dir}')
-    logger.warning(f'Plant temporary data remains at {plant_temp_dir}')
+    logger.info(f'Finished experiment {experiment_id}.')
+    logger.info(f'Controller temporary data remains at'
+                f' {controller_temp_dir}')
+    logger.info(f'Plant temporary data remains at {plant_temp_dir}')
+    logger.info(f'Final results were collected to {output_dir}')
 
 
 if __name__ == '__main__':
