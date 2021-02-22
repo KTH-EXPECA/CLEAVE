@@ -132,23 +132,48 @@ def prepare_controller_images(controller_temp_dir: Path,
 @click.argument('output-dir',
                 type=click.Path(exists=False, dir_okay=True, file_okay=False))
 @click.option('-d', '--exp-duration',
-              type=str, default='35m', show_default=True)
+              help='Duration of this experiment. Should be specified in a '
+                   '<duration><unit> manner; e.g. 35m for 35 minutes, '
+                   '1h20m for an hour and 20 minutes, 10s for 10 seconds, '
+                   'and so on.',
+              type=str, default='10s', show_default=True)
 @click.option('--plant-addr-template',
+              help='Template string used to format Plant IP addresses based '
+                   'on the Plant index. Will be formatted by calling '
+                   '<format_string>.format(plant_index).',
               type=str, default='192.168.1.2{:02d}', show_default=True)
 @click.option('--cleave_docker_img',
+              help='Docker image used for the experiment. Should be available '
+                   'for linux/amd64 and linux/armv7 platforms, as the same '
+                   'image will be used for both the Controllers and the '
+                   'Plants.',
               type=str, default='molguin/cleave:cleave', show_default=True)
 @click.option('-u', '--rpi-user',
+              help='User used to log in and deploy the Plants on the '
+                   'Raspberry Pis.',
               type=str, default='pi', show_default=True)
 @click.option('-p', '--rpi-passwd',
+              help='Password for the user used to log in and deploy the '
+                   'Plants on the Raspberry Pis.',
               type=str, default='raspberry', show_default=True)
 @click.option('-c', '--controller-temp-dir',
-              default=f'/tmp/{uuid.uuid4()}',
+              help='Local temporary directory where the output of the '
+                   'Controllers will be stored before collection. By default '
+                   'this corresponds to /tmp/<experiment_id>',
+              default=None,
               show_default=False,
               type=click.Path(exists=False))
 @click.option('-l', '--plant-temp-dir',
               type=str, show_default=True,
-              default='/home/pi/cleave')
-@click.option('-n', '--nprocs', type=int, default=6, show_default=True)
+              help='Remote temporary directory where the output of the '
+                   'Plants will be stored on each Raspberry Pi before '
+                   'collection. By default this corresponds to '
+                   '/home/<user>/cleave/<experiment_id>',
+              default=None)
+@click.option('-n', '--nprocs',
+              help='Number of parallel processes to use for final data '
+                   'collection.',
+              type=int, default=6, show_default=True)
 @click.option('-v', '--verbose', count=True, default=0, show_default=False,
               help='Set the STDERR logging verbosity level.')
 def main(host_addr: str,
@@ -159,10 +184,27 @@ def main(host_addr: str,
          cleave_docker_img: str = 'molguin/cleave:cleave',
          rpi_user: str = 'pi',
          rpi_passwd: str = 'raspberry',
-         controller_temp_dir: str = f'/tmp/{uuid.uuid4()}',
-         plant_temp_dir: str = '/home/pi/cleave',
+         controller_temp_dir: Optional[str] = None,
+         plant_temp_dir: Optional[str] = None,
          nprocs: int = 6,
          verbose: int = 0):
+    """
+    Run an experiment setup.
+
+    What this script does:
+
+        1. Sets up the appropriate number of containerized Docker instances
+        locally.
+
+        2. Sets up a matching number of remote Plant containers on
+        Raspberry Pi devices on the network.
+
+        3. Executes the experiment and waits for it to finish.
+
+        4. Once the experiment finishes, it collects the local and remote
+        data into a specified folder.
+    """
+
     # Set log level
     log_level = max(logger.level('CRITICAL').no - (verbose * 10), 0)
     logger.add(lambda msg: tqdm.tqdm.write(msg, end=""),
@@ -173,11 +215,32 @@ def main(host_addr: str,
                       '<level><b>{level}</b></level> '
                       '{message}')
 
+    experiment_id = uuid.uuid4()
+
+    # make sure the duration can be parsed
+    duration = pytimeparse.parse(exp_duration)
+
+    logger.info(f'Initializing experiment run with ID {experiment_id}.')
+    logger.info(f'Target duration: {exp_duration} ({duration} seconds).')
+
+    if controller_temp_dir is None:
+        controller_temp_dir = f'/tmp/{experiment_id}'
+    if plant_temp_dir is None:
+        plant_temp_dir = f'/home/{rpi_user}/cleave/{experiment_id}'
+
     # first things first, make sure the output dir exists and is empty
     base_output_dir = Path(output_dir).resolve()
     base_output_dir.mkdir(parents=True, exist_ok=False)
 
     logger.warning(f'Results will be output to {base_output_dir}.')
+
+    # make the controller temp dir
+    controller_temp_dir = Path(controller_temp_dir).resolve()
+    controller_temp_dir.mkdir(parents=True, exist_ok=False)
+
+    logger.warning(f'Controller temporary data will be output to '
+                   f' {controller_temp_dir}')
+    logger.warning(f'Plant temporary data will be output to {plant_temp_dir}')
 
     env = dict(os.environ)
     env['DEBIAN_FRONTEND'] = 'noninteractive'
@@ -190,16 +253,13 @@ def main(host_addr: str,
                              env=env)
     logger.info('Plant images pulled and ready.')
 
-    # make the controller temp dir
-    controller_temp_dir = Path(controller_temp_dir).resolve()
-    controller_temp_dir.mkdir(parents=True, exist_ok=False)
-
-    logger.warning(f'Temporary data dir: {controller_temp_dir}')
-
     prepare_controller_images(controller_temp_dir,
                               num_plants,
                               cleave_docker_img)
     logger.info('Controller images pulled and ready.')
+
+    logger.critical('NOTE: EXPERIMENT CANNOT BE STOPPED THROUGH THIS SCRIPT '
+                    'ONCE STARTED!')
 
     # start
     for t in range(5, 0, -1):
@@ -233,7 +293,6 @@ def main(host_addr: str,
     for p in procs:
         p.wait()
 
-    duration = pytimeparse.parse(exp_duration)
     delta_t = duration / 100
 
     logger.info('Running experiment, please wait...')
@@ -261,6 +320,11 @@ def main(host_addr: str,
                          itertools.repeat(rpi_passwd),
                          itertools.repeat(rpi_user),
                      ))
+
+    logger.warning(f'Finished experiment {experiment_id}.')
+    logger.warning(f'Controller temporary data remains at'
+                   f' {controller_temp_dir}')
+    logger.warning(f'Plant temporary data remains at {plant_temp_dir}')
 
 
 if __name__ == '__main__':
