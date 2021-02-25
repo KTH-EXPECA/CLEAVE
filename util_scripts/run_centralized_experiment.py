@@ -140,9 +140,9 @@ def prepare_controller_images(controller_temp_dir: Path,
                    '1h20m for an hour and 20 minutes, 10s for 10 seconds, '
                    'and so on.',
               type=str, default='10s', show_default=True)
-@click.option('-s', '--plant-sample-rate', type=float,
+@click.option('-s', '--plant-sample-rate', type=int,
               help='Sampling rate for the plant sensors, in Hertz.',
-              default=100.0, show_default=True)
+              default=100, show_default=True)
 @click.option('--plant-addr-template',
               help='Template string used to format Plant IP addresses based '
                    'on the Plant index. Will be formatted by calling '
@@ -292,7 +292,7 @@ def main(host_addr: str,
             '-e', f'CLEAVE_DURATION={exp_duration}',
             '-e', f'CLEAVE_CONTROL_HOST={host_addr}',
             '-e', f'CLEAVE_PLANT_INDEX={i}',
-            '-e', f'CLEAVE_SAMPLE_RATE={plant_sample_rate}',
+            '-e', f'CLEAVE_SAMPLE_RATE={plant_sample_rate:d}',
             '--volume', f'{plant_temp_dir}:/output:rw',
             cleave_docker_img,
             'cleave', '-vvvvv', f'--file-log=/output/plant_{i:02}/plant.log',
