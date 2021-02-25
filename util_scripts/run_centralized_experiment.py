@@ -137,6 +137,9 @@ def prepare_controller_images(controller_temp_dir: Path,
                    '1h20m for an hour and 20 minutes, 10s for 10 seconds, '
                    'and so on.',
               type=str, default='10s', show_default=True)
+@click.option('-s', '--plant-sample-rate', type=float,
+              help='Sampling rate for the plant sensors, in Hertz.',
+              default=100.0, show_default=True)
 @click.option('--plant-addr-template',
               help='Template string used to format Plant IP addresses based '
                    'on the Plant index. Will be formatted by calling '
@@ -180,6 +183,7 @@ def main(host_addr: str,
          num_plants: int,
          output_dir: str,
          exp_duration: str = '35m',
+         plant_sample_rate: int = 100,
          plant_addr_template: str = '192.168.1.2{:02d}',
          cleave_docker_img: str = 'molguin/cleave:cleave',
          rpi_user: str = 'pi',
@@ -284,6 +288,7 @@ def main(host_addr: str,
             '-e', f'CLEAVE_DURATION={exp_duration}',
             '-e', f'CLEAVE_CONTROL_HOST={host_addr}',
             '-e', f'CLEAVE_PLANT_INDEX={i}',
+            '-e', f'CLEAVE_SAMPLE_RATE={plant_sample_rate}',
             '--volume', f'{plant_temp_dir}:/output:rw',
             cleave_docker_img,
             'cleave', '-vvvvv', f'--file-log=/output/plant_{i:02}/plant.log',

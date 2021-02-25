@@ -30,11 +30,13 @@ output_dir = str(os.getenv('OUTPUT_DIR', f'./plant_{_plant_n:02d}'))
 
 state = InvPendulumState(fail_angle_rad=-1)
 
+sample_rate = int(os.getenv('CLEAVE_SAMPLE_RATE', 100))
+
 sensors = [
-    SimpleSensor('position', 100),
-    SimpleSensor('speed', 100),
-    SimpleSensor('angle', 100),
-    SimpleSensor('ang_vel', 100),
+    SimpleSensor('position', sample_rate),
+    SimpleSensor('speed', sample_rate),
+    SimpleSensor('angle', sample_rate),
+    SimpleSensor('ang_vel', sample_rate),
 ]
 
 actuators = [
