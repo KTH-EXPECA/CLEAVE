@@ -229,6 +229,7 @@ def main(host_addr: str,
 
     logger.info(f'Initializing experiment run with ID {experiment_id}.')
     logger.info(f'Target duration: {exp_duration} ({duration} seconds).')
+    logger.info(f'Plant sample rate: {plant_sample_rate:3g}Hz')
 
     if controller_temp_dir is None:
         controller_temp_dir = f'/tmp/{experiment_id}'
