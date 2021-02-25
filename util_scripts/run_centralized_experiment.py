@@ -114,6 +114,9 @@ def prepare_controller_images(controller_temp_dir: Path,
     with (controller_temp_dir / 'docker-compose.yml').open('w') as fp:
         print(out, file=fp)
 
+    # cleanup networks
+    subprocess.run(['docker', 'network', 'prune'])
+
     # pull clean new versions of images
     subprocess.run(
         ['docker-compose', 'rm', '-f'],
