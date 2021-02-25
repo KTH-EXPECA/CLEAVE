@@ -1,6 +1,0 @@
-services:
-  controller:
-    image: molguin/cleave:cleave
-    ports:
-      - 50000-50012:50000
-    entrypoint: '/usr/bin/ip addr show'
