@@ -115,7 +115,7 @@ def prepare_controller_images(controller_temp_dir: Path,
         print(out, file=fp)
 
     # cleanup networks
-    subprocess.run(['docker', 'network', 'prune'])
+    subprocess.run(['docker', 'network', 'prune', '--force'])
 
     # pull clean new versions of images
     subprocess.run(
