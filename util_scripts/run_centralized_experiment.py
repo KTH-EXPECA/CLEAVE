@@ -71,10 +71,7 @@ def collect_results(base_output_dir: Path,
     # collect plant results
     subprocess.run(
         ['sshpass', '-p', rpi_passwd,
-         'scp',
-         '-oPubkeyAuthentication=no',
-         '-oPasswordAuthentication=yes',
-         '-oStrictHostKeyChecking=no',
+         'scp', '-oPubkeyAuthentication=no', '-oPasswordAuthentication=yes',
          '-r', f'{rpi_user}@{plant_addr_template.format(plant_index)}:'
                f'{plant_dir}', temp_output]
     )
@@ -93,10 +90,7 @@ def prepare_plant_docker_img(img_name: str,
     procs = [subprocess.Popen(
         [
             'sshpass', '-p', rpi_passwd,
-            'ssh',
-            '-oPubkeyAuthentication=no',
-            '-oPasswordAuthentication=yes',
-            '-oStrictHostKeyChecking=no',
+            'ssh', '-oPubkeyAuthentication=no', '-oPasswordAuthentication=yes',
             f'{rpi_user}@{plant_addr_template.format(i)}', '--',
             'docker', 'pull', img_name
         ],
@@ -291,10 +285,7 @@ def main(host_addr: str,
     procs = [subprocess.Popen(
         [
             'sshpass', '-p', rpi_passwd,
-            'ssh',
-            '-oPubkeyAuthentication=no',
-            '-oPasswordAuthentication=yes',
-            '-oStrictHostKeyChecking=no',
+            'ssh', '-oPubkeyAuthentication=no', '-oPasswordAuthentication=yes',
             f'{rpi_user}@{plant_addr_template.format(i)}', '--',
             'docker', 'run', '--rm', '-d',
             '-e', f'OUTPUT_DIR=/output/plant_{i:02}',
