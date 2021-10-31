@@ -18,7 +18,7 @@ from cleave.api.plant import GaussianConstantActuator, SimpleSensor
 from cleave.impl.inverted_pendulum import InvPendulumStateWithViz
 
 host = 'localhost'
-port = 8080
+port = 50000
 
 controller_class = 'InvPendulumController'
 
