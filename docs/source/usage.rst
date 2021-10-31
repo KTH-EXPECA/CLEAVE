@@ -264,7 +264,6 @@ Putting together our examples from the previous subsections, an example configur
 .. literalinclude:: ../../examples/dummy_plant.py
     :caption: dummy_plant_config.py
     :language: python
-    :emphasize-lines: 41-48
     :lines: 15-
     
 
