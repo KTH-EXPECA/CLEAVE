@@ -22,10 +22,10 @@ port = 50000
 
 controller_class = 'InvPendulumController'
 
-tick_rate = 200
-emu_duration = '15s'
+tick_rate = 5000
+emu_duration = '60s'
 
-state = InvPendulumState(fail_angle_rad=-1)
+state = InvPendulumState(fail_angle_rad=1)
 
 sensors = [
     SimpleSensor('position', 100),
@@ -38,4 +38,4 @@ actuators = [
     SimpleConstantActuator(initial_value=0, prop_name='force')
 ]
 
-output_dir = '/tmp/_cleave/'
+output_dir = 'plant_metrics'
