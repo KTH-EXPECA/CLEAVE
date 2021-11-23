@@ -26,9 +26,9 @@ def plot_values(values,x_label,title,percent,type):
         plt.hlines(percent,min(values),max(values), colors="r",linestyles= 'dotted')
         plt.text(min(values),percent,str(int(100*percent))+"%")
         x=values[int(percent*len(values))]
-        print('' +str(percent*100) + "% of the RTT is less than: "+ str(float("{:.5f}".format(x)))+" (sec)" )
+        print('' +str(percent*100) + "% of the RTT is less than: "+ str(float("{:.5f}".format(x)))+" (ms)" )
         plt.vlines(x, 0,1,color="r",linestyles ="dashed" ) #linestyles : {'solid', 'dashed', 'dashdot', 'dotted'},
-        plt.text(x,0,str(float("{:.5f}".format(x))))
+        plt.text(x,0,str(float("{:.5f}".format(x)))+" ms")
 
     elif type=="angle":
         bottom_percent=(1-percent)/2
@@ -43,8 +43,8 @@ def plot_values(values,x_label,title,percent,type):
         print('' +str(percent*100) + "% of the data is between ["+ str(float("{:.5f}".format(x_left)))+", "+str(float("{:.5f}".format(x_right)))+"] (rad)" )
         plt.vlines(x_left, 0,1,color="r",linestyles ="dashed" ) #linestyles : {'solid', 'dashed', 'dashdot', 'dotted'},
         plt.vlines(x_right, 0,1,color="r",linestyles ="dashed" )
-        plt.text(x_left,0.6,str(float("{:.5f}".format(x_left))))
-        plt.text(x_right,0.4,str(float("{:.5f}".format(x_right))))
+        plt.text(x_left,0.6,str(float("{:.5f}".format(x_left)))+" rad")
+        plt.text(x_right,0.4,str(float("{:.5f}".format(x_right)))+" rad")
 
 
     plt.grid(linewidth=0.2)
@@ -63,60 +63,54 @@ def extract(file_name, col,folder,sample_rate=1):
                 continue
         return output
 
+def clip_rtt(output_rtt):
+    seq_tot=len(output_rtt)
+    try:
+        inf_indx= output_rtt.index( float("inf") )
+    except:
+        return output_rtt, 0
+    new_rtt= output_rtt[:inf_indx]
+    packet_loss= (len(output_rtt[inf_indx:-1])/seq_tot)*100
+    return new_rtt, float("{:.5f}".format(packet_loss))
+
 def main():
     print("\n Evaluating the results ---------->\n")
-
     # extract output angle and rtt from plant metrics
     files=os.listdir("plant_metrics")
     try:
         for i in files:
-            if "si" == i[0:2]:
+            if "si" == i[:2]:
                 sim_csv= i
                 f = open("plant_metrics/"+sim_csv, "r")
                 first_row=f.readline().strip("\n").split(",")
                 index_angle= first_row.index("output_angle")
-                #print("first line : output angle ",first_row, index_angle)
-            elif "ud" == i[0:2]:
+
+            elif "ud" == i[:2]:
                 udp_csv= i
                 f = open("plant_metrics/"+udp_csv, "r")
                 first_row=f.readline().strip("\n").split(",")
                 index_rtt= first_row.index("rtt")
                 index_seq_plant=first_row.index("seq")
-                #print("first line : rtt ",first_row, index_rtt)
+
         output_ang=extract(sim_csv,index_angle,"plant_metrics/") #  index_angle is the index for output_angle metric in simulation csvfile
-        output_rtt=extract(udp_csv,index_rtt,"plant_metrics/") #   index_rtt is the index for RTT metric in udp csvfile
+        output_rtt=extract(udp_csv,index_rtt,"plant_metrics/")   #  index_rtt is the index for RTT metric in udp csvfile
     except:
         print("Looking in the plant metrics folder.")
         print("The files your are looking for might not exist ")
         exit()
+
     percent=0.98
-
+    new_rtt, packet_loss = clip_rtt(output_rtt)
+    # convert from seconds to ms
+    new_rtt = [x * 1000 for x in new_rtt]
     plot_values(output_ang,"Angle (rad)", "Inverted pendulum's angle",percent,type="angle")
-    plot_values(output_rtt, "Time (s)", "The closed-loop control system RTT",percent,type="time")
-
+    plot_values(new_rtt, "Time (ms)", "The closed-loop control system RTT",percent,type="time")
     # calculate packet loss
-    files=os.listdir("controller_metrics")
-    try:
-        for i in files:
-                if "se" == i[0:2]:
-                    service_csv= i
-                    f = open("controller_metrics/"+service_csv, "r")
-                    first_row=f.readline().strip("\n").split(",")
-                    index_seq_controller= first_row.index("seq")
-                    #print("first line : seq index ",first_row, index_seq_controller)
-        seq_plant = int(extract(udp_csv,index_seq_plant,"plant_metrics/")[-1])
-        seq_controller = int(extract(service_csv,index_seq_controller,"controller_metrics/")[-1])
-    except:
-        print("Looking in the control metrics folder.")
-        print("The files your are looking for might not exist")
-        exit()
-
-    print("Packet loss: "+" %", (abs(seq_plant-seq_controller)/seq_plant )*100 )
+    print("Packet loss: "+str(packet_loss)+" %" )
     plt.show()
-    remove=input("Do you want to delete the csv files from plant and controller? y/n     ")
-
+    remove = input("Do you want to delete the csv files from plant? y/n     ")
     if remove =="y":
         for i in files:
-            os.remove("plant_metrics/"+i)
-        os.remove("control_metrics/"+service_csv)
+            os.remove("plant_metrics/" + i)
+
 main()
