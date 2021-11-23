@@ -22,7 +22,7 @@ port = 50000
 
 controller_class = 'InvPendulumController'
 
-tick_rate = 5000
+tick_rate = 200
 emu_duration = '60s'
 
 state = InvPendulumState(fail_angle_rad=1)
