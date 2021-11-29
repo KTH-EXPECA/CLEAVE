@@ -14,7 +14,8 @@
 
 # example config for a controller for an inverted pendulum inverted_pendulum
 from cleave.impl.inverted_pendulum import InvPendulumController
+import os
 
-port = 50000
+port = os.getenv("PORT")
 controller = InvPendulumController(ref=0.0)
 output_dir = 'controller_metrics'
