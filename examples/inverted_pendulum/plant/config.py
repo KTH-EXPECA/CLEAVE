@@ -26,7 +26,7 @@ tick_rate = os.getenv("TIK_RATE")
 emu_duration = os.getenv("EMU_DURATION")
 fail_angle_rad = os.getenv("FAIL_ANGLE_RAD")
 
-state = InvPendulumState(fail_angle_rad=fail_angle_rad)
+state = InvPendulumState(fail_angle_rad=int(fail_angle_rad))
 
 sensors = [
     SimpleSensor('position', 100),
