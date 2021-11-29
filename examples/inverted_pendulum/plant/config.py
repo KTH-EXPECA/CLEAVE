@@ -13,19 +13,20 @@
 #  limitations under the License.
 
 # Example config file for an inverted pendulum inverted_pendulum
-
+import os
 from cleave.api.plant import SimpleConstantActuator, SimpleSensor
 from cleave.impl.inverted_pendulum import InvPendulumState
 
-host = 'localhost'
-port = 50000
+host = os.getenv("CONTROLLER_ADDRESS")
+port = os.getenv("CONTROLLER_PORT")
 
 controller_class = 'InvPendulumController'
 
-tick_rate = 200
-emu_duration = '60s'
+tick_rate = os.getenv("TIK_RATE")
+emu_duration = os.getenv("EMU_DURATION")
+fail_angle_rad = os.getenv("FAIL_ANGLE_RAD")
 
-state = InvPendulumState(fail_angle_rad=1)
+state = InvPendulumState(fail_angle_rad=fail_angle_rad)
 
 sensors = [
     SimpleSensor('position', 100),
