@@ -76,38 +76,45 @@ def clip_rtt(output_rtt):
 def main():
     print("\n Evaluating the results ---------->\n")
     # extract output angle and rtt from plant metrics
-    files=os.listdir("plant_metrics")
+    files = os.listdir("plant_metrics")
+    sim_csv = list()
+    udp_csv = list()
     try:
         for i in files:
             if "si" == i[:2]:
-                sim_csv= i
-                f = open("plant_metrics/"+sim_csv, "r")
-                first_row=f.readline().strip("\n").split(",")
-                index_angle= first_row.index("output_angle")
+                sim_csv.append(i)
+                if len(sim_csv)==1:
+                    f = open("plant_metrics/"+sim_csv[0], "r")
+                    first_row = f.readline().strip("\n").split(",")
+                    index_angle = first_row.index("output_angle")
 
             elif "ud" == i[:2]:
-                udp_csv= i
-                f = open("plant_metrics/"+udp_csv, "r")
-                first_row=f.readline().strip("\n").split(",")
-                index_rtt= first_row.index("rtt")
-                index_seq_plant=first_row.index("seq")
+                udp_csv.append(i)
+                if len(udp_csv)==1:
+                    f = open("plant_metrics/"+udp_csv[0], "r")
+                    first_row=f.readline().strip("\n").split(",")
+                    index_rtt= first_row.index("rtt")
+                    index_seq_plant=first_row.index("seq")
+        for n in range(len(sim_csv)):
+            print("Host number: ", n )
+            output_ang = extract(sim_csv[n],index_angle,"plant_metrics/") #  index_angle is the index for output_angle metric in simulation csvfile
+            output_rtt = extract(udp_csv[n],index_rtt,"plant_metrics/")   #  index_rtt is the index for RTT metric in udp csvfile
+            percent=0.98
+            new_rtt, packet_loss = clip_rtt(output_rtt)
+            # convert from seconds to ms
+            new_rtt = [x * 1000 for x in new_rtt]
+            plot_values(output_ang,"Angle (rad)", "Inverted pendulum's angle",percent,type="angle")
+            plot_values(new_rtt, "Time (ms)", "The closed-loop control system RTT",percent,type="time")
+            # calculate packet loss
+            print("Packet loss: "+str(packet_loss)+" %" )
+            plt.show()
 
-        output_ang=extract(sim_csv,index_angle,"plant_metrics/") #  index_angle is the index for output_angle metric in simulation csvfile
-        output_rtt=extract(udp_csv,index_rtt,"plant_metrics/")   #  index_rtt is the index for RTT metric in udp csvfile
     except:
         print("Looking in the plant metrics folder.")
         print("The files your are looking for might not exist ")
         exit()
 
-    percent=0.98
-    new_rtt, packet_loss = clip_rtt(output_rtt)
-    # convert from seconds to ms
-    new_rtt = [x * 1000 for x in new_rtt]
-    plot_values(output_ang,"Angle (rad)", "Inverted pendulum's angle",percent,type="angle")
-    plot_values(new_rtt, "Time (ms)", "The closed-loop control system RTT",percent,type="time")
-    # calculate packet loss
-    print("Packet loss: "+str(packet_loss)+" %" )
-    plt.show()
+
     remove = input("Do you want to delete the csv files from plant? y/n     ")
     if remove =="y":
         for i in files:
