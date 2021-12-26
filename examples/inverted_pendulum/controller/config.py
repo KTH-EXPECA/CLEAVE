@@ -13,9 +13,9 @@
 #  limitations under the License.
 
 # example config for a controller for an inverted pendulum inverted_pendulum
-from cleave.impl.inverted_pendulum import InvPendulumController
 import os
+from cleave.impl.inverted_pendulum import InvPendulumController
 
-port = os.getenv("PORT")
+port = int(os.getenv("PORT"))
 controller = InvPendulumController(ref=0.0)
-output_dir = 'controller_metrics'
+output_dir = '/opt/controller_metrics'
