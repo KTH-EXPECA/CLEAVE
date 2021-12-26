@@ -39,6 +39,7 @@ _control_defaults = dict(
     controller_service=UDPControllerService,
     startup_callbacks=[],
     shutdown_callbacks=[],
+    add_delay_s=0.0
     # TODO: remove
 )
 
@@ -175,7 +176,9 @@ def run_controller(config_file_path: str):
 
     service: BaseControllerService = config.controller_service(
         config.controller,
-        Path(config.output_dir))
+        Path(config.output_dir),
+        add_delay_s=config.get_parameter('add_delay_s')
+    )
     for c in config.startup_callbacks:
         reactor.addSystemEventTrigger('during', 'startup', c)
     for c in config.shutdown_callbacks:

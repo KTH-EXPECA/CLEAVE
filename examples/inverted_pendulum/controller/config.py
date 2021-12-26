@@ -15,11 +15,9 @@
 # example config for a controller for an inverted pendulum inverted_pendulum
 import os
 
-from cleave.impl.inverted_pendulum import DelayedInvPendulumController
+from cleave.impl.inverted_pendulum import InvPendulumController
 
 port = int(os.getenv("PORT"))
-controller = DelayedInvPendulumController(
-    delay_s=float(os.getenv("DELAY", 0.0)),
-    ref=0.0
-)
+controller = InvPendulumController(ref=0.0)
 output_dir = '/opt/controller_metrics'
+add_delay_s = float(os.getenv("DELAY", 0.0))
