@@ -1,5 +1,6 @@
 import itertools
 import random
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 
@@ -16,6 +17,7 @@ base_output_dir = Path('/opt/cleave')
 cleave_img = 'molguin/cleave:cleave'
 
 
+@contextmanager
 def docker_client(*args, **kwargs) -> Generator[DockerClient, None, None]:
     client: DockerClient = DockerClient(*args, **kwargs)
     yield client
