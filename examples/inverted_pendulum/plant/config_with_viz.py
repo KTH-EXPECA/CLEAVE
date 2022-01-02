@@ -17,21 +17,20 @@
 from cleave.api.plant import GaussianConstantActuator, SimpleSensor
 from cleave.impl.inverted_pendulum import InvPendulumStateWithViz
 
-host = 'localhost'
-port = 50000
+host = '13.53.37.7'
+port = 50001
 
 controller_class = 'InvPendulumController'
 
-tick_rate = 200
-emu_duration = '60s'
-
-state = InvPendulumStateWithViz(fail_angle_rad=1)
+tick_rate = 110
+emu_duration = '30s'
+state = InvPendulumStateWithViz(fail_angle_rad=2)
 
 sensors = [
-    SimpleSensor('position', 100),
-    SimpleSensor('speed', 100),
-    SimpleSensor('angle', 100),
-    SimpleSensor('ang_vel', 100),
+    SimpleSensor('position', 11),
+    SimpleSensor('speed', 11),
+    SimpleSensor('angle', 11),
+    SimpleSensor('ang_vel', 11),
 ]
 
 actuators = [
