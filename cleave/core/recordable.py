@@ -26,12 +26,13 @@
 from __future__ import annotations
 
 import abc
-from datetime import datetime
+import os
 import threading
 from collections import namedtuple
+from datetime import datetime
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Any, Mapping, NamedTuple, Sequence, Set, Union
+from typing import Any, Mapping, NamedTuple, Sequence, Set
 
 import numpy as np
 import pandas as pd
@@ -145,8 +146,16 @@ class CSVRecorder(Recorder):
                                   f'directory!')
 
         output_dir.mkdir(exist_ok=True, parents=True)
+
+        name_suffix = os.getenv("NAME")
+        if name_suffix is None:
+            name_suffix = '.'
+        else:
+            name_suffix = f'.{name_suffix}.'
+
         self._path = output_dir / \
-                     f'{metric_name}.{datetime.now():%Y%m%d.%H%M%S%f}.csv'
+                     f'{metric_name}{name_suffix}' \
+                     f'{datetime.now():%Y%m%d.%H%M%S%f}.csv'
 
         dummy_data = np.empty((chunk_size, len(recordable.record_fields)))
         self._table_chunk = pd.DataFrame(data=dummy_data,

@@ -41,4 +41,4 @@ actuators = [
                              initial_value=0)
 ]
 
-output_dir = '/tmp/_cleave/'
+output_dir = 'plant_metrics'

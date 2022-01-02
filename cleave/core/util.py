@@ -58,14 +58,14 @@ class SingleElementQ:
 
         """
         with self._cond:
-            try:
-                while not self._has_value:
-                    if not self._cond.wait(timeout=timeout):
-                        raise Empty()
-                return self._value
-            finally:
-                self._value = None
-                self._has_value = False
+            while not self._has_value:
+                if not self._cond.wait(timeout=timeout):
+                    raise Empty()
+
+            out = self._value
+            self._value = None
+            self._has_value = False
+            return out
 
     def pop_nowait(self) -> Any:
         """
@@ -84,11 +84,10 @@ class SingleElementQ:
 
         """
         with self._cond:
-            try:
-                if not self._has_value:
-                    raise Empty()
-                else:
-                    return self._value
-            finally:
+            if not self._has_value:
+                raise Empty()
+            else:
+                out = self._value
                 self._value = None
                 self._has_value = False
+                return out

@@ -391,3 +391,16 @@ class InvPendulumController(Controller):
             force = math.copysign(self._max_force, force)
 
         return {'force': force}
+
+# class DelayedInvPendulumController(InvPendulumController):
+#     def __init__(self, delay_s: float, ref: float = 0.0, max_force: float =
+#     25):
+#         super(DelayedInvPendulumController, self).__init__(ref=ref,
+#                                                            max_force=max_force)
+#         assert delay_s >= 0
+#         self._delay = delay_s
+#
+#     def process(self, sensor_values: PhyPropMapping) -> PhyPropMapping:
+#         time.sleep(self._delay)
+#         return super(DelayedInvPendulumController, self).process(
+#         sensor_values)

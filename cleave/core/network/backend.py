@@ -43,7 +43,8 @@ class BusyControllerException(Exception):
 # noinspection PyTypeChecker
 class BaseControllerService(Recordable, ABC):
     def __init__(self,
-                 controller: Controller):
+                 controller: Controller,
+                 add_delay_s: float = 0.0):
         super(BaseControllerService, self).__init__()
         self._controller = controller
         self._busy_cond = Condition()
@@ -52,6 +53,11 @@ class BaseControllerService(Recordable, ABC):
         self._q = SingleElementQ()
         self._running = Event()
         self._running.clear()
+        self._add_delay = add_delay_s
+
+        if self._add_delay > 0:
+            self._logger.warn(f'Adding {add_delay_s} seconds delay to each '
+                              f'control command!')
 
     def initialize(self):
         def _process_loop():
@@ -59,7 +65,10 @@ class BaseControllerService(Recordable, ABC):
                 try:
                     samples, cb = self._q.pop(timeout=0.1)
                     results = self._controller.process(samples)
-                    reactor.callFromThread(cb, results)
+                    reactor.callFromThread(
+                        reactor.callLater,
+                        self._add_delay,
+                        cb, results)
                 except Empty:
                     continue
 
@@ -125,9 +134,10 @@ class UDPControllerService(BaseControllerService, DatagramProtocol):
 
     def __init__(self,
                  controller: Controller,
-                 output_dir: Path):
+                 output_dir: Path,
+                 add_delay_s: float = 0.0):
         super(UDPControllerService, self).__init__(
-            controller=controller
+            controller=controller, add_delay_s=add_delay_s
         )
         self._out_dir = output_dir
         self._msg_fact = ControlMessageFactory()

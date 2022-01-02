@@ -2,12 +2,18 @@ SHELL := /bin/bash
 
 .PHONY: all
 
-all: base cleave
+all: login base cleave logout
+
+login: FORCE
+	docker login
+
+logout: FORCE
+	docker logout
 
 base: FORCE
-	docker buildx build --output type=docker --platform=linux/armhf,linux/amd64 -t molguin/cleave:base --target base . --no-cache
+	docker buildx build --platform=linux/arm64,linux/amd64 -t molguin/cleave:base --target base . --push
 
 cleave: FORCE
-	docker buildx build --output type=docker --platform=linux/armhf,linux/amd64 -t molguin/cleave:cleave --target cleave . --no-cache
+	docker buildx build --platform=linux/arm64,linux/amd64 -t molguin/cleave:cleave --target cleave . --push
 
 FORCE:

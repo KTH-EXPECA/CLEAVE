@@ -9,7 +9,7 @@ RUN apt-get update &&\
 RUN apt-get install -y \
     build-essential gcc g++ gfortran libopenblas-base libopenblas-dev libjpeg-dev zlib1g zlib1g-dev zlibc libffi-dev \
     python3.8 python3.8-dev python3-numpy python3-matplotlib python3-scipy python3-twisted python3-pandas \
-    python3-seaborn python3-click python3-pyglet python3-pip wget
+    python3-seaborn python3-click python3-pyglet python3-pip wget at
 
 COPY ./requirements.txt /opt/
 COPY ./requirements_viz.txt /opt/
@@ -24,3 +24,4 @@ COPY . /CLEAVE
 WORKDIR /CLEAVE
 RUN pip3 install -U .
 RUN mkdir -p /output
+ENTRYPOINT ["python3", "cleave.py", "-vvvvv"]
