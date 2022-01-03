@@ -50,6 +50,7 @@ def run_experiment(
         client: DockerClient = client
         controller: Container = client.containers.run(
             detach=True,
+            remove=True,
             image=cleave_img,
             command=['run-controller',
                      'examples/inverted_pendulum/controller/config.py'],
@@ -68,6 +69,7 @@ def run_experiment(
         try:
             plant = client.containers.run(
                 detach=False,
+                remove=True,
                 image=cleave_img,
                 command=['run-plant',
                          'examples/inverted_pendulum/plant/config.py'],
