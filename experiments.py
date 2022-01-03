@@ -32,7 +32,7 @@ def run_experiment(
 ) -> None:
     # first thing first, create the output folder
 
-    logger.warning(f'Running: sampling_rate={sampling_rates_hz}, '
+    logger.warning(f'Running: sampling_rate={srate}, '
                    f'delay_ms={delay_ms}, '
                    f'tick_rate_hz={trate}, '
                    f'run_idx={run_idx}')
@@ -84,6 +84,7 @@ def run_experiment(
             )
         finally:
             # plant done, tear down controller
+            controller.stop()
             controller.remove()
 
 
