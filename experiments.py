@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 
+import docker.errors
 from docker import DockerClient
 from docker.models.containers import Container
 from loguru import logger
@@ -90,7 +91,10 @@ def run_experiment(
         finally:
             # plant done, tear down controller
             controller.stop()
-            controller.remove()
+            try:
+                controller.remove()
+            except docker.errors.NotFound:
+                pass
 
 
 if __name__ == '__main__':
