@@ -54,6 +54,7 @@ def run_experiment(
             image=cleave_img,
             command=['run-controller',
                      'examples/inverted_pendulum/controller/config.py'],
+            network='bridge',
             environment={
                 'PORT' : control_port,
                 'NAME' : f'controller.run_{run_idx:02d}',
@@ -64,6 +65,7 @@ def run_experiment(
 
         # get IP of controller inside Docker network
         ctrl_addr = controller.attrs['NetworkSettings']['IPAddress']
+        logger.warning(f'Controller address: {ctrl_addr}')
 
         # run the plant
         try:
@@ -73,6 +75,7 @@ def run_experiment(
                 image=cleave_img,
                 command=['run-plant',
                          'examples/inverted_pendulum/plant/config.py'],
+                network='bridge',
                 environment={
                     'NAME'              : f'plant.run_{run_idx:02d}',
                     'CONTROLLER_ADDRESS': f'{ctrl_addr}',
