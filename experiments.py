@@ -97,10 +97,6 @@ def run_experiment(
         finally:
             # plant done, tear down controller
             controller.stop()
-            try:
-                controller.remove()
-            except docker.errors.NotFound:
-                pass
 
 
 if __name__ == '__main__':
