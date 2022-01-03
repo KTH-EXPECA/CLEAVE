@@ -39,8 +39,8 @@ def run_experiment(
                    f'tick_rate_hz={trate}, '
                    f'run_idx={run_idx}')
 
-    exp_name = f'cleave_local_s{srate:03d}_t{trate:03d}_d' \
-               f'{delay_ms:03d}ms'
+    exp_name = f'cleave_local_s{srate:03d}Hz_t{trate:03d}Hz'
+               f'_d{delay_ms:03d}ms'
 
     output_dir = (base_output_dir / exp_name).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
