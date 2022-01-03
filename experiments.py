@@ -1,5 +1,6 @@
 import itertools
 import random
+import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
@@ -65,6 +66,11 @@ def run_experiment(
         )
 
         # get IP of controller inside Docker network
+        sleep_time = 5
+        logger.info(f'Sleeping for {sleep_time}s to allow Controller '
+                    f'container to start.')
+        time.sleep(sleep_time)
+        controller.reload()
         ctrl_addr = controller.attrs['NetworkSettings']['IPAddress']
         logger.warning(f'Controller address: {ctrl_addr}')
 
