@@ -5,7 +5,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 
-import docker.errors
 from docker import DockerClient
 from docker.models.containers import Container
 from loguru import logger
@@ -39,7 +38,7 @@ def run_experiment(
                    f'tick_rate_hz={trate}, '
                    f'run_idx={run_idx}')
 
-    exp_name = f'cleave_local_s{srate:03d}Hz_t{trate:03d}Hz'
+    exp_name = f'cleave_local_s{srate:03d}Hz_t{trate:03d}Hz' \
                f'_d{delay_ms:03d}ms'
 
     output_dir = (base_output_dir / exp_name).resolve()
