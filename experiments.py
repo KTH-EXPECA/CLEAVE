@@ -14,6 +14,7 @@ delays_ms = (0, 25, 50, 100)
 start_run = 1
 n_runs = 10
 tick_rates_hz = (120,)
+emu_duration = '5m'
 
 base_output_dir = Path('/opt/cleave')
 cleave_img = 'molguin/cleave:cleave'
@@ -113,7 +114,7 @@ def run_experiment(
                     'CONTROLLER_ADDRESS': ctrl_addr,
                     'CONTROLLER_PORT'   : control_port,
                     'TICK_RATE'         : f'{trate:d}',
-                    'EMU_DURATION'      : '5m',
+                    'EMU_DURATION'      : emu_duration,
                     'FAIL_ANGLE_RAD'    : -1,
                     'SAMPLE_RATE'       : f'{srate:d}'
                 },
