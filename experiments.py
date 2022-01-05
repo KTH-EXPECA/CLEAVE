@@ -94,7 +94,6 @@ def run_experiment(
                 proxy.reload()
                 proxy_addr = proxy.attrs['NetworkSettings']['IPAddress']
                 time.sleep(0.1)
-            proxy_addr = str(ctrl_addr)
             logger.warning(f'Proxy address: {proxy_addr}')
             ctrl_addr = proxy_addr
         else:
