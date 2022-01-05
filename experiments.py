@@ -3,7 +3,7 @@ import random
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Optional
 
 from docker import DockerClient
 from docker.models.containers import Container
@@ -57,21 +57,47 @@ def run_experiment(
                      'examples/inverted_pendulum/controller/config.py'],
             network='bridge',
             environment={
-                'PORT' : control_port,
-                'NAME' : f'controller.run_{run_idx:02d}',
-                'DELAY': f'{delay_ms / 1000.0:0.3f}'
+                'PORT': control_port,
+                'NAME': f'controller.run_{run_idx:02d}',
             },
             volumes=[f'{output_dir}:/opt/controller_metrics/']
         )
 
         # get IP of controller inside Docker network
-        sleep_time = 5
-        logger.info(f'Sleeping for {sleep_time}s to allow Controller '
-                    f'container to start.')
-        time.sleep(sleep_time)
-        controller.reload()
-        ctrl_addr = controller.attrs['NetworkSettings']['IPAddress']
+        ctrl_addr = None
+
+        while ctrl_addr is None or len(ctrl_addr) == 0:
+            controller.reload()
+            ctrl_addr = controller.attrs['NetworkSettings']['IPAddress']
+            time.sleep(0.1)
+        ctrl_addr = str(ctrl_addr)
         logger.warning(f'Controller address: {ctrl_addr}')
+
+        # if delay, start the proxy
+        if delay_ms > 0:
+            proxy: Optional[Container] = client.containers.run(
+                detach=True,
+                remove=True,
+                image='expeca/awsproxy:latest',
+                network='bridge',
+                environment={
+                    'SERVERIP': ctrl_addr,
+                    'DELAY'   : delay_ms // 2
+                },
+                cap_add='NET_ADMIN'
+            )
+
+            # get the address of the proxy
+            proxy_addr = None
+            while proxy_addr is None or len(ctrl_addr) == 0:
+                proxy.reload()
+                proxy_addr = proxy.attrs['NetworkSettings']['IPAddress']
+                time.sleep(0.1)
+            proxy_addr = str(ctrl_addr)
+            logger.warning(f'Controller address: {proxy_addr}')
+            ctrl_addr = proxy_addr
+        else:
+            proxy = None
 
         # run the plant
         try:
@@ -84,7 +110,7 @@ def run_experiment(
                 network='bridge',
                 environment={
                     'NAME'              : f'plant.run_{run_idx:02d}',
-                    'CONTROLLER_ADDRESS': f'{ctrl_addr}',
+                    'CONTROLLER_ADDRESS': ctrl_addr,
                     'CONTROLLER_PORT'   : control_port,
                     'TICK_RATE'         : f'{trate:d}',
                     'EMU_DURATION'      : '5m',
@@ -96,6 +122,8 @@ def run_experiment(
         finally:
             # plant done, tear down controller
             controller.stop()
+            if proxy is not None:
+                proxy.stop()
 
 
 if __name__ == '__main__':
