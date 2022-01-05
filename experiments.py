@@ -9,7 +9,7 @@ from docker import DockerClient
 from docker.models.containers import Container
 from loguru import logger
 
-sampling_rates_hz = (5, 10, 20, 40, 60)
+sampling_rates_hz = (10, 20, 40, 60)
 delays_ms = (0, 25, 50, 100)
 start_run = 1
 n_runs = 10
