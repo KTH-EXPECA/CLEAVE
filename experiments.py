@@ -11,6 +11,7 @@ from loguru import logger
 
 sampling_rates_hz = (5, 10, 20, 40, 60)
 delays_ms = (0, 25, 50, 100)
+start_run = 1
 n_runs = 10
 tick_rates_hz = (120,)
 
@@ -38,7 +39,8 @@ def run_experiment(
                    f'tick_rate_hz={trate}, '
                    f'run_idx={run_idx}')
 
-    exp_name = f'cleave_local_s{srate:03d}Hz_t{trate:03d}Hz' \
+    exp_name = f'cleave_local_s{srate:03d}Hz' \
+               f'_t{trate:03d}Hz' \
                f'_d{delay_ms:03d}ms'
 
     output_dir = (base_output_dir / exp_name).resolve()
@@ -65,7 +67,6 @@ def run_experiment(
 
         # get IP of controller inside Docker network
         ctrl_addr = None
-
         while ctrl_addr is None or len(ctrl_addr) == 0:
             controller.reload()
             ctrl_addr = controller.attrs['NetworkSettings']['IPAddress']
@@ -94,7 +95,7 @@ def run_experiment(
                 proxy_addr = proxy.attrs['NetworkSettings']['IPAddress']
                 time.sleep(0.1)
             proxy_addr = str(ctrl_addr)
-            logger.warning(f'Controller address: {proxy_addr}')
+            logger.warning(f'Proxy address: {proxy_addr}')
             ctrl_addr = proxy_addr
         else:
             proxy = None
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     combs = list(itertools.product(
         sampling_rates_hz,
         delays_ms,
-        range(1, n_runs + 1),
+        range(start_run, start_run + n_runs),
         tick_rates_hz
     ))
 
