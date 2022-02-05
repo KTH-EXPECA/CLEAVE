@@ -24,7 +24,6 @@ controller_class = 'InvPendulumController'
 
 tick_rate = 110
 emu_duration = '30s'
-
 state = InvPendulumStateWithViz(fail_angle_rad=2)
 
 sensors = [
