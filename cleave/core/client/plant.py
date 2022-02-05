@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections import Collection
+from typing import Collection
 from pathlib import Path
 
 import pytimeparse
