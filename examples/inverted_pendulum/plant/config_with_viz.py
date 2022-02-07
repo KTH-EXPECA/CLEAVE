@@ -13,31 +13,34 @@
 #  limitations under the License.
 
 # Example config file for an inverted pendulum inverted_pendulum
+import os
 
-from cleave.api.plant import GaussianConstantActuator, SimpleSensor
+from cleave.api.plant import SimpleConstantActuator, \
+    SimpleSensor
 from cleave.impl.inverted_pendulum import InvPendulumStateWithViz
 
-host = '13.53.37.7'
-port = 50001
+host = os.getenv('CONTROLLER_ADDRESS')
+port = int(os.getenv('CONTROLLER_PORT', 50000))
 
-controller_class = 'InvPendulumController'
+tick_rate = int(os.getenv('TICK_RATE', 100))
+emu_duration = os.getenv('EMU_DURATION')
 
-tick_rate = 110
-emu_duration = '30s'
-state = InvPendulumStateWithViz(fail_angle_rad=2)
+state = InvPendulumStateWithViz(
+    fail_angle_rad=int(os.getenv('FAIL_ANGLE_RAD', -1)),
+    pend_mass=float(os.getenv('PEND_MASS', 0.2)),
+    pend_length=float(os.getenv('PEND_LEN', 1.2))
+)
 
+sample_rate = int(os.getenv('SAMPLE_RATE', 100))
 sensors = [
-    SimpleSensor('position', 11),
-    SimpleSensor('speed', 11),
-    SimpleSensor('angle', 11),
-    SimpleSensor('ang_vel', 11),
+    SimpleSensor('position', sample_rate),
+    SimpleSensor('speed', sample_rate),
+    SimpleSensor('angle', sample_rate),
+    SimpleSensor('ang_vel', sample_rate),
 ]
 
 actuators = [
-    GaussianConstantActuator('force',
-                             g_mean=0.0,
-                             g_std=1.0,
-                             initial_value=0)
+    SimpleConstantActuator(0, prop_name='force')
 ]
 
 output_dir = 'plant_metrics'

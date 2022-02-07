@@ -128,8 +128,8 @@ class InvPendulumState(State):
                  ground_friction: float = 0.1,
                  cart_mass: float = 0.5,
                  cart_dims: Vec2d = Vec2d(0.3, 0.2),
-                 pend_com: float = 0.6,
-                 pend_width: float = 0.1,
+                 pend_length: float = 1.2,
+                 # pend_width: float = 0.1,
                  pend_mass: float = 0.2,
                  pend_moment: float = 0.001,  # TODO: calculate with pymunk?
                  ):
@@ -146,17 +146,18 @@ class InvPendulumState(State):
             Mass of the pendulum cart in Kg.
         cart_dims
             Dimensions of the cart in meters.
-        pend_com
-            Center of mass for the pendulum arm.
-        pend_width
-            Width of the pendulum arm in meters.
+        pend_length
+            Length of the pendulum arm.
         pend_mass
             Mass of the pendulum in Kg.
         pend_moment
             Moment of the pendulum.
         """
+
         super(InvPendulumState, self).__init__()
         # set up state
+
+        pend_com = pend_length / 2
 
         # space
         self._space = pymunk.Space(threaded=True)
@@ -183,7 +184,8 @@ class InvPendulumState(State):
         self._space.add(self._cart_body, self._cart_shape)
 
         # pendulum arm and mass
-        pend_dims = (pend_width, pend_com * 2)
+        pend_width = cart_dims[0] * 0.2
+        pend_dims = (pend_width, pend_length)
         self._pend_body = pymunk.Body(mass=pend_mass, moment=pend_moment)
         self._pend_body.position = \
             (self._cart_body.position.x,
@@ -240,8 +242,8 @@ class InvPendulumStateWithViz(InvPendulumState):
                  ground_friction: float = 0.1,
                  cart_mass: float = 0.5,
                  cart_dims: Vec2d = Vec2d(0.3, 0.2),
-                 pend_com: float = 0.6,
-                 pend_width: float = 0.1,
+                 pend_length: float = 1.2,
+                 # pend_width: float = 0.1,
                  pend_mass: float = 0.2,
                  pend_moment: float = 0.001,  # TODO: calculate with pymunk?
                  window_w: int = 1000,
@@ -262,10 +264,8 @@ class InvPendulumStateWithViz(InvPendulumState):
             Mass of the pendulum cart in Kg.
         cart_dims
             Dimensions of the cart in meters.
-        pend_com
-            Center of mass for the pendulum arm.
-        pend_width
-            Width of the pendulum arm in meters.
+        pend_length
+            Length of the pendulum arm.
         pend_mass
             Mass of the pendulum in Kg.
         pend_moment
@@ -278,8 +278,8 @@ class InvPendulumStateWithViz(InvPendulumState):
             ground_friction=ground_friction,
             cart_mass=cart_mass,
             cart_dims=cart_dims,
-            pend_com=pend_com,
-            pend_width=pend_width,
+            pend_length=pend_length,
+            # pend_width=pend_width,
             pend_mass=pend_mass,
             pend_moment=pend_moment,
         )
