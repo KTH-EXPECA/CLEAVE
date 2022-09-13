@@ -1,19 +1,17 @@
+DOCKERCMD := docker --config .docker buildx build --platform=linux/arm64,linux/amd64
 SHELL := /bin/bash
+
+REPO := expeca/cleave
+
+SRC_DIR := .../cleave
+SRC_FILES := $(wildcard $(SRC_DIR)/*)
 
 .PHONY: all
 
-all: login base cleave logout
+all: base cleave
 
-login: FORCE
-	docker login
+base: Dockerfile $(SRC_FILES) cleave.py
+	$(DOCKERCMD) -t $(REPO):base -f $< --target base . --push
 
-logout: FORCE
-	docker logout
-
-base: FORCE
-	docker buildx build --platform=linux/arm64,linux/amd64 -t molguin/cleave:base --target base . --push
-
-cleave: FORCE
-	docker buildx build --platform=linux/arm64,linux/amd64 -t molguin/cleave:cleave --target cleave . --push
-
-FORCE:
+cleave: Dockerfile $(SRC_FILES) cleave.py
+	$(DOCKERCMD) -t $(REPO):cleave -f $< --target cleave . --push
