@@ -1,0 +1,30 @@
+version: "3.0"
+networks:
+  cleave: {}  # define a network that the components interact over
+  # not strictly necessary when running docker-compose locally, as by default, services
+  # are already connected to a hidden default network that allows them to communicate
+services:
+  cleave-plant:
+    image: expeca/cleave:cleave  # the image we want to pull and run
+    command: "run-plant examples/inverted_pendulum/plant/config.py" # the command we want to run
+    # note that since the cleave containers put the "python cleave.py" command as their
+    # ENTRYPOINT, this "command:" actually corresponds to whatever goes after "python cleave.py"
+    # see here for the difference between an ENTRYPOINT and a CMD in a DOCKERFILE:
+    # https://stackoverflow.com/questions/21553353/what-is-the-difference-between-cmd-and-entrypoint-in-a-dockerfile
+    environment:
+      # environment variables containing parameters to the plant
+      CONTROLLER_ADDRESS: cleave-server  # no need to specify ip addresses, containers can find
+      # each other by name
+      EMU_DURATION: 10s
+    networks:
+      - cleave
+    depends_on:
+      # the plant depends on the controller
+      - cleave-server
+  cleave-server:
+    image: expeca/cleave:cleave
+    command: "run-controller examples/inverted_pendulum/controller/config.py"
+    environment:
+      PORT: 50000
+    networks:
+      - cleave
